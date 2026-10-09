@@ -170,15 +170,19 @@ export const translations = {
     addCustomSkill: 'Добавить навык',
 
     // Skill categories
-    catAwareness: 'Внимательность',
-    catBody: 'Тело',
-    catControl: 'Управление',
-    catEducation: 'Образование',
-    catFighting: 'Бой',
-    catPerformance: 'Выступление',
-    catRanged: 'Стрельба',
-    catSocial: 'Общение',
-    catTechnique: 'Техника',
+    catAwareness: 'Навыки восприятия',
+    catBody: 'Физические навыки',
+    catControl: 'Навыки управления',
+    catEducation: 'Навыки образования',
+    catFighting: 'Навыки рукопашного боя',
+    catPerformance: 'Творческие навыки',
+    catRanged: 'Навыки боя на дистанции',
+    catSocial: 'Социальные навыки',
+    catTechnique: 'Технические навыки',
+    skillColSkill: 'Навык',
+    skillColLevel: 'УР',
+    skillColStat: 'ХАР',
+    skillColBase: 'ОСН',
 
     // Netrunner
     netrunnerTitle: 'КИБЕРДЕКА И НЕТРАННИНГ',
@@ -466,6 +470,10 @@ export const translations = {
     catRanged: 'Ranged Weapon Skills',
     catSocial: 'Social Skills',
     catTechnique: 'Technique Skills',
+    skillColSkill: 'Skill',
+    skillColLevel: 'LVL',
+    skillColStat: 'STAT',
+    skillColBase: 'BASE',
 
     // Netrunner
     netrunnerTitle: 'CYBERDECK & NETRUNNING',

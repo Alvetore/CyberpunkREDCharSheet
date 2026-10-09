@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Character, Skill, SkillCategory, StatKey } from '../types/character';
 import { Language, translations } from '../locales/i18n';
+import { CPR_SKILLS } from '../data/initialData';
 import { sfx } from '../utils/audio';
 import { 
   BookOpen, 
@@ -8,7 +9,10 @@ import {
   Plus, 
   Dices, 
   Trash2,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ShieldAlert,
+  HeartPulse,
+  X
 } from 'lucide-react';
 
 interface SkillsSectionProps {
@@ -19,18 +23,38 @@ interface SkillsSectionProps {
   dualTerms: boolean;
 }
 
-const CATEGORIES: { key: 'all' | SkillCategory; labelRu: string; labelEn: string }[] = [
-  { key: 'all', labelRu: 'Все', labelEn: 'All' },
-  { key: 'Awareness', labelRu: 'Внимательность', labelEn: 'Awareness' },
-  { key: 'Body', labelRu: 'Тело', labelEn: 'Body' },
-  { key: 'Control', labelRu: 'Управление', labelEn: 'Control' },
-  { key: 'Education', labelRu: 'Образование', labelEn: 'Education' },
-  { key: 'Fighting', labelRu: 'Бой', labelEn: 'Fighting' },
-  { key: 'Performance', labelRu: 'Выступление', labelEn: 'Performance' },
-  { key: 'Ranged', labelRu: 'Стрельба', labelEn: 'Ranged' },
-  { key: 'Social', labelRu: 'Общение', labelEn: 'Social' },
-  { key: 'Technique', labelRu: 'Техника', labelEn: 'Technique' },
+interface CategoryConfig {
+  key: SkillCategory;
+  translationKey: keyof typeof translations['ru'];
+  col: 1 | 2;
+}
+
+const CATEGORY_MAP: CategoryConfig[] = [
+  // Column 1 (Left Block: 31 skills in official sheet)
+  { key: 'Awareness', translationKey: 'catAwareness', col: 1 },
+  { key: 'Body', translationKey: 'catBody', col: 1 },
+  { key: 'Control', translationKey: 'catControl', col: 1 },
+  { key: 'Education', translationKey: 'catEducation', col: 1 },
+  // Column 2 (Right Block: 35 skills in official sheet)
+  { key: 'Fighting', translationKey: 'catFighting', col: 2 },
+  { key: 'Performance', translationKey: 'catPerformance', col: 2 },
+  { key: 'Ranged', translationKey: 'catRanged', col: 2 },
+  { key: 'Social', translationKey: 'catSocial', col: 2 },
+  { key: 'Technique', translationKey: 'catTechnique', col: 2 },
 ];
+
+const STAT_DISPLAY_RU: Record<StatKey, string> = {
+  INT: 'ИНТ',
+  REF: 'РЕФ',
+  DEX: 'ЛВК',
+  TECH: 'ТЕХ',
+  COOL: 'КРУТ',
+  WILL: 'ВОЛЯ',
+  LUCK: 'УДЧ',
+  MOVE: 'СКО',
+  BODY: 'ТЕЛО',
+  EMP: 'ЭМП',
+};
 
 export const SkillsSection: React.FC<SkillsSectionProps> = ({
   character,
@@ -44,7 +68,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddCustom, setShowAddCustom] = useState(false);
 
-  // New custom skill
+  // New custom skill inputs
   const [customNameRu, setCustomNameRu] = useState('');
   const [customNameEn, setCustomNameEn] = useState('');
   const [customStat, setCustomStat] = useState<StatKey>('INT');
@@ -56,7 +80,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   const seriouslyWoundedThreshold = Math.ceil(hpMax / 2);
   const woundPenalty = character.hpCurrent <= 0 ? -4 : character.hpCurrent <= seriouslyWoundedThreshold ? -2 : 0;
 
-  // Armor penalty
+  // Armor penalty (applies to REF and DEX)
   const armorPenalty = Math.min(character.armor.head.penalty || 0, character.armor.body.penalty || 0);
 
   const handleLevelChange = (skillId: string, delta: number) => {
@@ -98,16 +122,235 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
     onUpdateCharacter({ ...character, skills: updated });
   };
 
-  // Filter skills
-  const filteredSkills = character.skills.filter((skill) => {
-    const matchesCategory = selectedCategory === 'all' || skill.category === selectedCategory;
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      skill.nameRu.toLowerCase().includes(query) ||
-      skill.nameEn.toLowerCase().includes(query) ||
-      skill.stat.toLowerCase().includes(query);
-    return matchesCategory && matchesSearch;
-  });
+  // Helper to get canonical name and details for a skill
+  const getSkillDetails = (skill: Skill) => {
+    const canonical = CPR_SKILLS.find((c) => c.id === skill.id);
+    const nameRu = canonical ? canonical.nameRu : skill.nameRu;
+    const nameEn = canonical ? canonical.nameEn : skill.nameEn;
+    const multiplier = canonical ? canonical.multiplier : (skill.multiplier || 1);
+
+    const statVal = character.stats[skill.stat] || 0;
+    const isPenalizedByArmor = (skill.stat === 'REF' || skill.stat === 'DEX') && armorPenalty < 0;
+    const effectiveStat = statVal + (isPenalizedByArmor ? armorPenalty : 0);
+    const effectiveBase = effectiveStat + skill.level + woundPenalty;
+
+    return {
+      nameRu,
+      nameEn,
+      multiplier,
+      statVal,
+      isPenalizedByArmor,
+      effectiveStat,
+      effectiveBase,
+    };
+  };
+
+  // Check if a skill matches search query
+  const matchesSearch = (skill: Skill) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.trim().toLowerCase();
+    const { nameRu, nameEn } = getSkillDetails(skill);
+    const statRu = STAT_DISPLAY_RU[skill.stat]?.toLowerCase() || '';
+    return (
+      nameRu.toLowerCase().includes(query) ||
+      nameEn.toLowerCase().includes(query) ||
+      skill.stat.toLowerCase().includes(query) ||
+      statRu.includes(query)
+    );
+  };
+
+  // Render an individual category table
+  const renderCategoryTable = (catConfig: CategoryConfig) => {
+    const categoryTitle = (t[catConfig.translationKey] as string) || catConfig.key;
+    
+    // Filter and sort skills belonging to this category
+    const skillsInCat = character.skills.filter((s) => s.category === catConfig.key);
+    
+    // Sort to match official sheet order (canonical order from CPR_SKILLS)
+    const sortedSkills = [...skillsInCat].sort((a, b) => {
+      const idxA = CPR_SKILLS.findIndex((cs) => cs.id === a.id);
+      const idxB = CPR_SKILLS.findIndex((cs) => cs.id === b.id);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.nameRu.localeCompare(b.nameRu);
+    });
+
+    const visibleSkills = sortedSkills.filter(matchesSearch);
+
+    // If searching and this category has no matches, omit it
+    if (searchQuery.trim() && visibleSkills.length === 0) {
+      return null;
+    }
+
+    return (
+      <div 
+        key={catConfig.key}
+        className="border border-red-700/80 rounded-md overflow-hidden bg-zinc-900/95 shadow-md flex flex-col"
+      >
+        {/* Category Header */}
+        <div className="flex items-center justify-between bg-zinc-950 px-3 py-2 border-b border-red-700/80">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-1.5 h-3.5 bg-red-600 rounded-xs shrink-0" />
+            <h3 className="font-orbitron font-bold text-xs sm:text-sm text-red-500 uppercase tracking-wider truncate">
+              {categoryTitle}
+            </h3>
+            <span className="text-[10px] text-zinc-500 font-mono shrink-0">
+              ({visibleSkills.length})
+            </span>
+          </div>
+
+          {/* Table Column Labels */}
+          <div className="flex items-center text-[11px] font-mono font-bold text-zinc-400 shrink-0 select-none">
+            <span className="w-16 sm:w-20 text-center tracking-wide">{t.skillColLevel || 'УР'}</span>
+            <span className="w-9 sm:w-10 text-center tracking-wide">{t.skillColStat || 'ХАР'}</span>
+            <span className="w-11 sm:w-12 text-center text-red-400 tracking-wide">{t.skillColBase || 'ОСН'}</span>
+          </div>
+        </div>
+
+        {/* Skill Rows */}
+        <div className="divide-y divide-zinc-800/60">
+          {visibleSkills.length === 0 ? (
+            <div className="px-3 py-2 text-center text-xs text-zinc-500 italic">
+              {lang === 'ru' ? 'Нет навыков' : 'No skills'}
+            </div>
+          ) : (
+            visibleSkills.map((skill) => {
+              const {
+                nameRu,
+                nameEn,
+                multiplier,
+                statVal,
+                isPenalizedByArmor,
+                effectiveStat,
+                effectiveBase
+              } = getSkillDetails(skill);
+
+              return (
+                <div
+                  key={skill.id}
+                  className="flex items-center justify-between px-2.5 sm:px-3 py-1.5 hover:bg-zinc-800/40 transition group"
+                >
+                  {/* Left: Skill title + stat badge + dual term */}
+                  <div className="min-w-0 flex-1 pr-2">
+                    <div className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
+                      <span className={`text-xs transition ${
+                        skill.level > 0 ? 'font-bold text-zinc-100 group-hover:text-red-300' : 'font-medium text-zinc-300 group-hover:text-zinc-100'
+                      }`}>
+                        {lang === 'ru' ? nameRu : nameEn}
+                      </span>
+
+                      {multiplier === 2 && (
+                        <span
+                          className="text-[9px] font-bold text-red-400 bg-red-950/80 border border-red-800 px-1 py-0.2 rounded shrink-0 cursor-help"
+                          title={t.x2Notice}
+                        >
+                          (х2)
+                        </span>
+                      )}
+
+                      <span className="text-[10px] font-mono font-bold text-amber-500/90 shrink-0">
+                        ({lang === 'ru' ? STAT_DISPLAY_RU[skill.stat] : skill.stat})
+                      </span>
+
+                      {skill.isCustom && (
+                        <button
+                          onClick={() => handleDeleteCustomSkill(skill.id)}
+                          className="text-zinc-600 hover:text-red-400 p-0.5 transition"
+                          title={lang === 'ru' ? 'Удалить навык' : 'Delete skill'}
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      )}
+                    </div>
+
+                    {dualTerms && (
+                      <div className="text-[10px] text-zinc-500 truncate leading-tight mt-0.5">
+                        {lang === 'ru' ? nameEn : nameRu}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Stepper (УР), Stat (ХАР), Roll Button (ОСН) */}
+                  <div className="flex items-center shrink-0">
+                    {/* Stepper (УР) */}
+                    <div
+                      className="w-16 sm:w-20 flex items-center justify-center gap-0.5"
+                      title={
+                        skill.level < 10
+                          ? lang === 'ru'
+                            ? `След. уровень: ${(skill.level + 1) * 20 * multiplier} IP`
+                            : `Next rank: ${(skill.level + 1) * 20 * multiplier} IP`
+                          : (lang === 'ru' ? 'Макс. ранг (10)' : 'Max Rank (10)')
+                      }
+                    >
+                      <button
+                        onClick={() => handleLevelChange(skill.id, -1)}
+                        disabled={skill.level <= 0}
+                        className="w-5 h-6 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 hover:bg-zinc-800 rounded text-xs font-bold transition active:scale-95 touch-manipulation"
+                      >
+                        -
+                      </button>
+                      <span className={`w-5 min-w-[20px] text-center font-orbitron font-bold text-xs ${
+                        skill.level > 0 ? 'text-zinc-100' : 'text-zinc-500'
+                      }`}>
+                        {skill.level}
+                      </span>
+                      <button
+                        onClick={() => handleLevelChange(skill.id, 1)}
+                        disabled={skill.level >= 10}
+                        className="w-5 h-6 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 hover:bg-zinc-800 rounded text-xs font-bold transition active:scale-95 touch-manipulation"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* Stat (ХАР) */}
+                    <div className="w-9 sm:w-10 text-center font-mono font-bold text-xs select-none">
+                      {isPenalizedByArmor ? (
+                        <span className="text-amber-400 cursor-help" title={`База ${statVal} + Штраф брони ${armorPenalty}`}>
+                          {effectiveStat}
+                        </span>
+                      ) : (
+                        <span className="text-zinc-300">
+                          {statVal}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Roll Base (ОСН) */}
+                    <div className="w-11 sm:w-12 flex items-center justify-center">
+                      <button
+                        onClick={() => onRollSkill(skill, effectiveBase)}
+                        title={`${lang === 'ru' ? 'Бросить' : 'Roll'} ${lang === 'ru' ? nameRu : nameEn}: 1d10 + ${effectiveBase}`}
+                        className={`w-full py-1 min-h-[26px] flex items-center justify-center gap-0.5 rounded font-mono font-bold text-xs border transition active:scale-95 select-none ${
+                          effectiveBase >= 14
+                            ? 'bg-red-950/70 hover:bg-red-600 hover:text-white border-red-700 text-red-200 shadow-xs'
+                            : 'bg-zinc-950 hover:bg-red-900/60 hover:text-white border-zinc-800 hover:border-red-700 text-zinc-200'
+                        }`}
+                      >
+                        <Dices size={11} className="text-red-400 shrink-0 hidden sm:inline" />
+                        <span>{effectiveBase}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Group categories into Column 1 & Column 2
+  const col1Categories = CATEGORY_MAP.filter((c) => c.col === 1);
+  const col2Categories = CATEGORY_MAP.filter((c) => c.col === 2);
+
+  // Filtered categories when a specific one is selected
+  const activeCategoryConfig = selectedCategory === 'all' 
+    ? null 
+    : CATEGORY_MAP.find((c) => c.key === selectedCategory);
 
   return (
     <div className="space-y-4">
@@ -120,7 +363,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               {t.skillsTitle}
             </h2>
             <span className="text-xs text-zinc-400 font-mono">
-              ({filteredSkills.length} / {character.skills.length})
+              ({character.skills.length})
             </span>
           </div>
 
@@ -132,8 +375,16 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 placeholder={t.searchSkills}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-500 focus:border-red-500 focus:outline-none"
+                className="w-full pl-8 pr-7 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-500 focus:border-red-500 focus:outline-none"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-2 text-zinc-500 hover:text-zinc-200"
+                >
+                  <X size={13} />
+                </button>
+              )}
             </div>
 
             <button
@@ -142,7 +393,11 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 setShowAddCustom(!showAddCustom);
               }}
               title={t.addCustomSkill}
-              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-red-600/80 text-zinc-200 hover:text-white border border-zinc-700 rounded text-xs font-semibold flex items-center gap-1 transition"
+              className={`px-2.5 py-1.5 border rounded text-xs font-semibold flex items-center gap-1 transition ${
+                showAddCustom
+                  ? 'bg-red-600 text-white border-red-500'
+                  : 'bg-zinc-800 hover:bg-red-600/80 text-zinc-200 hover:text-white border-zinc-700'
+              }`}
             >
               <Plus size={14} />
               <span className="hidden sm:inline">{lang === 'ru' ? 'Свой' : 'Custom'}</span>
@@ -153,7 +408,20 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
         {/* Category Filter Chips */}
         <div className="flex items-center gap-1.5 overflow-x-auto touch-pan-x scrollbar-none pb-1 text-xs -mx-1 px-1">
           <SlidersHorizontal size={14} className="text-zinc-500 shrink-0 mr-1" />
-          {CATEGORIES.map((cat) => (
+          <button
+            onClick={() => {
+              sfx.playClick();
+              setSelectedCategory('all');
+            }}
+            className={`px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 transition text-[11px] font-semibold min-h-[30px] flex items-center justify-center ${
+              selectedCategory === 'all'
+                ? 'bg-red-600 text-white shadow-sm shadow-red-950'
+                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+            }`}
+          >
+            {t.allCategories}
+          </button>
+          {CATEGORY_MAP.map((cat) => (
             <button
               key={cat.key}
               onClick={() => {
@@ -166,19 +434,54 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                   : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
               }`}
             >
-              {lang === 'ru' ? cat.labelRu : cat.labelEn}
+              {t[cat.translationKey] as string}
             </button>
           ))}
         </div>
       </div>
 
+      {/* Warnings & Modifiers notices */}
+      {(woundPenalty < 0 || armorPenalty < 0) && (
+        <div className="flex flex-wrap gap-2 text-xs">
+          {woundPenalty < 0 && (
+            <div className="bg-red-950/50 border border-red-800 rounded px-2.5 py-1 text-red-300 flex items-center gap-1.5">
+              <HeartPulse size={13} className="text-red-400" />
+              <span>
+                {lang === 'ru' 
+                  ? `Штраф ранений: ${woundPenalty} ко всем навыкам` 
+                  : `Wound penalty: ${woundPenalty} to all skills`}
+              </span>
+            </div>
+          )}
+          {armorPenalty < 0 && (
+            <div className="bg-amber-950/40 border border-amber-800 rounded px-2.5 py-1 text-amber-300 flex items-center gap-1.5">
+              <ShieldAlert size={13} className="text-amber-400" />
+              <span>
+                {lang === 'ru' 
+                  ? `Штраф брони: ${armorPenalty} к навыкам РЕФ и ЛВК` 
+                  : `Armor penalty: ${armorPenalty} to REF & DEX skills`}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Add Custom Skill Form */}
       {showAddCustom && (
-        <div className="bg-zinc-900 border border-red-800/80 rounded-lg p-3 sm:p-4 shadow-lg space-y-3">
-          <span className="font-orbitron font-bold text-xs uppercase text-red-400 block">
-            {t.addCustomSkill}
-          </span>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+        <div className="bg-zinc-900 border border-red-800/80 rounded-lg p-3 sm:p-4 shadow-lg space-y-3 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between">
+            <span className="font-orbitron font-bold text-xs uppercase text-red-400">
+              {t.addCustomSkill}
+            </span>
+            <button
+              onClick={() => setShowAddCustom(false)}
+              className="text-zinc-500 hover:text-zinc-200"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
             <input
               type="text"
               placeholder={lang === 'ru' ? "Название (RU)" : "Name (RU)"}
@@ -198,9 +501,20 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               onChange={(e) => setCustomStat(e.target.value as StatKey)}
               className="bg-zinc-950 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-100"
             >
-              {['INT', 'REF', 'DEX', 'TECH', 'COOL', 'WILL', 'LUCK', 'MOVE', 'BODY', 'EMP'].map((st) => (
+              {(['INT', 'REF', 'DEX', 'TECH', 'COOL', 'WILL', 'LUCK', 'MOVE', 'BODY', 'EMP'] as StatKey[]).map((st) => (
                 <option key={st} value={st}>
-                  {lang === 'ru' ? 'Характеристика:' : 'Stat:'} {st}
+                  {lang === 'ru' ? 'Хар-ка:' : 'Stat:'} {st} ({STAT_DISPLAY_RU[st]})
+                </option>
+              ))}
+            </select>
+            <select
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value as SkillCategory)}
+              className="bg-zinc-950 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-100"
+            >
+              {CATEGORY_MAP.map((cat) => (
+                <option key={cat.key} value={cat.key}>
+                  {t[cat.translationKey] as string}
                 </option>
               ))}
             </select>
@@ -215,7 +529,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               </select>
               <button
                 onClick={handleAddCustomSkill}
-                className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase rounded"
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase rounded transition"
               >
                 {lang === 'ru' ? 'Создать' : 'Create'}
               </button>
@@ -224,105 +538,26 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
         </div>
       )}
 
-      {/* Skills Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-2.5">
-        {filteredSkills.map((skill) => {
-          const statVal = character.stats[skill.stat] || 0;
-          const baseRaw = statVal + skill.level;
+      {/* Skills Display */}
+      {selectedCategory === 'all' ? (
+        /* Official CPR Sheet Two-Column Layout */
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          {/* Column 1: Awareness, Body, Control, Education */}
+          <div className="space-y-4">
+            {col1Categories.map((cat) => renderCategoryTable(cat))}
+          </div>
 
-          // Apply armor penalty to REF and DEX skills
-          const isPenalizedByArmor = (skill.stat === 'REF' || skill.stat === 'DEX') && armorPenalty < 0;
-          const effectiveBase = baseRaw + (isPenalizedByArmor ? armorPenalty : 0) + woundPenalty;
-
-          return (
-            <div
-              key={skill.id}
-              className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded p-2.5 flex items-center justify-between gap-2 transition group"
-            >
-              {/* Skill info */}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-xs text-zinc-100 truncate">
-                    {lang === 'ru' ? skill.nameRu : skill.nameEn}
-                  </span>
-                  {skill.multiplier === 2 && (
-                    <span
-                      className="text-[9px] bg-red-950 text-red-400 border border-red-800 px-1 rounded font-bold cursor-help"
-                      title={lang === 'ru' ? 'Сложный навык: улучшение стоит x2 IP (40 IP за уровень)' : 'Difficult Skill: upgrade costs x2 IP (40 IP per level)'}
-                    >
-                      x2 IP
-                    </span>
-                  )}
-                  {skill.isCustom && (
-                    <button
-                      onClick={() => handleDeleteCustomSkill(skill.id)}
-                      className="text-zinc-600 hover:text-red-400 p-0.5 ml-auto"
-                      title={lang === 'ru' ? "Удалить пользовательский навык" : "Delete custom skill"}
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  )}
-                </div>
-
-                {/* Subtitle with dual term and stat */}
-                <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 mt-0.5">
-                  <span className="font-mono font-bold text-yellow-500/90">{skill.stat} ({statVal})</span>
-                  {dualTerms && (
-                    <span className="text-zinc-500 truncate">
-                      / {lang === 'ru' ? skill.nameEn : skill.nameRu}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Skill Level adjuster & Total Base */}
-              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                {/* Level Controls */}
-                <div
-                  className="flex items-center gap-0.5 bg-zinc-950 border border-zinc-800 rounded px-1 py-0.5"
-                  title={
-                    skill.level < 10
-                      ? lang === 'ru'
-                        ? `След. уровень: ${(skill.level + 1) * 20 * skill.multiplier} IP`
-                        : `Next level: ${(skill.level + 1) * 20 * skill.multiplier} IP`
-                      : (lang === 'ru' ? 'Макс. ранг' : 'Max Rank')
-                  }
-                >
-                  <button
-                    onClick={() => handleLevelChange(skill.id, -1)}
-                    className="text-zinc-400 hover:text-white font-bold text-sm w-6 h-6 flex items-center justify-center transition"
-                  >
-                    -
-                  </button>
-                  <span className="font-orbitron font-bold text-xs text-zinc-200 min-w-[16px] text-center">
-                    {skill.level}
-                  </span>
-                  <button
-                    onClick={() => handleLevelChange(skill.id, 1)}
-                    className="text-zinc-400 hover:text-white font-bold text-sm w-6 h-6 flex items-center justify-center transition"
-                  >
-                    +
-                  </button>
-                </div>
-
-                {/* Effective Base & Roll Button */}
-                <button
-                  onClick={() => onRollSkill(skill, effectiveBase)}
-                  title={`Бросить ${lang === 'ru' ? skill.nameRu : skill.nameEn}: База (${effectiveBase}) + 1d10`}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 min-h-[30px] rounded text-xs font-mono font-bold border transition ${
-                    effectiveBase >= 14
-                      ? 'bg-red-950/40 hover:bg-red-600 hover:text-white border-red-700 text-red-300'
-                      : 'bg-zinc-950 hover:bg-zinc-800 border-zinc-800 text-zinc-200'
-                  }`}
-                >
-                  <Dices size={13} className="text-red-500" />
-                  <span>{effectiveBase}</span>
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+          {/* Column 2: Fighting, Performance, Ranged, Social, Technique */}
+          <div className="space-y-4">
+            {col2Categories.map((cat) => renderCategoryTable(cat))}
+          </div>
+        </div>
+      ) : (
+        /* Focused Single Category View */
+        <div className="max-w-4xl mx-auto">
+          {activeCategoryConfig && renderCategoryTable(activeCategoryConfig)}
+        </div>
+      )}
     </div>
   );
 };
