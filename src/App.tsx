@@ -249,7 +249,8 @@ export const App: React.FC = () => {
   const handleRollWeaponAttack = (weapon: Weapon, targetDv?: number, rangeStr?: string) => {
     // Find skill base
     const skill = activeChar.skills.find((s) => s.id === weapon.skillId);
-    const statVal = activeChar.stats.REF;
+    const isMelee = weapon.skillId === 'melee_weapon' || weapon.skillId === 'brawling' || weapon.skillId === 'martial_arts' || weapon.category.includes('Melee');
+    const statVal = isMelee ? activeChar.stats.DEX : activeChar.stats.REF;
     const skillLvl = skill ? skill.level : 0;
     const armorPenalty = Math.min(activeChar.armor.head.penalty || 0, activeChar.armor.body.penalty || 0);
 
@@ -259,7 +260,9 @@ export const App: React.FC = () => {
     const baseVal = statVal + skillLvl + armorPenalty + woundPenalty;
 
     const result = executeCyberpunkCheck({
-      title: lang === 'ru' ? `Атака: ${weapon.name}${rangeStr ? ` (${rangeStr})` : ''}` : `Attack: ${weapon.name}${rangeStr ? ` (${rangeStr})` : ''}`,
+      title: lang === 'ru' 
+        ? `Атака (${isMelee ? 'DEX' : 'REF'}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : isMelee ? ' [Ближний бой · 50% SP]' : ''}` 
+        : `Attack (${isMelee ? 'DEX' : 'REF'}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : isMelee ? ' [Melee · Half SP]' : ''}`,
       type: 'attack',
       baseVal,
       targetDv,
@@ -269,7 +272,28 @@ export const App: React.FC = () => {
   };
 
   const handleRollWeaponDamage = (weapon: Weapon) => {
-    const result = executeDamageRoll(lang === 'ru' ? `Урон: ${weapon.name}` : `Damage: ${weapon.name}`, weapon.damage, lang);
+    const isMelee = weapon.skillId === 'melee_weapon' || weapon.skillId === 'brawling' || weapon.skillId === 'martial_arts' || weapon.category.includes('Melee');
+    const title = lang === 'ru' 
+      ? `Урон: ${weapon.name}${isMelee ? ' (Игнорирует 50% SP)' : ''}` 
+      : `Damage: ${weapon.name}${isMelee ? ' (Ignores 50% SP)' : ''}`;
+    const result = executeDamageRoll(title, weapon.damage, lang);
+    addRollResult(result);
+  };
+
+  const handleRollCustomCheck = (title: string, baseVal: number, targetDv?: number, modifiers?: { name: string; val: number }[]) => {
+    const result = executeCyberpunkCheck({
+      title,
+      type: 'attack',
+      baseVal,
+      targetDv,
+      modifiers,
+      lang
+    });
+    addRollResult(result);
+  };
+
+  const handleRollCustomDamage = (title: string, formula: string) => {
+    const result = executeDamageRoll(title, formula, lang);
     addRollResult(result);
   };
 
@@ -488,6 +512,8 @@ export const App: React.FC = () => {
                 onUpdateCharacter={handleUpdateActiveCharacter}
                 onRollWeaponAttack={handleRollWeaponAttack}
                 onRollWeaponDamage={handleRollWeaponDamage}
+                onRollCustomCheck={handleRollCustomCheck}
+                onRollCustomDamage={handleRollCustomDamage}
                 onOpenShop={handleOpenShop}
                 lang={lang}
               />

@@ -63,6 +63,8 @@ export type WeaponCategory =
   | 'Very Heavy Melee'
   | 'Exotic';
 
+export type MartialArtsStyle = 'Karate' | 'Judo' | 'Taekwondo' | 'Aikido';
+
 export interface Weapon {
   id: string;
   name: string;
@@ -253,6 +255,9 @@ export interface Character {
   gear: GearItem[];
   lifepath: Lifepath;
   roleAbilities: RoleAbilities;
+
+  // Combat & Martial Arts
+  martialArtsStyle?: MartialArtsStyle;
 
   // Economy & Lifestyle
   cashEb: number;

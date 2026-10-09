@@ -62,6 +62,9 @@ const SHOP_WEAPONS: { name: string; category: Weapon['category']; damage: string
   { name: 'SMG (Federated Tech-9)', category: 'SMG', damage: '2d6', rof: 1, cost: 100, skillId: 'handgun', mag: 30, ammo: 'Medium Pistol' },
   { name: 'Shotgun (Rostovic DB-2)', category: 'Shotgun', damage: '5d6', rof: 1, cost: 500, skillId: 'shoulder_arms', mag: 4, ammo: 'Shotgun Shells' },
   { name: 'Assault Rifle (Militech Ronin)', category: 'Assault Rifle', damage: '5d6', rof: 1, cost: 500, skillId: 'shoulder_arms', mag: 30, ammo: 'Rifle Ammo' },
+  { name: 'Light Melee (Combat Knife)', category: 'Light Melee', damage: '1d6', rof: 2, cost: 50, skillId: 'melee_weapon', mag: 0, ammo: 'None' },
+  { name: 'Medium Melee (Baseball Bat)', category: 'Medium Melee', damage: '2d6', rof: 2, cost: 50, skillId: 'melee_weapon', mag: 0, ammo: 'None' },
+  { name: 'Heavy Melee (Machete / Crowbar)', category: 'Heavy Melee', damage: '3d6', rof: 2, cost: 100, skillId: 'melee_weapon', mag: 0, ammo: 'None' },
   { name: 'Very Heavy Melee (Katana)', category: 'Very Heavy Melee', damage: '4d6', rof: 1, cost: 100, skillId: 'melee_weapon', mag: 0, ammo: 'None' }
 ];
 
