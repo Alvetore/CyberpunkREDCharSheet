@@ -9,12 +9,14 @@ import {
   Brain, 
   Zap, 
   ShieldAlert,
-  Layers
+  Layers,
+  ShoppingCart
 } from 'lucide-react';
 
 interface CyberwareSectionProps {
   character: Character;
   onUpdateCharacter: (char: Character) => void;
+  onOpenShop?: (category?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear') => void;
   lang: Language;
 }
 
@@ -45,6 +47,7 @@ const CATEGORIES: CyberwareCategory[] = [
 export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
   character,
   onUpdateCharacter,
+  onOpenShop,
   lang
 }) => {
   const t = translations[lang];
@@ -132,6 +135,20 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
               {totalHumanityLoss} HL
             </span>
           </div>
+
+          {onOpenShop && (
+            <button
+              onClick={() => {
+                sfx.playClick();
+                onOpenShop('cyberware');
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-950/60 hover:bg-yellow-600 border border-yellow-700/80 text-yellow-300 hover:text-black font-bold text-xs uppercase tracking-wider rounded transition font-orbitron"
+              title="Купить импланты из каталога DataPool"
+            >
+              <ShoppingCart size={14} className="text-yellow-400" />
+              <span>Каталог DataPool</span>
+            </button>
+          )}
 
           <button
             onClick={() => {

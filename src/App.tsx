@@ -27,6 +27,8 @@ import { GearSection } from './components/GearSection';
 import { DiceRollerModal } from './components/DiceRollerModal';
 import { DamageCalculatorModal } from './components/DamageCalculatorModal';
 import { CharacterWizardModal } from './components/CharacterWizardModal';
+import { NotesSection } from './components/NotesSection';
+import { DataPoolShopModal } from './components/DataPoolShopModal';
 
 import { 
   Crosshair, 
@@ -37,7 +39,9 @@ import {
   Compass, 
   Dice6, 
   HeartCrack,
-  Sparkles
+  Sparkles,
+  FileText,
+  ShoppingCart
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -54,7 +58,7 @@ export const App: React.FC = () => {
 
   // Active navigation tab
   const [activeTab, setActiveTab] = useState<
-    'main' | 'skills' | 'netrunner' | 'cyberware' | 'injuries' | 'gear' | 'lifepath'
+    'main' | 'skills' | 'netrunner' | 'cyberware' | 'injuries' | 'gear' | 'lifepath' | 'notes'
   >('main');
 
   // Dice Roller Modal state
@@ -64,6 +68,15 @@ export const App: React.FC = () => {
   // Damage Calculator & Character Wizard Modals
   const [isDamageCalcOpen, setIsDamageCalcOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+
+  // DataPool Shop Modal state
+  const [isShopOpen, setIsShopOpen] = useState(false);
+  const [shopCategory, setShopCategory] = useState<'all' | 'weapons' | 'armor' | 'cyberware' | 'gear'>('all');
+
+  const handleOpenShop = (cat: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' = 'all') => {
+    setShopCategory(cat);
+    setIsShopOpen(true);
+  };
 
   const t = translations[lang];
 
@@ -276,6 +289,7 @@ export const App: React.FC = () => {
         onImportCharacter={handleImportCharacter}
         onOpenDiceRoller={() => setIsDiceModalOpen(true)}
         onOpenWizard={() => setIsWizardOpen(true)}
+        onOpenShop={() => handleOpenShop('all')}
         lang={lang}
         onToggleLang={() => setLang(lang === 'ru' ? 'en' : 'ru')}
         soundEnabled={soundEnabled}
@@ -411,6 +425,24 @@ export const App: React.FC = () => {
             <Compass size={15} />
             <span>{t.tabLifepath}</span>
           </button>
+
+          <button
+            onClick={() => {
+              sfx.playClick();
+              setActiveTab('notes');
+            }}
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap ${
+              activeTab === 'notes'
+                ? 'text-yellow-400 border-b-2 border-yellow-400 bg-yellow-950/20'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <FileText size={15} />
+            <span>{t.tabNotes || 'Заметки'}</span>
+            {activeChar.notes && (
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 ml-0.5" />
+            )}
+          </button>
         </div>
 
         {/* Tab Contents */}
@@ -427,6 +459,7 @@ export const App: React.FC = () => {
                 onUpdateCharacter={handleUpdateActiveCharacter}
                 onRollWeaponAttack={handleRollWeaponAttack}
                 onRollWeaponDamage={handleRollWeaponDamage}
+                onOpenShop={handleOpenShop}
                 lang={lang}
               />
             </div>
@@ -465,6 +498,7 @@ export const App: React.FC = () => {
             <CyberwareSection
               character={activeChar}
               onUpdateCharacter={handleUpdateActiveCharacter}
+              onOpenShop={handleOpenShop}
               lang={lang}
             />
           )}
@@ -473,12 +507,21 @@ export const App: React.FC = () => {
             <GearSection
               character={activeChar}
               onUpdateCharacter={handleUpdateActiveCharacter}
+              onOpenShop={handleOpenShop}
               lang={lang}
             />
           )}
 
           {activeTab === 'lifepath' && (
             <LifepathSection
+              character={activeChar}
+              onUpdateCharacter={handleUpdateActiveCharacter}
+              lang={lang}
+            />
+          )}
+
+          {activeTab === 'notes' && (
+            <NotesSection
               character={activeChar}
               onUpdateCharacter={handleUpdateActiveCharacter}
               lang={lang}
@@ -531,6 +574,16 @@ export const App: React.FC = () => {
           setActiveId(newChar.id);
         }}
         lang={lang}
+      />
+
+      {/* DataPool Market & Store Modal */}
+      <DataPoolShopModal
+        isOpen={isShopOpen}
+        onClose={() => setIsShopOpen(false)}
+        character={activeChar}
+        onUpdateCharacter={handleUpdateActiveCharacter}
+        lang={lang}
+        initialCategory={shopCategory}
       />
 
       {/* Footer */}

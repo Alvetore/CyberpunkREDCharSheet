@@ -14,7 +14,8 @@ import {
   Printer, 
   Dice6,
   FileArchive,
-  Wand2
+  Wand2,
+  ShoppingCart
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -29,6 +30,7 @@ interface HeaderProps {
   onImportCharacter: (text: string) => void;
   onOpenDiceRoller: () => void;
   onOpenWizard: () => void;
+  onOpenShop: () => void;
   lang: Language;
   onToggleLang: () => void;
   soundEnabled: boolean;
@@ -49,6 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
   onImportCharacter,
   onOpenDiceRoller,
   onOpenWizard,
+  onOpenShop,
   lang,
   onToggleLang,
   soundEnabled,
@@ -139,6 +142,19 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Wand2 size={14} className="text-yellow-400" />
             <span className="hidden md:inline">Конструктор</span>
+          </button>
+
+          {/* DataPool Market Button */}
+          <button
+            onClick={() => {
+              sfx.playClick();
+              onOpenShop();
+            }}
+            title="Магазин DataPool (оружие, броня, импланты, снаряжение)"
+            className="flex items-center gap-1 px-2 py-1.5 bg-yellow-950/70 hover:bg-yellow-600 border border-yellow-700 text-yellow-300 hover:text-black text-xs font-bold rounded transition font-orbitron shadow-sm"
+          >
+            <ShoppingCart size={14} className="text-yellow-400" />
+            <span className="hidden md:inline">{lang === 'ru' ? 'Магазин' : 'Shop'}</span>
           </button>
 
           {/* Duplicate Button */}

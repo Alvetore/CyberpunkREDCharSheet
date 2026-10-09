@@ -26,7 +26,9 @@ export const translations = {
     tabInjuries: 'Травмы и Броня',
     tabGear: 'Снаряжение и Деньги',
     tabLifepath: 'Жизненный путь',
+    tabNotes: 'Заметки',
     tabDice: 'Дайсроллер',
+    openShop: 'Магазин DataPool',
 
     // Character identity
     name: 'Имя персонажа',
@@ -244,7 +246,9 @@ export const translations = {
     tabInjuries: 'Injuries & Armor',
     tabGear: 'Gear & Economy',
     tabLifepath: 'Lifepath',
+    tabNotes: 'Notes',
     tabDice: 'Dice Roller',
+    openShop: 'DataPool Shop',
 
     // Character identity
     name: 'Character Name',

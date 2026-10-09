@@ -12,7 +12,8 @@ import {
   Table, 
   ShieldAlert,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ShoppingCart
 } from 'lucide-react';
 
 interface WeaponsSectionProps {
@@ -20,6 +21,7 @@ interface WeaponsSectionProps {
   onUpdateCharacter: (char: Character) => void;
   onRollWeaponAttack: (weapon: Weapon, targetDv?: number, rangeStr?: string) => void;
   onRollWeaponDamage: (weapon: Weapon) => void;
+  onOpenShop?: (category?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear') => void;
   lang: Language;
 }
 
@@ -41,6 +43,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   onUpdateCharacter,
   onRollWeaponAttack,
   onRollWeaponDamage,
+  onOpenShop,
   lang
 }) => {
   const t = translations[lang];
@@ -143,7 +146,21 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
           <span className="text-xs text-zinc-400 font-mono">({character.weapons.length})</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {onOpenShop && (
+            <button
+              onClick={() => {
+                sfx.playClick();
+                onOpenShop('weapons');
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-950/60 hover:bg-yellow-600 border border-yellow-700/80 text-yellow-300 hover:text-black font-bold text-xs uppercase tracking-wider rounded transition font-orbitron"
+              title="Купить оружие из каталога DataPool"
+            >
+              <ShoppingCart size={14} className="text-yellow-400" />
+              <span>Каталог DataPool</span>
+            </button>
+          )}
+
           <button
             onClick={() => {
               sfx.playClick();
