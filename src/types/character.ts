@@ -169,6 +169,10 @@ export interface CriticalInjury {
   effectEn: string;
   quickFixDv: number;
   treatmentDv: number;
+  quickFixTextRu?: string;
+  quickFixTextEn?: string;
+  treatmentTextRu?: string;
+  treatmentTextEn?: string;
   isActive: boolean;
 }
 
@@ -209,7 +213,7 @@ export interface Vehicle {
   name: string;
   model: string;
   category: VehicleCategory;
-  sdpMax: number; // Structural Damage Points (ПЗТ)
+  sdpMax: number; // Structural Damage Points (ПСП)
   sdpCurrent: number;
   armorSp?: number; // Armor SP
   seats: number | string;

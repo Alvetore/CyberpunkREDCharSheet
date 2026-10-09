@@ -560,7 +560,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
                     {isDestroyed && (
                       <div className="flex items-center gap-1.5 text-xs text-red-400 bg-red-950/60 border border-red-800 rounded px-2 py-1 font-semibold">
                         <AlertTriangle size={14} className="shrink-0" />
-                        <span>{lang === 'ru' ? 'ВЫВЕДЕНО ИЗ СТРОЯ / УНИЧТОЖЕНО (0 ПЗТ)' : 'DESTROYED / DISABLED (0 SDP)'}</span>
+                        <span>{lang === 'ru' ? 'ВЫВЕДЕНО ИЗ СТРОЯ / УНИЧТОЖЕНО (0 ПСП)' : 'DESTROYED / DISABLED (0 SDP)'}</span>
                       </div>
                     )}
 
@@ -608,7 +608,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
                         onClick={() => handleFullRepair(vehicle.id)}
                         disabled={vehicle.sdpCurrent >= vehicle.sdpMax}
                         className="px-2.5 py-1 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed rounded text-[11px] font-bold font-orbitron transition flex items-center gap-1 min-h-[28px]"
-                        title={lang === 'ru' ? 'Восстановить ПЗТ до максимума' : 'Restore SDP to max'}
+                        title={lang === 'ru' ? 'Восстановить ПСП до максимума' : 'Restore SDP to max'}
                       >
                         <Wrench size={12} />
                         <span>{t.restoreSdp}</span>
@@ -651,10 +651,10 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
                     <div className="bg-zinc-950 p-2 rounded border border-zinc-800/80">
                       <div className="text-[10px] text-zinc-500 flex items-center gap-1">
                         <Shield size={12} />
-                        <span>{lang === 'ru' ? 'Броня (SP)' : 'Armor (SP)'}</span>
+                        <span>{lang === 'ru' ? 'Броня (ОС)' : 'Armor (SP)'}</span>
                       </div>
                       <div className="font-bold text-zinc-200 mt-0.5">
-                        {vehicle.armorSp !== undefined && vehicle.armorSp > 0 ? `${vehicle.armorSp} SP` : '0 SP'}
+                        {vehicle.armorSp !== undefined && vehicle.armorSp > 0 ? `${vehicle.armorSp} ${lang === 'ru' ? 'ОС' : 'SP'}` : (lang === 'ru' ? '0 ОС' : '0 SP')}
                       </div>
                     </div>
                   </div>

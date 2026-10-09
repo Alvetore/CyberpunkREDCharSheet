@@ -202,14 +202,14 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
 
   const handleRollBrawlingStrikeDamage = () => {
     onRollCustomDamage?.(
-      lang === 'ru' ? `Урон безоружного удара (BODY ${character.stats.BODY}) [Игнор 50% SP]` : `Unarmed Strike Damage (BODY ${character.stats.BODY}) [Half SP]`,
+      lang === 'ru' ? `Урон безоружного удара (ТЕЛО ${character.stats.BODY}) [Игнор 50% ОС]` : `Unarmed Strike Damage (BODY ${character.stats.BODY}) [Half SP]`,
       unarmedDamage
     );
   };
 
   const handleRollGrab = () => {
     onRollCustomCheck?.(
-      lang === 'ru' ? 'Захват противника (Grab) [DEX + Мордобой vs Evasion/Brawling]' : 'Grapple Check (Grab) [DEX + Brawling vs Evasion/Brawling]',
+      lang === 'ru' ? 'Захват противника (Grab) [ЛВК + Драка vs Уклонение/Драка]' : 'Grapple Check (Grab) [DEX + Brawling vs Evasion/Brawling]',
       brawlingBase
     );
   };
@@ -217,14 +217,14 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   const handleRollChoke = () => {
     sfx.playCritSuccess();
     const title = lang === 'ru' 
-      ? `Удушение (Choke): -${character.stats.BODY} урона прямо в ОЗ [ПОЛНЫЙ ИГНОР SP!]` 
+      ? `Удушение (Choke): -${character.stats.BODY} урона прямо в ПЗ [ПОЛНЫЙ ИГНОР ОС!]` 
       : `Choke: -${character.stats.BODY} damage directly to HP [IGNORES ALL SP!]`;
     onRollCustomCheck?.(title, character.stats.BODY);
   };
 
   const handleRollThrow = () => {
     onRollCustomDamage?.(
-      lang === 'ru' ? `Бросок через себя (Throw): ${unarmedDamage} урона [Цель сбита с ног / Prone, Игнор 50% SP]` : `Throw Damage: ${unarmedDamage} [Target Prone, Half SP]`,
+      lang === 'ru' ? `Бросок (Throw): ${unarmedDamage} урона [Цель сбита с ног / Prone, Игнор 50% ОС]` : `Throw Damage: ${unarmedDamage} [Target Prone, Half SP]`,
       unarmedDamage
     );
     setIsGrapplingTarget(false);
@@ -232,14 +232,14 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
 
   const handleRollMartialArtsStrike = () => {
     onRollCustomCheck?.(
-      lang === 'ru' ? `Атака Боевых Искусств: ${styleData.nameRu} [Игнор 50% SP]` : `Martial Arts Strike: ${styleData.nameEn} [Half SP]`,
+      lang === 'ru' ? `Атака Боевых Искусств: ${styleData.nameRu} [Игнор 50% ОС]` : `Martial Arts Strike: ${styleData.nameEn} [Half SP]`,
       maBase
     );
   };
 
   const handleRollMartialArtsDamage = () => {
     onRollCustomDamage?.(
-      lang === 'ru' ? `Урон удара ${styleData.nameRu} (BODY ${character.stats.BODY}) [Игнор 50% SP]` : `Martial Arts Damage (${styleData.nameEn}) [Half SP]`,
+      lang === 'ru' ? `Урон удара ${styleData.nameRu} (ТЕЛО ${character.stats.BODY}) [Игнор 50% ОС]` : `Martial Arts Damage (${styleData.nameEn}) [Half SP]`,
       unarmedDamage
     );
   };
@@ -317,7 +317,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
 
     if (move.id === 'wrestling_choke') {
       onRollCustomCheck?.(
-        lang === 'ru' ? `Реслинг: Мгновенное удушение (-${character.stats.BODY} HP прямо в ОЗ [Игнор SP!])` : `Wrestling: Instant Choke (-${character.stats.BODY} direct HP [Ignores SP!])`,
+        lang === 'ru' ? `Реслинг: Мгновенное удушение (-${character.stats.BODY} ПЗ прямо в здоровье [Игнор ОС!])` : `Wrestling: Instant Choke (-${character.stats.BODY} direct HP [Ignores SP!])`,
         character.stats.BODY
       );
       return;
@@ -460,7 +460,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
           }`}
         >
           <Hand size={13} />
-          <span>{lang === 'ru' ? 'Драка (Мордобой)' : 'Brawling'}</span>
+          <span>{lang === 'ru' ? 'Драка (Brawling)' : 'Brawling'}</span>
           <span className="text-[10px] opacity-90">({unarmedDamage})</span>
         </button>
 
@@ -566,10 +566,10 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 </div>
                 <div>
                   <h3 className="font-orbitron font-bold text-base text-amber-400 uppercase tracking-wider">
-                    {lang === 'ru' ? 'Безоружная атака (Мордобой / Brawling)' : 'Unarmed Strike (Brawling)'}
+                    {lang === 'ru' ? 'Безоружная атака (Драка / Brawling)' : 'Unarmed Strike (Brawling)'}
                   </h3>
                   <div className="flex items-center gap-2 text-xs text-zinc-400">
-                    <span>{lang === 'ru' ? 'Навык:' : 'Skill:'} <strong>DEX ({character.stats.DEX}) + Мордобой ({brawlingLvl})</strong> = База <strong className="text-white font-mono">{brawlingBase}</strong></span>
+                    <span>{lang === 'ru' ? 'Навык:' : 'Skill:'} <strong>{lang === 'ru' ? 'ЛВК' : 'DEX'} ({character.stats.DEX}) + {lang === 'ru' ? 'Драка' : 'Brawling'} ({brawlingLvl})</strong> = База <strong className="text-white font-mono">{brawlingBase}</strong></span>
                     <span>•</span>
                     <span className="text-amber-300 font-semibold">{t.halfSpNotice}</span>
                   </div>
@@ -579,7 +579,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
               {/* Stats badges */}
               <div className="flex items-center gap-2">
                 <div className="bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded text-center">
-                  <span className="text-[10px] text-zinc-400 block uppercase font-mono">{lang === 'ru' ? 'Урон (BODY ' + character.stats.BODY + ')' : 'Damage (BODY ' + character.stats.BODY + ')'}</span>
+                  <span className="text-[10px] text-zinc-400 block uppercase font-mono">{lang === 'ru' ? 'Урон (ТЕЛО ' + character.stats.BODY + ')' : 'Damage (BODY ' + character.stats.BODY + ')'}</span>
                   <span className="font-orbitron font-black text-base text-yellow-400">{unarmedDamage}</span>
                 </div>
                 <div className="bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded text-center">
@@ -642,7 +642,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   </div>
                   <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
                     {lang === 'ru'
-                      ? 'Проверка DEX + Мордобой против DEX + Мордобой/Уклонение цели. При успехе цель не может двигаться сама и получает штраф -2 ко всем действиям.'
+                      ? 'Проверка ЛВК + Драка против ЛВК + Драка/Уклонение цели. При успехе цель не может двигаться сама и получает штраф -2 ко всем действиям.'
                       : 'DEX + Brawling vs target DEX + Brawling/Evasion. Target cannot move on their own and suffers -2 to all actions.'}
                   </p>
                 </div>
@@ -665,12 +665,12 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                       {lang === 'ru' ? '2. Удушение (Choke)' : '2. Choke'}
                     </span>
                     <span className="text-[10px] bg-red-950 text-red-300 border border-red-800 px-1.5 py-0.2 rounded font-mono">
-                      {lang === 'ru' ? 'Игнор SP!' : 'Bypasses SP!'}
+                      {lang === 'ru' ? 'Игнор ОС!' : 'Bypasses SP!'}
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
                     {lang === 'ru'
-                      ? `Требует активного захвата. Наносит ${character.stats.BODY} урона (значение BODY) НАПРЯМУЮ в ОЗ без учёта брони. 3 хода подряд = потеря сознания.`
+                      ? `Требует активного захвата. Наносит ${character.stats.BODY} урона (значение ТЕЛО) НАПРЯМУЮ в ПЗ без учёта брони. 3 хода подряд = потеря сознания.`
                       : `Requires target grappled. Deals ${character.stats.BODY} damage directly to target HP bypassing all armor! 3 turns = unconscious.`}
                   </p>
                 </div>
@@ -680,7 +680,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   className="w-full py-2 min-h-[36px] bg-red-950/70 hover:bg-red-600 border border-red-800 text-red-200 hover:text-white text-xs font-bold font-orbitron uppercase rounded transition flex items-center justify-center gap-1.5 shadow"
                 >
                   <Flame size={13} />
-                  <span>{lang === 'ru' ? `Удушить (-${character.stats.BODY} HP в ОЗ)` : `Choke (-${character.stats.BODY} direct HP)`}</span>
+                  <span>{lang === 'ru' ? `Удушить (-${character.stats.BODY} ПЗ)` : `Choke (-${character.stats.BODY} direct HP)`}</span>
                 </button>
               </div>
 

@@ -21,20 +21,22 @@ interface GearSectionProps {
 }
 
 const LIFESTYLES: { id: string; nameRu: string; nameEn: string }[] = [
-  { id: 'kibble', nameRu: 'Kibble (Киббл — 100 eb/мес)', nameEn: 'Kibble (100 eb/mo)' },
-  { id: 'generic_prepak', nameRu: 'Generic Prepak (Обычный полуфабрикат — 300 eb/мес)', nameEn: 'Generic Prepak (300 eb/mo)' },
-  { id: 'good_prepak', nameRu: 'Good Prepak (Качественные полуфабрикаты — 600 eb/мес)', nameEn: 'Good Prepak (600 eb/mo)' },
-  { id: 'fresh_food', nameRu: 'Fresh Food (Настоящая свежая еда — 1500 eb/мес)', nameEn: 'Fresh Food (1500 eb/mo)' }
+  { id: 'kibble', nameRu: 'На киббле (100 eb/мес)', nameEn: 'Kibble (100 eb/mo)' },
+  { id: 'generic_prepak', nameRu: 'На обычных полуфабрикатах (300 eb/мес)', nameEn: 'Generic Prepak (300 eb/mo)' },
+  { id: 'good_prepak', nameRu: 'На хороших полуфабрикатах (600 eb/мес)', nameEn: 'Good Prepak (600 eb/mo)' },
+  { id: 'fresh_food', nameRu: 'На свежей еде (1 500 eb/мес)', nameEn: 'Fresh Food (1,500 eb/mo)' }
 ];
 
 const HOUSING_OPTIONS: { id: string; nameRu: string; nameEn: string }[] = [
-  { id: 'street', nameRu: 'Living on the Street (Улица / Ночлежка — 0 eb)', nameEn: 'Living on the Street (0 eb)' },
-  { id: 'coffin', nameRu: 'Coffin Motel (Гроб-отель — 100 eb/мес)', nameEn: 'Coffin Motel (100 eb/mo)' },
-  { id: 'cube', nameRu: 'Cube Hotel (Куб-отель — 500 eb/мес)', nameEn: 'Cube Hotel (500 eb/mo)' },
-  { id: 'cargo', nameRu: 'Cargo Container (Грузовой контейнер — 1000 eb/мес)', nameEn: 'Cargo Container (1000 eb/mo)' },
-  { id: 'studio', nameRu: 'Studio Apartment (Квартира-студия — 1500 eb/мес)', nameEn: 'Studio Apartment (1500 eb/mo)' },
-  { id: 'two_bed', nameRu: 'Two-Bedroom Apartment (Двухкомнатная — 2500 eb/мес)', nameEn: 'Two-Bedroom Apartment (2500 eb/mo)' },
-  { id: 'corp', nameRu: 'Corporate Executive Suite (Корпоративный пентхаус — 10000 eb/мес)', nameEn: 'Corporate Executive Suite (10000 eb/mo)' }
+  { id: 'street', nameRu: 'Жизнь на улице (0 eb)', nameEn: 'Living on the Street (0 eb)' },
+  { id: 'vehicle', nameRu: 'Жизнь на улице в транспорте (0 eb)', nameEn: 'Living in your Vehicle (0 eb)' },
+  { id: 'cube', nameRu: 'Куб-отель (500 eb/мес)', nameEn: 'Cube Hotel (500 eb/mo)' },
+  { id: 'cargo', nameRu: 'Грузовой контейнер (1 000 eb/мес)', nameEn: 'Cargo Container (1,000 eb/mo)' },
+  { id: 'studio', nameRu: 'Квартира-студия (1 500 eb/мес)', nameEn: 'Studio Apartment (1,500 eb/mo)' },
+  { id: 'two_bed', nameRu: 'Двуспальная квартира (2 500 eb/мес)', nameEn: 'Two-Bedroom Apartment (2,500 eb/mo)' },
+  { id: 'corp_conapt', nameRu: 'Корпоративный конапт (Корпорация)', nameEn: 'Corporate Conapt (Corporate)' },
+  { id: 'upscale_conapt', nameRu: 'Улучшенный конапт (7 500 eb/мес)', nameEn: 'Upscale Conapt (7,500 eb/mo)' },
+  { id: 'penthouse', nameRu: 'Роскошный пентхаус (15 000 eb/мес)', nameEn: 'Luxury Penthouse (15,000 eb/mo)' }
 ];
 
 export const GearSection: React.FC<GearSectionProps> = ({

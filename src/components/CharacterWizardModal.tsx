@@ -728,19 +728,19 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
               <div className="grid grid-cols-3 gap-2 text-center text-xs bg-zinc-950 p-2.5 rounded border border-zinc-800">
                 <div>
                   <span className="text-zinc-500 text-[10px] uppercase block">
-                    {lang === 'ru' ? 'Очки здоровья (HP)' : 'Hit Points (HP)'}
+                    {lang === 'ru' ? 'Пункты здоровья (ПЗ)' : 'Hit Points (HP)'}
                   </span>
-                  <span className="font-orbitron font-bold text-base text-red-400">{hpMax} HP</span>
+                  <span className="font-orbitron font-bold text-base text-red-400">{hpMax} {lang === 'ru' ? 'ПЗ' : 'HP'}</span>
                 </div>
                 <div>
                   <span className="text-zinc-500 text-[10px] uppercase block">
-                    {lang === 'ru' ? 'Человечность / EMP' : 'Humanity / EMP'}
+                    {lang === 'ru' ? 'Человечность / ЭМП' : 'Humanity / EMP'}
                   </span>
                   <span className="font-orbitron font-bold text-base text-cyan-400">{baseHumanity} / {stats.EMP}</span>
                 </div>
                 <div>
                   <span className="text-zinc-500 text-[10px] uppercase block">
-                    {lang === 'ru' ? 'Спасбросок (BODY)' : 'Death Save (BODY)'}
+                    {lang === 'ru' ? 'Спасбросок (ТЕЛО)' : 'Death Save (BODY)'}
                   </span>
                   <span className="font-orbitron font-bold text-base text-yellow-400">{stats.BODY}</span>
                 </div>
@@ -1133,11 +1133,11 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                   <div className="bg-zinc-900 p-2 rounded">
-                    <span className="text-zinc-500 block">{lang === 'ru' ? 'Здоровье (HP)' : 'Hit Points (HP)'}</span>
-                    <span className="font-orbitron font-bold text-red-400">{hpMax} HP</span>
+                    <span className="text-zinc-500 block">{lang === 'ru' ? 'Пункты здоровья (ПЗ)' : 'Hit Points (HP)'}</span>
+                    <span className="font-orbitron font-bold text-red-400">{hpMax} {lang === 'ru' ? 'ПЗ' : 'HP'}</span>
                   </div>
                   <div className="bg-zinc-900 p-2 rounded">
-                    <span className="text-zinc-500 block">{lang === 'ru' ? 'Человечность / EMP' : 'Humanity / EMP'}</span>
+                    <span className="text-zinc-500 block">{lang === 'ru' ? 'Человечность / ЭМП' : 'Humanity / EMP'}</span>
                     <span className="font-orbitron font-bold text-cyan-400">{currentHumanity} / {currentEmp}</span>
                   </div>
                   <div className="bg-zinc-900 p-2 rounded">

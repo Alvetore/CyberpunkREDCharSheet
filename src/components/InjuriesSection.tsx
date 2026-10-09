@@ -175,7 +175,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
             >
               {PRESET_ARMOR_OPTIONS.map((p) => (
                 <option key={p.name} value={p.name}>
-                  {p.name} (SP {p.sp}{p.penalty < 0 ? (lang === 'ru' ? `, Штраф ${p.penalty}` : `, Penalty ${p.penalty}`) : ''})
+                  {p.name} ({lang === 'ru' ? 'ОС' : 'SP'} {p.sp}{p.penalty < 0 ? (lang === 'ru' ? `, Штраф ${p.penalty}` : `, Penalty ${p.penalty}`) : ''})
                 </option>
               ))}
             </select>
@@ -234,7 +234,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
             >
               {PRESET_ARMOR_OPTIONS.map((p) => (
                 <option key={p.name} value={p.name}>
-                  {p.name} (SP {p.sp}{p.penalty < 0 ? (lang === 'ru' ? `, Штраф ${p.penalty}` : `, Penalty ${p.penalty}`) : ''})
+                  {p.name} ({lang === 'ru' ? 'ОС' : 'SP'} {p.sp}{p.penalty < 0 ? (lang === 'ru' ? `, Штраф ${p.penalty}` : `, Penalty ${p.penalty}`) : ''})
                 </option>
               ))}
             </select>
@@ -368,15 +368,25 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
                 </div>
 
                 {/* Medical treatment DVs */}
-                <div className="flex items-center gap-3 text-[10px] text-zinc-400 mt-1.5 pt-1.5 border-t border-zinc-850">
+                <div className="flex flex-col gap-1 text-[10px] text-zinc-400 mt-1.5 pt-1.5 border-t border-zinc-800/80">
                   {inj.quickFixDv > 0 && (
-                    <span>
-                      {lang === 'ru' ? 'Быстрое лечение:' : 'Quick Fix:'} <strong className="text-yellow-400 font-mono">DV {inj.quickFixDv}</strong>
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-zinc-400 font-semibold">{lang === 'ru' ? 'Быстрая помощь:' : 'Quick Fix:'}</span>
+                      <span className="text-yellow-400 font-mono">
+                        {lang === 'ru' 
+                          ? (inj.quickFixTextRu || `СЛ ${inj.quickFixDv}`) 
+                          : (inj.quickFixTextEn || `DV ${inj.quickFixDv}`)}
+                      </span>
+                    </div>
                   )}
-                  <span>
-                    {lang === 'ru' ? 'Операция / Лечение:' : 'Treatment:'} <strong className="text-cyan-400 font-mono">DV {inj.treatmentDv}</strong>
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-zinc-400 font-semibold">{lang === 'ru' ? 'Лечение:' : 'Treatment:'}</span>
+                    <span className="text-cyan-400 font-mono">
+                      {lang === 'ru' 
+                        ? (inj.treatmentTextRu || `СЛ ${inj.treatmentDv}`) 
+                        : (inj.treatmentTextEn || `DV ${inj.treatmentDv}`)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

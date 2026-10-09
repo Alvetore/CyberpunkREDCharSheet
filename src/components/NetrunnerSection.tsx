@@ -207,99 +207,123 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 min-[440px]:grid-cols-2 md:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-1 min-[440px]:grid-cols-2 md:grid-cols-5 gap-2.5">
           {/* Scanner */}
           <button
-            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Сканирование архитектуры (Scanner)' : 'Scanner Action', 8)}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Сканер (Scanner) — СЛ 8' : 'Scanner Action', 8)}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
-              <span className="flex items-center gap-1.5"><Eye size={13} /> Scanner</span>
-              <span className="text-[10px] text-cyan-400 font-mono">DV 8</span>
+              <span className="flex items-center gap-1.5"><Eye size={13} /> {lang === 'ru' ? 'Сканер' : 'Scanner'}</span>
+              <span className="text-[10px] text-cyan-400 font-mono">СЛ 8</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Поиск узлов и точек доступа' : 'Find nodes and access points'}</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Поиск систем и точек доступа' : 'Find nodes and access points'}</div>
           </button>
 
           {/* Backdoor */}
           <button
-            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Взлом шлюза (Backdoor)' : 'Backdoor Action')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Бэкдор (Backdoor)' : 'Backdoor Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
-              <span className="flex items-center gap-1.5"><Lock size={13} /> Backdoor</span>
-              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'DV Пароля' : 'Password DV'}</span>
+              <span className="flex items-center gap-1.5"><Lock size={13} /> {lang === 'ru' ? 'Бэкдор' : 'Backdoor'}</span>
+              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'СЛ Пароля' : 'Password DV'}</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Взлом закрытого шлюза' : 'Break through locked gate'}</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Взлом пароля / шлюза' : 'Break through locked gate'}</div>
           </button>
 
           {/* Pathfinder */}
           <button
-            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Разведка архитектуры (Pathfinder)' : 'Pathfinder Action')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Следопыт (Pathfinder)' : 'Pathfinder Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
-              <span className="flex items-center gap-1.5"><Compass size={13} /> Pathfinder</span>
-              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'DV Этажа' : 'Floor DV'}</span>
+              <span className="flex items-center gap-1.5"><Compass size={13} /> {lang === 'ru' ? 'Следопыт' : 'Pathfinder'}</span>
+              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'СЛ Архит.' : 'Floor DV'}</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Карта архитектуры и Black ICE' : 'Map architecture and Black ICE'}</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Карта архитектуры и Чёрного льда' : 'Map architecture and Black ICE'}</div>
           </button>
 
           {/* Control Node */}
           <button
-            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Управление узлом (Control)' : 'Control Action')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Контроль (Control)' : 'Control Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
-              <span className="flex items-center gap-1.5"><Sliders size={13} /> Control</span>
-              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'DV Узла' : 'Node DV'}</span>
+              <span className="flex items-center gap-1.5"><Sliders size={13} /> {lang === 'ru' ? 'Контроль' : 'Control'}</span>
+              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'СЛ Узла' : 'Node DV'}</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Перехват турелей, камер, дверей' : 'Control turrets, cameras, doors'}</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Управление турелями, камерами' : 'Control turrets, cameras, doors'}</div>
           </button>
 
           {/* Eye-Dee */}
           <button
-            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Идентификация данных (Eye-Dee)' : 'Eye-Dee Action')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Идентификация (Eye-Dee)' : 'Eye-Dee Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
-              <span className="flex items-center gap-1.5"><Eye size={13} /> Eye-Dee</span>
-              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'DV Файла' : 'File DV'}</span>
+              <span className="flex items-center gap-1.5"><Eye size={13} /> {lang === 'ru' ? 'Идентификация' : 'Eye-Dee'}</span>
+              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'СЛ Файла' : 'File DV'}</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Анализ файлов и содержимого' : 'Inspect files and contents'}</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Анализ данных и их ценности' : 'Inspect files and contents'}</div>
           </button>
 
           {/* Virus */}
           <button
-            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Внедрение вируса (Virus)' : 'Virus Action')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Вирус (Virus)' : 'Virus Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
-              <span className="flex items-center gap-1.5"><Zap size={13} /> Virus</span>
-              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'DV Сложности' : 'Virus DV'}</span>
+              <span className="flex items-center gap-1.5"><Flame size={13} /> {lang === 'ru' ? 'Вирус' : 'Virus'}</span>
+              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'СЛ Задачи' : 'Virus DV'}</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Создание постоянного эффекта' : 'Create persistent effect'}</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Внедрение вируса в ядро' : 'Create persistent effect'}</div>
           </button>
 
           {/* Slide */}
           <button
-            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Бегство от ICE (Slide)' : 'Slide Action')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Подкат (Slide)' : 'Slide Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
-              <span className="flex items-center gap-1.5"><LogOut size={13} /> Slide</span>
+              <span className="flex items-center gap-1.5"><LogOut size={13} /> {lang === 'ru' ? 'Подкат' : 'Slide'}</span>
               <span className="text-[10px] text-zinc-400 font-mono">vs ICE Percept</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Уход от преследования Black ICE' : 'Flee pursuing Black ICE'}</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Уход от чёрного льда' : 'Flee pursuing Black ICE'}</div>
+          </button>
+
+          {/* Cloak */}
+          <button
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Плащ (Cloak)' : 'Cloak Action')}
+            className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
+          >
+            <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
+              <span className="flex items-center gap-1.5"><ShieldCheck size={13} /> {lang === 'ru' ? 'Плащ' : 'Cloak'}</span>
+              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'Скрытность' : 'Stealth DV'}</span>
+            </div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Заметание следов в сети' : 'Hide tracks before logging off'}</div>
+          </button>
+
+          {/* Zap */}
+          <button
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Разряд (Zap)' : 'Zap Action')}
+            className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
+          >
+            <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
+              <span className="flex items-center gap-1.5"><Zap size={13} /> {lang === 'ru' ? 'Разряд' : 'Zap'}</span>
+              <span className="text-[10px] text-yellow-400 font-mono">1d6 REZ</span>
+            </div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Базовая атака по льду / программам' : 'Basic attack on programs / netrunners'}</div>
           </button>
 
           {/* Safe Jack Out */}
           <button
-            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Экстренное отключение (Jack Out)' : 'Jack Out Action')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Отключение (Jack Out)' : 'Jack Out Action')}
             className="p-2.5 bg-zinc-950 hover:bg-red-950/40 border border-zinc-800 hover:border-red-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-red-300">
-              <span className="flex items-center gap-1.5"><LogOut size={13} /> Jack Out</span>
-              <span className="text-[10px] text-red-400 font-mono">SAFE / DUMP</span>
+              <span className="flex items-center gap-1.5"><LogOut size={13} /> {lang === 'ru' ? 'Отключение' : 'Jack Out'}</span>
+              <span className="text-[10px] text-red-400 font-mono">SAFE</span>
             </div>
             <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Безопасный разрыв соединения' : 'Safe disconnection from Net'}</div>
           </button>

@@ -130,9 +130,9 @@ export const CPR_BRAWLING_MANEUVERS: BrawlingManeuver[] = [
     nameEn: 'Brawling Strike',
     requirementRu: '1 свободная рука или нога',
     requirementEn: '1 free hand or foot',
-    checkRu: 'DEX + Мордобой + 1d10 против DEX + Уклонение цели',
+    checkRu: 'ЛВК + Драка + 1d10 против ЛВК + Уклонение цели',
     checkEn: 'DEX + Brawling + 1d10 vs Defender DEX + Evasion + 1d10',
-    effectRu: 'Наносит урон на основе вашего BODY (игнорирует 50% SP брони цели, округление вверх). Темп боя: ROF 2 (2 удара за действие).',
+    effectRu: 'Наносит урон на основе вашего ТЕЛО (игнорирует 50% ОС брони цели, округление вверх). Темп боя: СКОР 2 (2 удара за действие).',
     effectEn: 'Deals damage based on your BODY stat (ignores half of target SP, rounded up). ROF 2 (2 attacks per action).',
     damageType: 'unarmed'
   },
@@ -142,9 +142,9 @@ export const CPR_BRAWLING_MANEUVERS: BrawlingManeuver[] = [
     nameEn: 'Grapple / Grab',
     requirementRu: '1 свободная рука, цель в пределах досягаемости',
     requirementEn: '1 free hand, target within melee reach',
-    checkRu: 'DEX + Мордобой + 1d10 против DEX + Мордобой (или Уклонение) цели',
+    checkRu: 'ЛВК + Драка + 1d10 против ЛВК + Драка (или Уклонение) цели',
     checkEn: 'DEX + Brawling + 1d10 vs Target DEX + Brawling (or Evasion) + 1d10',
-    effectRu: 'При успехе цель захвачена (Grappled): не может перемещаться самостоятельно, получает штраф -2 ко всем действиям (кроме попыток вырваться). Вы можете волочить цель со скоростью 1/2 MOVE или использовать как живой щит (Human Shield). Для освобождения цель тратит Действие на встречный бросок Мордобоя.',
+    effectRu: 'При успехе цель захвачена (Grappled): не может перемещаться самостоятельно, получает штраф -2 ко всем действиям (кроме попыток вырваться). Вы можете волочить цель со скоростью 1/2 СКО или использовать как живой щит (Human Shield). Для освобождения цель тратит Действие на встречный бросок Драки.',
     effectEn: 'Target is Grappled: cannot move on their own, suffers -2 to all actions (except escape). You can drag target at 1/2 MOVE or use as Human Shield. Target spends Action on their turn to roll DEX + Brawling to break free.',
     damageType: 'none'
   },
@@ -156,19 +156,19 @@ export const CPR_BRAWLING_MANEUVERS: BrawlingManeuver[] = [
     requirementEn: 'Target is already Grappled by you',
     checkRu: 'Требует Действие (автоматическое попадание по захваченной цели)',
     checkEn: 'Requires Action (automatic hit on grappled target)',
-    effectRu: 'Наносит урон, равный показателю вашего BODY, НАПРЯМУЮ в Очки Здоровья цели (ПОЛНОСТЬЮ ИГНОРИРУЕТ ВСЮ БРОНЮ SP!). Если удерживать удушение 3 хода подряд — цель теряет сознание (без сознания на 1 минуту или до реанимации).',
+    effectRu: 'Наносит урон, равный показателю вашего ТЕЛО, НАПРЯМУЮ в Пункты здоровья (ПЗ) цели (ПОЛНОСТЬЮ ИГНОРИРУЕТ ВСЮ БРОНЮ ОС!). Если удерживать удушение 3 хода подряд — цель теряет сознание (без сознания на 1 минуту или до реанимации).',
     effectEn: 'Deals damage equal to your BODY stat directly to target HP (COMPLETELY IGNORES ALL ARMOR SP!). If choked for 3 consecutive turns, target is knocked unconscious for 1 minute.',
     damageType: 'body_direct'
   },
   {
     id: 'throw',
-    nameRu: 'Бросок через себя (Throw)',
+    nameRu: 'Бросок (Throw)',
     nameEn: 'Throw',
     requirementRu: 'Цель уже находится в вашем захвате (Grappled)',
     requirementEn: 'Target is already Grappled by you',
     checkRu: 'Требует Действие. Завершает захват.',
     checkEn: 'Requires Action. Ends the grapple.',
-    effectRu: 'Вы бросаете цель на землю: цель сбита с ног (Prone) и получает полный урон рукопашного удара (на основе вашего BODY, игнорируя 50% SP). Если бросить во второго врага — оба падают с ног и получают урон!',
+    effectRu: 'Вы бросаете цель на землю: цель сбита с ног (Prone) и получает полный урон рукопашного удара (на основе вашего ТЕЛО, игнорируя 50% ОС). Если бросить во второго врага — оба падают с ног и получают урон!',
     effectEn: 'You throw target to ground: target falls Prone and takes full unarmed strike damage (based on your BODY, ignoring 50% SP). If thrown into another person, both take damage and fall Prone!',
     damageType: 'unarmed'
   },
@@ -180,7 +180,7 @@ export const CPR_BRAWLING_MANEUVERS: BrawlingManeuver[] = [
     requirementEn: 'Target is Grappled by you',
     checkRu: 'Пассивное состояние при захвате',
     checkEn: 'Passive state while grappling',
-    effectRu: 'Вы держите врага перед собой. Все входящие в вас атаки попадают в живой щит! Урон наносится по SP и HP удерживаемого врага. Когда HP врага падает до 0, он умирает и перестает служить щитом.',
+    effectRu: 'Вы держите врага перед собой. Все входящие в вас атаки попадают в живой щит! Урон наносится по ОС и ПЗ удерживаемого врага. Когда ПЗ врага падает до 0, он умирает и перестает служить щитом.',
     effectEn: 'You position the grappled target in front of you. Incoming attacks hit the human shield instead, damaging their SP and HP until they reach 0 HP.',
     damageType: 'none'
   }
