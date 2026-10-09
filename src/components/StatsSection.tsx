@@ -11,7 +11,8 @@ import {
   Dices, 
   Flame, 
   Skull,
-  Zap
+  Zap,
+  HeartCrack
 } from 'lucide-react';
 
 interface StatsSectionProps {
@@ -20,6 +21,7 @@ interface StatsSectionProps {
   onRollStat: (statKey: StatKey, statVal: number) => void;
   onRollInitiative: () => void;
   onRollDeathSave: () => void;
+  onOpenDamageCalc: () => void;
   lang: Language;
 }
 
@@ -44,6 +46,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
   onRollStat,
   onRollInitiative,
   onRollDeathSave,
+  onOpenDamageCalc,
   lang
 }) => {
   const t = translations[lang];
@@ -282,6 +285,20 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               {t.mortallyWoundedEffect}
             </div>
           )}
+
+          {/* Damage Calculator button */}
+          <div className="pt-2 mt-2 border-t border-zinc-800">
+            <button
+              onClick={() => {
+                sfx.playClick();
+                onOpenDamageCalc();
+              }}
+              className="w-full py-1 bg-red-950/60 hover:bg-red-800 border border-red-700/80 text-red-300 hover:text-white rounded text-[11px] font-bold font-orbitron uppercase tracking-wider flex items-center justify-center gap-1.5 transition shadow-sm"
+            >
+              <HeartCrack size={13} />
+              <span>Расчет урона и абляции</span>
+            </button>
+          </div>
         </div>
 
         {/* HUMANITY CARD */}

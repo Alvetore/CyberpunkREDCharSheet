@@ -13,7 +13,8 @@ import {
   Languages, 
   Printer, 
   Dice6,
-  FileArchive
+  FileArchive,
+  Wand2
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -27,6 +28,7 @@ interface HeaderProps {
   onExportAll: () => void;
   onImportCharacter: (text: string) => void;
   onOpenDiceRoller: () => void;
+  onOpenWizard: () => void;
   lang: Language;
   onToggleLang: () => void;
   soundEnabled: boolean;
@@ -46,6 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
   onExportAll,
   onImportCharacter,
   onOpenDiceRoller,
+  onOpenWizard,
   lang,
   onToggleLang,
   soundEnabled,
@@ -123,6 +126,19 @@ export const Header: React.FC<HeaderProps> = ({
             className="p-1.5 bg-zinc-800 hover:bg-red-600/80 text-zinc-300 hover:text-white border border-zinc-700 rounded transition"
           >
             <Plus size={16} />
+          </button>
+
+          {/* Character Creation Wizard Button */}
+          <button
+            onClick={() => {
+              sfx.playClick();
+              onOpenWizard();
+            }}
+            title="Конструктор персонажа (Point-Buy Wizard по правилам CPR)"
+            className="flex items-center gap-1 px-2 py-1.5 bg-red-950/70 hover:bg-red-600 border border-red-700 text-red-300 hover:text-white text-xs font-bold rounded transition font-orbitron"
+          >
+            <Wand2 size={14} className="text-yellow-400" />
+            <span className="hidden md:inline">Конструктор</span>
           </button>
 
           {/* Duplicate Button */}

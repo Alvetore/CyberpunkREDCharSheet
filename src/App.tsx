@@ -25,6 +25,8 @@ import { InjuriesSection } from './components/InjuriesSection';
 import { LifepathSection } from './components/LifepathSection';
 import { GearSection } from './components/GearSection';
 import { DiceRollerModal } from './components/DiceRollerModal';
+import { DamageCalculatorModal } from './components/DamageCalculatorModal';
+import { CharacterWizardModal } from './components/CharacterWizardModal';
 
 import { 
   Crosshair, 
@@ -58,6 +60,10 @@ export const App: React.FC = () => {
   // Dice Roller Modal state
   const [isDiceModalOpen, setIsDiceModalOpen] = useState(false);
   const [rollHistory, setRollHistory] = useState<RollResult[]>([]);
+
+  // Damage Calculator & Character Wizard Modals
+  const [isDamageCalcOpen, setIsDamageCalcOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const t = translations[lang];
 
@@ -269,6 +275,7 @@ export const App: React.FC = () => {
         onExportAll={handleExportAll}
         onImportCharacter={handleImportCharacter}
         onOpenDiceRoller={() => setIsDiceModalOpen(true)}
+        onOpenWizard={() => setIsWizardOpen(true)}
         lang={lang}
         onToggleLang={() => setLang(lang === 'ru' ? 'en' : 'ru')}
         soundEnabled={soundEnabled}
@@ -286,6 +293,7 @@ export const App: React.FC = () => {
           onRollStat={handleRollStat}
           onRollInitiative={handleRollInitiative}
           onRollDeathSave={handleRollDeathSave}
+          onOpenDamageCalc={() => setIsDamageCalcOpen(true)}
           lang={lang}
         />
 
@@ -448,6 +456,7 @@ export const App: React.FC = () => {
             <InjuriesSection
               character={activeChar}
               onUpdateCharacter={handleUpdateActiveCharacter}
+              onOpenDamageCalc={() => setIsDamageCalcOpen(true)}
               lang={lang}
             />
           )}
@@ -502,6 +511,26 @@ export const App: React.FC = () => {
         rollHistory={rollHistory}
         onAddRollResult={(res) => setRollHistory((prev) => [res, ...prev.slice(0, 49)])}
         onClearHistory={() => setRollHistory([])}
+      />
+
+      {/* Damage Calculator & Armor Ablation Modal */}
+      <DamageCalculatorModal
+        isOpen={isDamageCalcOpen}
+        onClose={() => setIsDamageCalcOpen(false)}
+        character={activeChar}
+        onUpdateCharacter={handleUpdateActiveCharacter}
+        lang={lang}
+      />
+
+      {/* Character Creation Wizard Modal */}
+      <CharacterWizardModal
+        isOpen={isWizardOpen}
+        onClose={() => setIsWizardOpen(false)}
+        onCharacterCreated={(newChar) => {
+          setCharacters((prev) => [...prev, newChar]);
+          setActiveId(newChar.id);
+        }}
+        lang={lang}
       />
 
       {/* Footer */}

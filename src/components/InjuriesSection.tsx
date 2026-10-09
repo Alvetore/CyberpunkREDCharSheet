@@ -19,12 +19,14 @@ import {
 interface InjuriesSectionProps {
   character: Character;
   onUpdateCharacter: (char: Character) => void;
+  onOpenDamageCalc: () => void;
   lang: Language;
 }
 
 export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
   character,
   onUpdateCharacter,
+  onOpenDamageCalc,
   lang
 }) => {
   const t = translations[lang];
@@ -119,18 +121,32 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
     <div className="space-y-4">
       {/* Armor Section */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 shadow-md">
-        <div className="flex items-center justify-between mb-3 border-b border-zinc-800 pb-2">
+        <div className="flex flex-wrap items-center justify-between mb-3 border-b border-zinc-800 pb-2 gap-2">
           <div className="flex items-center gap-2">
             <ShieldCheck size={18} className="text-red-500" />
             <h2 className="font-orbitron font-bold text-sm text-red-500 uppercase tracking-wider">
               {t.armorTitle}
             </h2>
           </div>
-          {(character.armor.head.penalty < 0 || character.armor.body.penalty < 0) && (
-            <span className="text-xs text-amber-400 font-bold">
-              Штраф тяжелой брони к REF/DEX/MOVE: {Math.min(character.armor.head.penalty, character.armor.body.penalty)}
-            </span>
-          )}
+
+          <div className="flex items-center gap-2">
+            {(character.armor.head.penalty < 0 || character.armor.body.penalty < 0) && (
+              <span className="text-xs text-amber-400 font-bold hidden sm:inline">
+                Штраф брони: {Math.min(character.armor.head.penalty, character.armor.body.penalty)}
+              </span>
+            )}
+
+            <button
+              onClick={() => {
+                sfx.playClick();
+                onOpenDamageCalc();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition shadow-md shadow-red-950"
+            >
+              <HeartCrack size={14} />
+              <span>Расчет урона и абляции</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
