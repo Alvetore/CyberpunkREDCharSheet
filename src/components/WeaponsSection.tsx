@@ -8,6 +8,7 @@ import {
   CPR_MELEE_WEAPON_TIERS, 
   CPR_BRAWLING_MANEUVERS, 
   CPR_MARTIAL_ARTS_STYLES,
+  CPR_UNIVERSAL_MARTIAL_ARTS_MOVES,
   MartialArtsMove
 } from '../data/meleeRules';
 import { sfx } from '../utils/audio';
@@ -107,7 +108,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   const maLvl = maSkill?.level || 0;
   const maBase = character.stats.DEX + maLvl + armorPenalty + woundPenalty;
   const currentMaStyle: MartialArtsStyle = character.martialArtsStyle || 'Karate';
-  const styleData = CPR_MARTIAL_ARTS_STYLES[currentMaStyle];
+  const styleData = CPR_MARTIAL_ARTS_STYLES[currentMaStyle] || CPR_MARTIAL_ARTS_STYLES.Karate;
 
   // Counts
   const rangedWeapons = character.weapons.filter((w) => w.magCapacity > 0 && !w.category.includes('Melee'));
@@ -246,52 +247,93 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   const handleExecuteMaSpecialMove = (move: MartialArtsMove) => {
     sfx.playCritSuccess();
 
-    if (move.id === 'armor_breaking_strike') {
+    if (move.id === 'kip_up') {
       onRollCustomCheck?.(
-        lang === 'ru' ? 'Каратэ: Пробивающий броню удар (Абляция -2 SP!)' : 'Karate: Armor Breaking Strike (-2 SP Ablation!)',
-        maBase
+        lang === 'ru' ? 'Общий спецприём: Быстрый подъём (Kip Up) [СЛ13]' : 'Universal Move: Kip Up [DV 13]',
+        maBase,
+        13
       );
-    } else if (move.id === 'bone_breaking_strike') {
-      onRollCustomDamage?.(
-        lang === 'ru' ? `Каратэ: Дробящий кости удар (+5 бонус Crit HP, Травма костей)` : `Karate: Bone Breaking Strike (+5 Crit HP bonus, Broken Bones)`,
-        unarmedDamage
-      );
-    } else if (move.id === 'counter_throw') {
-      onRollCustomDamage?.(
-        lang === 'ru' ? `Дзюдо: Ответный бросок (Враг сбит с ног / Prone!)` : `Judo: Counter Throw (Target falls Prone!)`,
-        unarmedDamage
-      );
-    } else if (move.id === 'pain_compliance') {
-      onRollCustomCheck?.(
-        lang === 'ru' ? `Дзюдо: Болевой приём (-${character.stats.BODY} HP прямо в ОЗ, -2 ко всем действиям цели)` : `Judo: Pain Compliance (-${character.stats.BODY} HP directly to target HP, -2 to all actions)`,
-        maBase
-      );
-    } else if (move.id === 'flying_kick') {
-      // Unarmed + 1d6
-      const baseNum = parseInt(unarmedDamage.replace('d6', ''), 10) || 2;
-      const boostedFormula = `${baseNum + 1}d6`;
-      onRollCustomDamage?.(
-        lang === 'ru' ? `Тхэквондо: Удар ногой в прыжке (+1d6 урона, отброс на 2м!)` : `Taekwondo: Flying Kick (+1d6 damage, knockback 2m!)`,
-        boostedFormula
-      );
-    } else if (move.id === 'spinning_kick') {
-      onRollCustomCheck?.(
-        lang === 'ru' ? 'Тхэквондо: Удар с разворота (Проверка против Prone & потеря Движения!)' : 'Taekwondo: Spinning Kick (Check vs Prone & lose Move Action!)',
-        maBase
-      );
-    } else if (move.id === 'iron_grip') {
-      onRollCustomCheck?.(
-        lang === 'ru' ? 'Айкидо: Железный захват (Бонус +2 к захвату / освобождению)' : 'Aikido: Iron Grip (+2 bonus to grapple check)',
-        maBase + 2,
-        undefined,
-        [{ name: 'Iron Grip Bonus', val: 2 }]
-      );
-    } else if (move.id === 'disarming_strike') {
-      onRollCustomCheck?.(
-        lang === 'ru' ? 'Айкидо: Обезоруживающий приём (Выбивание оружия из рук!)' : 'Aikido: Disarming Strike (Disarm held weapon!)',
-        maBase
-      );
+      return;
     }
+
+    if (move.id === 'karate_bone_break') {
+      onRollCustomDamage?.(
+        lang === 'ru' ? 'Каратэ: Костедробительный удар (+5 Crit HP, Перелом)' : 'Karate: Bone Breaking Strike (+5 Crit HP)',
+        unarmedDamage
+      );
+      return;
+    }
+
+    if (move.id === 'judo_counter_throw') {
+      onRollCustomDamage?.(
+        lang === 'ru' ? 'Дзюдо: Контрбросок (Враг сбит с ног / Prone!)' : 'Judo: Counter Throw (Target falls Prone!)',
+        unarmedDamage
+      );
+      return;
+    }
+
+    if (move.id === 'taekwondo_pressure_point') {
+      onRollCustomDamage?.(
+        lang === 'ru' ? 'Тхэквондо: Удар по болевым точкам (+5 Crit HP, Травма)' : 'Taekwondo: Pressure Point Strike (+5 Crit HP)',
+        unarmedDamage
+      );
+      return;
+    }
+
+    if (move.id === 'taekwondo_flying_kick') {
+      onRollCustomDamage?.(
+        lang === 'ru' ? 'Тхэквондо: Летящий удар (Сбит с ног / Prone!)' : 'Taekwondo: Flying Kick (Knocked Prone!)',
+        unarmedDamage
+      );
+      return;
+    }
+
+    if (move.id === 'boxing_knockout') {
+      onRollCustomCheck?.(
+        lang === 'ru' ? 'Бокс: Нокаутирующий удар (-5 штраф в голову, Травма Челюсти)' : 'Boxing: Knockout Punch (-5 aimed head penalty)',
+        maBase - 5,
+        undefined,
+        [{ name: 'Aimed Penalty', val: -5 }]
+      );
+      return;
+    }
+
+    if (move.id === 'borg_fist') {
+      const dmg = character.humanityCurrent < 0 ? '6d6' : '5d6';
+      onRollCustomDamage?.(
+        lang === 'ru' ? `Панцерфауст: Кулак борга (${dmg} урона)` : `Panzerfaust: Borg Fist (${dmg} damage)`,
+        dmg
+      );
+      return;
+    }
+
+    if (move.id === 'militech_knife_training') {
+      onRollCustomDamage?.(
+        lang === 'ru' ? 'Militech: Усиленный удар боевым ножом (4d6)' : 'Militech: Enhanced Combat Knife (4d6)',
+        '4d6'
+      );
+      return;
+    }
+
+    if (move.id === 'wrestling_choke') {
+      onRollCustomCheck?.(
+        lang === 'ru' ? `Реслинг: Мгновенное удушение (-${character.stats.BODY} HP прямо в ОЗ [Игнор SP!])` : `Wrestling: Instant Choke (-${character.stats.BODY} direct HP [Ignores SP!])`,
+        character.stats.BODY
+      );
+      return;
+    }
+
+    if (move.id === 'yukon_crack_skulls') {
+      onRollCustomCheck?.(
+        lang === 'ru' ? `Юкон: Стукни друг о друга (-${character.stats.BODY} HP целям в захвате)` : `Yukon: Crack Skulls (-${character.stats.BODY} direct HP)`,
+        character.stats.BODY
+      );
+      return;
+    }
+
+    // Default handler for all checks (using targetDv when specified)
+    const moveTitle = `${lang === 'ru' ? styleData.nameRu : styleData.nameEn}: ${lang === 'ru' ? move.nameRu : move.nameEn}${move.targetDv ? ` [СЛ${move.targetDv}]` : ''}`;
+    onRollCustomCheck?.(moveTitle, maBase, move.targetDv);
   };
 
   // Filter weapons based on sub-tab
@@ -674,56 +716,84 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
         </div>
       )}
 
-      {/* SECTION 2: MARTIAL ARTS (Боевые искусства) */}
+      {/* SECTION 2: MARTIAL ARTS (Боевые искусства — 27 стилей DataPool) */}
       {combatSubTab === 'martial_arts' && (
-        <div className="space-y-3.5 animate-fade-in">
+        <div className="space-y-4 animate-fade-in">
           {/* Main Martial Arts Card */}
-          <div className="bg-zinc-900 border-2 border-cyan-600/80 rounded-xl p-3.5 sm:p-4 shadow-xl space-y-3">
-            <div className="flex flex-wrap items-start justify-between gap-2 border-b border-zinc-800 pb-2.5">
-              <div className="flex items-center gap-2">
+          <div className="bg-zinc-900 border-2 border-cyan-600/80 rounded-xl p-3.5 sm:p-4 shadow-xl space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-cyan-950/60 border border-cyan-600 rounded text-cyan-400">
-                  <Zap size={20} />
+                  <Zap size={22} />
                 </div>
                 <div>
-                  <h3 className="font-orbitron font-bold text-base text-cyan-400 uppercase tracking-wider">
-                    {lang === 'ru' ? 'Боевые искусства (Martial Arts x2)' : 'Martial Arts (x2 Skill)'}
-                  </h3>
-                  <div className="flex items-center gap-2 text-xs text-zinc-400">
-                    <span>{lang === 'ru' ? 'Навык:' : 'Skill:'} <strong>DEX ({character.stats.DEX}) + Боевые искусства ({maLvl})</strong> = База <strong className="text-white font-mono">{maBase}</strong></span>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-orbitron font-bold text-base text-cyan-400 uppercase tracking-wider">
+                      {lang === 'ru' ? 'Боевые искусства (Martial Arts x2)' : 'Martial Arts (x2 Skill)'}
+                    </h3>
+                    <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase bg-cyan-950 text-cyan-300 border border-cyan-800">
+                      27 {lang === 'ru' ? 'стилей' : 'styles'}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 mt-0.5">
+                    <span>{lang === 'ru' ? 'Навык:' : 'Skill:'} <strong>DEX ({character.stats.DEX}) + БИ ({maLvl})</strong> = База <strong className="text-white font-mono">{maBase}</strong></span>
                     <span>•</span>
                     <span className="text-cyan-300 font-semibold">{t.halfSpNotice}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Style selector pills */}
-              <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800 overflow-x-auto touch-pan-x scrollbar-none max-w-full flex-wrap sm:flex-nowrap">
-                {(['Karate', 'Judo', 'Taekwondo', 'Aikido'] as MartialArtsStyle[]).map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => handleSelectMaStyle(st)}
-                    className={`px-2.5 py-1 text-xs font-orbitron font-bold rounded transition shrink-0 ${
-                      currentMaStyle === st
-                        ? 'bg-cyan-600 text-white shadow'
-                        : 'text-zinc-400 hover:text-zinc-200'
-                    }`}
+              {/* Responsive Style Selector */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <label className="text-xs text-zinc-400 font-medium sm:hidden">
+                  {lang === 'ru' ? 'Выбрать стиль боевых искусств:' : 'Select Martial Arts Style:'}
+                </label>
+                <div className="relative min-w-[240px]">
+                  <select
+                    value={currentMaStyle}
+                    onChange={(e) => handleSelectMaStyle(e.target.value as MartialArtsStyle)}
+                    className="w-full bg-zinc-950 border-2 border-cyan-600 hover:border-cyan-400 text-cyan-200 font-orbitron font-bold text-xs py-2 px-3 pr-8 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-400 shadow-md transition"
                   >
-                    {st === 'Karate' ? (lang === 'ru' ? 'Каратэ' : 'Karate') :
-                     st === 'Judo' ? (lang === 'ru' ? 'Дзюдо' : 'Judo') :
-                     st === 'Taekwondo' ? (lang === 'ru' ? 'Тхэквондо' : 'Taekwondo') :
-                     (lang === 'ru' ? 'Айкидо' : 'Aikido')}
-                  </button>
-                ))}
+                    <optgroup label={lang === 'ru' ? 'Книга правил (Corebook — 4 стиля)' : 'Corebook Styles (4)'}>
+                      {(['Aikido', 'Karate', 'Judo', 'Taekwondo'] as MartialArtsStyle[]).map((st) => (
+                        <option key={st} value={st} className="bg-zinc-900 text-zinc-100 font-sans">
+                          {lang === 'ru' ? CPR_MARTIAL_ARTS_STYLES[st].nameRu : CPR_MARTIAL_ARTS_STYLES[st].nameEn}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label={lang === 'ru' ? '«Киберкулаки Ярости» (Cyberpunks of Fury — 23 стиля)' : 'Cyberpunks of Fury (23 styles)'}>
+                      {(Object.keys(CPR_MARTIAL_ARTS_STYLES) as MartialArtsStyle[])
+                        .filter((st) => !['Aikido', 'Karate', 'Judo', 'Taekwondo'].includes(st))
+                        .map((st) => (
+                          <option key={st} value={st} className="bg-zinc-900 text-zinc-100 font-sans">
+                            {lang === 'ru' ? CPR_MARTIAL_ARTS_STYLES[st].nameRu : CPR_MARTIAL_ARTS_STYLES[st].nameEn}
+                          </option>
+                        ))}
+                    </optgroup>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-cyan-400">
+                    <ChevronDown size={16} />
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Style Description Banner */}
-            <div className="p-2.5 bg-zinc-950 border border-cyan-900/60 rounded text-xs text-zinc-300 flex items-start gap-2">
-              <Info size={16} className="text-cyan-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-cyan-300 font-orbitron block mb-0.5">
-                  {lang === 'ru' ? styleData.nameRu : styleData.nameEn}
-                </strong>
+            <div className="p-3 bg-zinc-950 border border-cyan-900/60 rounded-lg text-xs text-zinc-300 flex items-start gap-2.5">
+              <Info size={18} className="text-cyan-400 shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <strong className="text-cyan-300 font-orbitron text-sm">
+                    {lang === 'ru' ? styleData.nameRu : styleData.nameEn}
+                  </strong>
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase border ${
+                    styleData.category === 'Corebook'
+                      ? 'bg-amber-950/70 text-amber-300 border-amber-800'
+                      : 'bg-red-950/70 text-red-300 border-red-800'
+                  }`}>
+                    {styleData.source}
+                  </span>
+                </div>
                 <p className="text-[11px] text-zinc-400 leading-relaxed">
                   {lang === 'ru' ? styleData.descriptionRu : styleData.descriptionEn}
                 </p>
@@ -753,37 +823,57 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
           </div>
 
           {/* 2 Special Moves for the active style */}
-          <div className="space-y-2">
-            <span className="text-xs font-orbitron font-bold text-yellow-400 uppercase block tracking-wider">
-              {lang === 'ru' ? `Особые приёмы стиля: ${styleData.nameRu}` : `Special Moves: ${styleData.nameEn}`}
-            </span>
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-orbitron font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Zap size={14} />
+                {lang === 'ru' ? `Уникальные приёмы стиля: ${styleData.nameRu}` : `Unique Style Moves: ${styleData.nameEn}`}
+              </span>
+              <span className="text-[10px] text-zinc-500 font-mono">
+                2 {lang === 'ru' ? 'приёма' : 'moves'}
+              </span>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {styleData.moves.map((move) => (
                 <div
                   key={move.id}
-                  className="bg-zinc-900 border border-zinc-800 hover:border-cyan-800 rounded-lg p-3.5 flex flex-col justify-between shadow-md space-y-2.5 transition"
+                  className="bg-zinc-900 border border-zinc-800 hover:border-cyan-800/80 rounded-lg p-3.5 flex flex-col justify-between shadow-md space-y-2.5 transition"
                 >
                   <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="font-orbitron font-bold text-sm text-cyan-300">
-                        {lang === 'ru' ? move.nameRu : move.nameEn}
-                      </span>
-                      {move.damageBonus && (
-                        <span className="text-[10px] bg-red-950 text-red-300 border border-red-800 px-1.5 py-0.5 rounded font-mono font-bold shrink-0">
-                          {move.damageBonus}
+                    <div className="flex items-start justify-between gap-2 border-b border-zinc-800/60 pb-2">
+                      <div>
+                        <span className="font-orbitron font-bold text-sm text-cyan-300 block">
+                          {lang === 'ru' ? move.nameRu : move.nameEn}
                         </span>
-                      )}
+                        <span className="text-[10px] text-zinc-400 font-mono">
+                          {lang === 'ru' ? move.checkRu : move.checkEn}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {move.targetDv && (
+                          <span className="text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-800 px-1.5 py-0.5 rounded font-mono font-bold">
+                            СЛ {move.targetDv}
+                          </span>
+                        )}
+                        {move.damageBonus && (
+                          <span className="text-[10px] bg-red-950 text-red-300 border border-red-800 px-1.5 py-0.5 rounded font-mono font-bold">
+                            {move.damageBonus}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="mt-2 space-y-1.5 text-xs">
-                      <div className="text-[11px] text-zinc-400">
-                        <strong className="text-zinc-300">{lang === 'ru' ? 'Требование:' : 'Requirement:'}</strong>{' '}
+                    <div className="mt-2.5 space-y-2 text-xs">
+                      <div className="text-[11px] text-zinc-300 leading-snug">
+                        <strong className="text-amber-400 font-mono">{lang === 'ru' ? 'Условие: ' : 'Requirement: '}</strong>
                         {lang === 'ru' ? move.requirementRu : move.requirementEn}
                       </div>
 
-                      <div className="text-[11px] text-zinc-300 bg-zinc-950 p-2 rounded border border-zinc-850 leading-relaxed">
-                        <strong className="text-cyan-400 block mb-0.5">{lang === 'ru' ? 'Эффект правила CPR:' : 'CPR Rule Effect:'}</strong>
+                      <div className="text-[11px] text-zinc-300 bg-zinc-950 p-2.5 rounded border border-zinc-850 leading-relaxed">
+                        <strong className="text-cyan-400 block mb-0.5 font-orbitron text-[10px] tracking-wider uppercase">
+                          {lang === 'ru' ? 'Эффект правила CPR:' : 'CPR Rule Effect:'}
+                        </strong>
                         {lang === 'ru' ? move.effectRu : move.effectEn}
                       </div>
                     </div>
@@ -799,6 +889,49 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Universal Special Move (Available to all styles) */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3.5 shadow-md space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-2">
+              <div className="flex items-center gap-2">
+                <RotateCcw size={16} className="text-yellow-400" />
+                <span className="font-orbitron font-bold text-sm text-yellow-400 uppercase tracking-wider">
+                  {lang === 'ru' ? 'Общий спецприём боевых искусств (CPR Universal Move)' : 'Universal Martial Arts Move'}
+                </span>
+              </div>
+              <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono font-bold">
+                {lang === 'ru' ? 'Для всех 27 стилей' : 'All 27 Styles'}
+              </span>
+            </div>
+
+            {CPR_UNIVERSAL_MARTIAL_ARTS_MOVES.map((move) => (
+              <div key={move.id} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+                <div className="md:col-span-2 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <strong className="text-white font-orbitron text-xs">
+                      {lang === 'ru' ? move.nameRu : move.nameEn}
+                    </strong>
+                    <span className="text-[10px] bg-yellow-950 text-yellow-300 border border-yellow-800 px-1.5 py-0.2 rounded font-mono">
+                      СЛ 13
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">
+                    {lang === 'ru' ? move.effectRu : move.effectEn}
+                  </p>
+                </div>
+
+                <div className="md:col-span-1">
+                  <button
+                    onClick={() => handleExecuteMaSpecialMove(move)}
+                    className="w-full py-2.5 min-h-[40px] bg-yellow-950/80 hover:bg-yellow-500 border border-yellow-700 text-yellow-300 hover:text-black text-xs font-bold font-orbitron uppercase rounded transition flex items-center justify-center gap-1.5 shadow"
+                  >
+                    <RotateCcw size={14} />
+                    <span>{lang === 'ru' ? 'БЫСТРЫЙ ПОДЪЁМ (СЛ13)' : 'ROLL KIP UP (DV 13)'}</span>
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -917,6 +1050,51 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                       <td className="py-1.5 px-2 text-zinc-500 italic">{lang === 'ru' ? tier.examplesRu : tier.examplesEn}</td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Table 3: 27 CPR Martial Arts Styles Catalog */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-orbitron font-bold text-xs uppercase text-cyan-400 block">
+                {lang === 'ru' ? 'Каталог всех 27 стилей боевых искусств («Киберкулаки Ярости» & Corebook)' : 'Catalog of 27 Martial Arts Styles (Cyberpunks of Fury & Corebook)'}
+              </span>
+              <span className="text-[10px] text-zinc-400 font-mono bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
+                DataPool Reference
+              </span>
+            </div>
+            <div className="overflow-x-auto touch-pan-x max-h-72 overflow-y-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-zinc-800 text-zinc-400 font-mono text-[11px]">
+                    <th className="py-1.5 px-2">Стиль</th>
+                    <th className="py-1.5 px-2">Источник</th>
+                    <th className="py-1.5 px-2">Специальные приёмы стиля</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(Object.keys(CPR_MARTIAL_ARTS_STYLES) as MartialArtsStyle[]).map((st) => {
+                    const info = CPR_MARTIAL_ARTS_STYLES[st];
+                    return (
+                      <tr key={st} className="border-b border-zinc-800/40 hover:bg-zinc-800/30">
+                        <td className="py-1.5 px-2 font-bold font-orbitron text-zinc-200">
+                          {lang === 'ru' ? info.nameRu : info.nameEn}
+                        </td>
+                        <td className="py-1.5 px-2 font-mono text-[11px]">
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                            info.category === 'Corebook' ? 'text-amber-400 bg-amber-950/60' : 'text-red-400 bg-red-950/60'
+                          }`}>
+                            {info.source}
+                          </span>
+                        </td>
+                        <td className="py-1.5 px-2 text-zinc-300">
+                          {info.moves.map((m) => lang === 'ru' ? m.nameRu : m.nameEn).join(' • ')}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

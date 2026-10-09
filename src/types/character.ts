@@ -63,7 +63,34 @@ export type WeaponCategory =
   | 'Very Heavy Melee'
   | 'Exotic';
 
-export type MartialArtsStyle = 'Karate' | 'Judo' | 'Taekwondo' | 'Aikido';
+export type MartialArtsStyle =
+  | 'Aikido'
+  | 'Karate'
+  | 'Judo'
+  | 'Taekwondo'
+  | 'ArasakaTe'
+  | 'Escrima'
+  | 'Boxing'
+  | 'Capoeira'
+  | 'ChoyLiFut'
+  | 'DrunkenBoxing'
+  | 'GunFu'
+  | 'JiuJitsu'
+  | 'Kendo'
+  | 'KravMaga'
+  | 'KungFu'
+  | 'Kyudo'
+  | 'MilitechKnife'
+  | 'MuayThai'
+  | 'YukonMultiArmed'
+  | 'FpaBorg'
+  | 'PencakSilat'
+  | 'SovietSystema'
+  | 'Sumo'
+  | 'TaiChi'
+  | 'PoliceDefensiveTactics'
+  | 'StrikeBoxing'
+  | 'Wrestling';
 
 export interface Weapon {
   id: string;

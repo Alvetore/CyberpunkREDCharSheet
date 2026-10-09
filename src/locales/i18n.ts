@@ -101,7 +101,7 @@ export const translations = {
 
     // Melee & Martial Arts
     meleeTitle: 'БЛИЖНИЙ БОЙ И БОЕВЫЕ ИСКУССТВА',
-    meleeSubtitle: 'Официальные правила Cyberpunk RED: Драка, Захваты, Холодное оружие и 4 стиля боевых искусств',
+    meleeSubtitle: 'Официальные правила Cyberpunk RED: Драка, Захваты, Холодное оружие и 27 стилей боевых искусств («Киберкулаки Ярости» & Corebook)',
     tabRangedWeapons: 'Огнестрельное оружие',
     tabMeleeWeapons: 'Холодное оружие',
     tabBrawling: 'Мордобой (Драка)',
@@ -362,7 +362,7 @@ export const translations = {
 
     // Melee & Martial Arts
     meleeTitle: 'MELEE COMBAT & MARTIAL ARTS',
-    meleeSubtitle: 'Official Cyberpunk RED Melee Rules: Brawling, Grapples, Melee Weapons & 4 Martial Arts Styles',
+    meleeSubtitle: 'Official Cyberpunk RED Melee Rules: Brawling, Grapples, Melee Weapons & 27 Martial Arts Styles (Cyberpunks of Fury & Corebook)',
     tabRangedWeapons: 'Ranged Weapons',
     tabMeleeWeapons: 'Melee Weapons',
     tabBrawling: 'Brawling',
