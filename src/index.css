@@ -63,6 +63,20 @@
   background: #ef4444;
 }
 
+/* Hide scrollbar utility for mobile swiping tabs & tags */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile tap delay removal and touch optimization */
+button, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+}
+
 /* Light Theme - Arasaka Corporate Clean */
 html.light {
   color-scheme: light;

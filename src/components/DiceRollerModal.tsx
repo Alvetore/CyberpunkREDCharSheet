@@ -91,10 +91,10 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
   const latestRoll = rollHistory[0];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
-      <div className="bg-zinc-900 border-2 border-red-600 w-full max-w-2xl rounded-lg shadow-2xl shadow-red-950/80 flex flex-col max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
+      <div className="bg-zinc-900 border-2 border-red-600 w-full max-w-2xl rounded-lg shadow-2xl shadow-red-950/80 flex flex-col max-h-[94dvh] sm:max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-zinc-950 border-b border-red-800">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-zinc-950 border-b border-red-800">
           <div className="flex items-center gap-2 text-red-500 font-orbitron font-bold">
             <Dices size={20} className="animate-spin-slow" />
             <span className="tracking-wider uppercase">{t.diceRollerTitle}</span>

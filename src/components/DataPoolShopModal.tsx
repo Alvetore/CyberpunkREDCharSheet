@@ -267,7 +267,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-zinc-900 border border-red-900/80 rounded-xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      <div className="bg-zinc-900 border border-red-900/80 rounded-xl w-full max-w-4xl max-h-[94dvh] sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
         
         {/* Top Header */}
         <div className="bg-zinc-950 px-4 py-3 border-b border-zinc-800 flex items-center justify-between gap-3">
@@ -297,7 +297,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
               sfx.playClick();
               onClose();
             }}
-            className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 transition"
+            className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 transition min-w-[36px] min-h-[36px] flex items-center justify-center"
           >
             <X size={20} />
           </button>
@@ -306,7 +306,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         {/* Currency & Quick Tools Bar */}
         <div className="bg-zinc-950/80 px-4 py-2.5 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3 text-xs">
           {/* Character Balance */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Coins size={16} className="text-yellow-400" />
             <span className="text-zinc-400 font-semibold">{lang === 'ru' ? 'Баланс персонажа:' : 'Cash balance:'}</span>
             <span className="font-orbitron font-bold text-yellow-400 text-sm">
@@ -314,17 +314,17 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
             </span>
 
             {/* Quick cash adjust */}
-            <div className="flex items-center gap-1 ml-2">
+            <div className="flex items-center gap-1 ml-1 sm:ml-2">
               <button
                 onClick={() => handleAdjustCash(100)}
-                className="px-1.5 py-0.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-300 font-mono"
+                className="px-2 py-1 min-h-[28px] min-w-[38px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-300 font-mono flex items-center justify-center transition"
                 title="+100 eb"
               >
                 +100
               </button>
               <button
                 onClick={() => handleAdjustCash(500)}
-                className="px-1.5 py-0.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-300 font-mono"
+                className="px-2 py-1 min-h-[28px] min-w-[38px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-300 font-mono flex items-center justify-center transition"
                 title="+500 eb"
               >
                 +500
@@ -332,7 +332,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
               <button
                 onClick={() => handleAdjustCash(-100)}
                 disabled={character.cashEb < 100}
-                className="px-1.5 py-0.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-300 font-mono disabled:opacity-30"
+                className="px-2 py-1 min-h-[28px] min-w-[38px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-300 font-mono disabled:opacity-30 flex items-center justify-center transition"
                 title="-100 eb"
               >
                 -100
@@ -369,14 +369,14 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         <div className="p-3 sm:p-4 bg-zinc-900 border-b border-zinc-800 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             {/* Search Box */}
-            <div className="relative flex-1 min-w-[220px]">
+            <div className="relative flex-1 min-w-[200px]">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
                 type="text"
                 placeholder={lang === 'ru' ? 'Поиск по названию или описанию...' : 'Search items...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-8 pr-8 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-red-500"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-8 pr-8 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-red-500 min-h-[38px]"
               />
               {searchQuery && (
                 <button
@@ -392,7 +392,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-xs text-zinc-200 focus:outline-none focus:border-red-500"
+              className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-xs text-zinc-200 focus:outline-none focus:border-red-500 min-h-[38px]"
             >
               <option value="default">{lang === 'ru' ? 'Сортировка: По умолчанию' : 'Sort: Default'}</option>
               <option value="price_asc">{lang === 'ru' ? 'Сначала дешевые' : 'Price: Low to High'}</option>
@@ -401,13 +401,13 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
           </div>
 
           {/* Category Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-1.5 text-xs overflow-x-auto touch-pan-x scrollbar-none pb-1 -mb-1">
             <button
               onClick={() => {
                 sfx.playClick();
                 setActiveTab('all');
               }}
-              className={`px-3 py-1.5 rounded font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded font-bold transition flex items-center gap-1.5 shrink-0 min-h-[36px] ${
                 activeTab === 'all'
                   ? 'bg-red-600 text-white shadow-md'
                   : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
@@ -422,7 +422,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                 sfx.playClick();
                 setActiveTab('weapons');
               }}
-              className={`px-3 py-1.5 rounded font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded font-bold transition flex items-center gap-1.5 shrink-0 min-h-[36px] ${
                 activeTab === 'weapons'
                   ? 'bg-red-600 text-white shadow-md'
                   : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
@@ -438,7 +438,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                 sfx.playClick();
                 setActiveTab('armor');
               }}
-              className={`px-3 py-1.5 rounded font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded font-bold transition flex items-center gap-1.5 shrink-0 min-h-[36px] ${
                 activeTab === 'armor'
                   ? 'bg-red-600 text-white shadow-md'
                   : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
@@ -454,7 +454,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                 sfx.playClick();
                 setActiveTab('cyberware');
               }}
-              className={`px-3 py-1.5 rounded font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded font-bold transition flex items-center gap-1.5 shrink-0 min-h-[36px] ${
                 activeTab === 'cyberware'
                   ? 'bg-cyan-600 text-white shadow-md'
                   : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
@@ -470,7 +470,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                 sfx.playClick();
                 setActiveTab('gear');
               }}
-              className={`px-3 py-1.5 rounded font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded font-bold transition flex items-center gap-1.5 shrink-0 min-h-[36px] ${
                 activeTab === 'gear'
                   ? 'bg-yellow-600 text-black shadow-md'
                   : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
@@ -620,7 +620,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                       <button
                         onClick={() => handleBuyItem(item)}
                         disabled={!canAfford}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold font-orbitron uppercase tracking-wider transition ${
+                        className={`flex items-center gap-1.5 px-3.5 py-1.5 min-h-[36px] rounded text-xs font-bold font-orbitron uppercase tracking-wider transition ${
                           canAfford
                             ? 'bg-red-600 hover:bg-red-500 text-white shadow'
                             : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'

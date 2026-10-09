@@ -207,7 +207,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
           </h3>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 min-[440px]:grid-cols-2 md:grid-cols-4 gap-2.5">
           {/* Scanner */}
           <button
             onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Сканирование архитектуры (Scanner)' : 'Scanner Action', 8)}
@@ -388,11 +388,11 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => handleAdjustRez(prog.id, -1)}
-                        className="w-5 h-5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs font-bold text-zinc-300"
+                        className="w-7 h-7 sm:w-5 sm:h-5 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs font-bold text-zinc-300 flex items-center justify-center transition"
                       >
                         -
                       </button>
-                      <div className="flex-1 bg-zinc-950 h-2 rounded-full overflow-hidden border border-zinc-800">
+                      <div className="flex-1 bg-zinc-950 h-2.5 rounded-full overflow-hidden border border-zinc-800">
                         <div
                           className={`h-full transition-all ${
                             isDerezzed ? 'bg-red-600' : 'bg-cyan-500'
@@ -404,7 +404,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                       </div>
                       <button
                         onClick={() => handleAdjustRez(prog.id, 1)}
-                        className="w-5 h-5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs font-bold text-zinc-300"
+                        className="w-7 h-7 sm:w-5 sm:h-5 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs font-bold text-zinc-300 flex items-center justify-center transition"
                       >
                         +
                       </button>
@@ -416,7 +416,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                 <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-900 text-xs">
                   <button
                     onClick={() => handleToggleInstall(prog.id)}
-                    className={`px-2.5 py-1 rounded font-semibold text-[11px] transition ${
+                    className={`px-3 py-1.5 min-h-[34px] sm:min-h-[28px] rounded font-semibold text-[11px] transition flex items-center justify-center ${
                       prog.isInstalled
                         ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
                         : 'bg-cyan-950 text-cyan-400 border border-cyan-800'
@@ -428,7 +428,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                   {prog.category === 'Attacker' || prog.category === 'Black ICE' ? (
                     <button
                       onClick={() => onRollProgramAttack(prog)}
-                      className="px-2.5 py-1 bg-red-900/60 hover:bg-red-800 border border-red-700 text-white rounded text-[11px] font-bold flex items-center gap-1"
+                      className="px-3 py-1.5 min-h-[34px] sm:min-h-[28px] bg-red-900/60 hover:bg-red-800 border border-red-700 text-white rounded text-[11px] font-bold flex items-center justify-center gap-1 shadow-sm"
                     >
                       <Flame size={12} />
                       {lang === 'ru' ? 'Атака' : 'Attack'} (ATK +{prog.atkBonus})
@@ -436,7 +436,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                   ) : (
                     <button
                       onClick={() => onRollInterfaceAction(lang === 'ru' ? `Активация ${prog.name}` : `Activate ${prog.name}`, undefined, prog.atkBonus)}
-                      className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[11px] font-bold flex items-center gap-1"
+                      className="px-3 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[11px] font-bold flex items-center justify-center gap-1"
                     >
                       <Dices size={12} />
                       {lang === 'ru' ? 'Запустить' : 'Run'}
@@ -452,7 +452,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
       {/* Add Program Modal */}
       {showAddProgram && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
-          <div className="bg-zinc-900 border-2 border-cyan-500 w-full max-w-md rounded-lg shadow-2xl p-4 space-y-4">
+          <div className="bg-zinc-900 border-2 border-cyan-500 w-full max-w-md rounded-lg shadow-2xl p-4 space-y-4 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
               <h3 className="font-orbitron font-bold text-cyan-400 text-sm uppercase">
                 {t.addProgram}

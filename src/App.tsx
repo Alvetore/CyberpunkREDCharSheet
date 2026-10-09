@@ -328,7 +328,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 space-y-4">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-2.5 sm:p-4 md:p-5 space-y-4 pb-24 sm:pb-8">
         {/* Core Stats always visible on top */}
         <StatsSection
           character={activeChar}
@@ -340,14 +340,14 @@ export const App: React.FC = () => {
           lang={lang}
         />
 
-        {/* Navigation Tabs */}
-        <div className="border-b border-zinc-800 flex items-center gap-1 overflow-x-auto no-print pt-1">
+        {/* Navigation Tabs (Smooth touch scrolling on mobile) */}
+        <div className="border-b border-zinc-800 flex items-center gap-1 overflow-x-auto touch-pan-x scrollbar-none no-print pt-1 -mx-2.5 px-2.5 sm:mx-0 sm:px-0">
           <button
             onClick={() => {
               sfx.playClick();
               setActiveTab('main');
             }}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
               activeTab === 'main'
                 ? 'text-red-500 border-b-2 border-red-500 bg-red-950/20'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -362,7 +362,7 @@ export const App: React.FC = () => {
               sfx.playClick();
               setActiveTab('skills');
             }}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
               activeTab === 'skills'
                 ? 'text-red-500 border-b-2 border-red-500 bg-red-950/20'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -377,7 +377,7 @@ export const App: React.FC = () => {
               sfx.playClick();
               setActiveTab('netrunner');
             }}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
               activeTab === 'netrunner'
                 ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-950/20'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -395,7 +395,7 @@ export const App: React.FC = () => {
               sfx.playClick();
               setActiveTab('injuries');
             }}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
               activeTab === 'injuries'
                 ? 'text-red-500 border-b-2 border-red-500 bg-red-950/20'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -415,7 +415,7 @@ export const App: React.FC = () => {
               sfx.playClick();
               setActiveTab('cyberware');
             }}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
               activeTab === 'cyberware'
                 ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-950/20'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -430,7 +430,7 @@ export const App: React.FC = () => {
               sfx.playClick();
               setActiveTab('gear');
             }}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
               activeTab === 'gear'
                 ? 'text-red-500 border-b-2 border-red-500 bg-red-950/20'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -445,7 +445,7 @@ export const App: React.FC = () => {
               sfx.playClick();
               setActiveTab('lifepath');
             }}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
               activeTab === 'lifepath'
                 ? 'text-yellow-400 border-b-2 border-yellow-400 bg-yellow-950/20'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -460,7 +460,7 @@ export const App: React.FC = () => {
               sfx.playClick();
               setActiveTab('notes');
             }}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
               activeTab === 'notes'
                 ? 'text-yellow-400 border-b-2 border-yellow-400 bg-yellow-950/20'
                 : 'text-zinc-400 hover:text-zinc-200'

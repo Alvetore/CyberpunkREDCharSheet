@@ -107,8 +107,9 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
         </div>
 
         {/* Quick Insert Templates */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-zinc-800/80 text-xs">
-          <span className="text-zinc-500 text-[11px] mr-1 flex items-center gap-1">
+        {/* Quick Insert Templates */}
+        <div className="flex items-center gap-1.5 overflow-x-auto touch-pan-x scrollbar-none pt-2 border-t border-zinc-800/80 text-xs -mx-1 px-1">
+          <span className="text-zinc-500 text-[11px] mr-1 flex items-center gap-1 shrink-0">
             <Sparkles size={12} className="text-yellow-500" />
             {lang === 'ru' ? 'Шаблоны:' : 'Templates:'}
           </span>
@@ -119,7 +120,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
                 ? `### 📅 Сессия [${new Date().toLocaleDateString()}]:\n- **Место:** \n- **События:** \n- **Итоги:** `
                 : `### 📅 Session [${new Date().toLocaleDateString()}]:\n- **Location:** \n- **Events:** \n- **Outcome:** `
             )}
-            className="flex items-center gap-1 px-2 py-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px]"
+            className="flex items-center gap-1 px-2.5 py-1.5 min-h-[30px] bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px] shrink-0"
           >
             <Calendar size={12} className="text-cyan-400" />
             <span>{lang === 'ru' ? '+ Сессия' : '+ Session'}</span>
@@ -131,7 +132,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
                 ? `- **👤 NPC / Контакт:** [Имя]\n  - Роль: \n  - Связь: \n  - Отношение: \n  - Заметки: `
                 : `- **👤 NPC / Contact:** [Name]\n  - Role: \n  - Affiliation: \n  - Attitude: \n  - Notes: `
             )}
-            className="flex items-center gap-1 px-2 py-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px]"
+            className="flex items-center gap-1 px-2.5 py-1.5 min-h-[30px] bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px] shrink-0"
           >
             <UserPlus size={12} className="text-emerald-400" />
             <span>{lang === 'ru' ? '+ Контакт / NPC' : '+ NPC Contact'}</span>
@@ -143,7 +144,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
                 ? `- **🎯 Контракт:** [Название/Цель]\n  - Заказчик: \n  - Задача: \n  - Награда: [eb]\n  - Дедлайн / Риски: `
                 : `- **🎯 Contract:** [Name/Target]\n  - Employer: \n  - Objective: \n  - Reward: [eb]\n  - Deadline / Risks: `
             )}
-            className="flex items-center gap-1 px-2 py-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px]"
+            className="flex items-center gap-1 px-2.5 py-1.5 min-h-[30px] bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px] shrink-0"
           >
             <Target size={12} className="text-red-400" />
             <span>{lang === 'ru' ? '+ Контракт' : '+ Contract'}</span>
@@ -155,7 +156,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
                 ? `- **📦 Лут / Схрон:** \n  - Предметы: \n  - Локация / Пароль: `
                 : `- **📦 Loot / Stash:** \n  - Items: \n  - Location / Code: `
             )}
-            className="flex items-center gap-1 px-2 py-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px]"
+            className="flex items-center gap-1 px-2.5 py-1.5 min-h-[30px] bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px] shrink-0"
           >
             <Coins size={12} className="text-yellow-400" />
             <span>{lang === 'ru' ? '+ Лут' : '+ Loot'}</span>
@@ -167,7 +168,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
                 ? `- **💀 Долг / Враг:** [Кто]\n  - Сумма / Причина: \n  - Срок расплаты: `
                 : `- **💀 Debt / Nemesis:** [Who]\n  - Amount / Reason: \n  - Due Date: `
             )}
-            className="flex items-center gap-1 px-2 py-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px]"
+            className="flex items-center gap-1 px-2.5 py-1.5 min-h-[30px] bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px] shrink-0"
           >
             <Skull size={12} className="text-purple-400" />
             <span>{lang === 'ru' ? '+ Долг / Угроза' : '+ Debt / Enemy'}</span>
@@ -185,8 +186,8 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
               ? 'Введите любые заметки по ходу игры: события сессии, диалоги, шифры, координаты тайников, имена фиксеров...'
               : 'Write down session notes, dialogue clues, safehouse passwords, fixer names...'
           }
-          rows={16}
-          className="w-full bg-zinc-950 border border-zinc-800 focus:border-yellow-500 rounded-lg p-3.5 text-xs sm:text-sm font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none resize-y leading-relaxed"
+          rows={12}
+          className="w-full bg-zinc-950 border border-zinc-800 focus:border-yellow-500 rounded-lg p-3 sm:p-3.5 text-xs sm:text-sm font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none resize-y leading-relaxed min-h-[220px]"
         />
 
         {/* Footer info bar */}

@@ -130,7 +130,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => handleSoloPointChange('threatDetection', -1)}
-                  className="w-5 h-5 bg-zinc-800 rounded text-xs text-zinc-300"
+                  className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition"
                 >
                   -
                 </button>
@@ -139,7 +139,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
                 </span>
                 <button
                   onClick={() => handleSoloPointChange('threatDetection', 1)}
-                  className="w-5 h-5 bg-zinc-800 rounded text-xs text-zinc-300"
+                  className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition"
                 >
                   +
                 </button>
@@ -155,7 +155,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => handleSoloPointChange('initiativeReaction', -1)}
-                  className="w-5 h-5 bg-zinc-800 rounded text-xs text-zinc-300"
+                  className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition"
                 >
                   -
                 </button>
@@ -164,7 +164,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
                 </span>
                 <button
                   onClick={() => handleSoloPointChange('initiativeReaction', 1)}
-                  className="w-5 h-5 bg-zinc-800 rounded text-xs text-zinc-300"
+                  className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition"
                 >
                   +
                 </button>
@@ -180,7 +180,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => handleSoloPointChange('precisionAttack', -1)}
-                  className="w-5 h-5 bg-zinc-800 rounded text-xs text-zinc-300"
+                  className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition"
                 >
                   -
                 </button>
@@ -189,7 +189,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
                 </span>
                 <button
                   onClick={() => handleSoloPointChange('precisionAttack', 1)}
-                  className="w-5 h-5 bg-zinc-800 rounded text-xs text-zinc-300"
+                  className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition"
                 >
                   +
                 </button>
@@ -205,7 +205,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => handleSoloPointChange('spotWeakness', -1)}
-                  className="w-5 h-5 bg-zinc-800 rounded text-xs text-zinc-300"
+                  className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition"
                 >
                   -
                 </button>
@@ -214,7 +214,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
                 </span>
                 <button
                   onClick={() => handleSoloPointChange('spotWeakness', 1)}
-                  className="w-5 h-5 bg-zinc-800 rounded text-xs text-zinc-300"
+                  className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition"
                 >
                   +
                 </button>
@@ -230,7 +230,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => handleSoloPointChange('damageAbsorb', -1)}
-                  className="w-5 h-5 bg-zinc-800 rounded text-xs text-zinc-300"
+                  className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition"
                 >
                   -
                 </button>
@@ -239,7 +239,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
                 </span>
                 <button
                   onClick={() => handleSoloPointChange('damageAbsorb', 1)}
-                  className="w-5 h-5 bg-zinc-800 rounded text-xs text-zinc-300"
+                  className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition"
                 >
                   +
                 </button>
@@ -257,33 +257,33 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <span className="text-xs text-zinc-200 font-bold">{t.fieldExpertise}</span>
               <div className="flex items-center gap-1.5">
-                <button onClick={() => handleTechPointChange('fieldExpertise', -1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">-</button>
-                <span className="font-orbitron font-bold text-xs text-white">{character.roleAbilities.tech.fieldExpertise}</span>
-                <button onClick={() => handleTechPointChange('fieldExpertise', 1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">+</button>
+                <button onClick={() => handleTechPointChange('fieldExpertise', -1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">-</button>
+                <span className="font-orbitron font-bold text-xs text-white min-w-[16px] text-center">{character.roleAbilities.tech.fieldExpertise}</span>
+                <button onClick={() => handleTechPointChange('fieldExpertise', 1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">+</button>
               </div>
             </div>
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <span className="text-xs text-zinc-200 font-bold">{t.upgrade}</span>
               <div className="flex items-center gap-1.5">
-                <button onClick={() => handleTechPointChange('upgrade', -1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">-</button>
-                <span className="font-orbitron font-bold text-xs text-white">{character.roleAbilities.tech.upgrade}</span>
-                <button onClick={() => handleTechPointChange('upgrade', 1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">+</button>
+                <button onClick={() => handleTechPointChange('upgrade', -1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">-</button>
+                <span className="font-orbitron font-bold text-xs text-white min-w-[16px] text-center">{character.roleAbilities.tech.upgrade}</span>
+                <button onClick={() => handleTechPointChange('upgrade', 1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">+</button>
               </div>
             </div>
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <span className="text-xs text-zinc-200 font-bold">{t.fabrication}</span>
               <div className="flex items-center gap-1.5">
-                <button onClick={() => handleTechPointChange('fabrication', -1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">-</button>
-                <span className="font-orbitron font-bold text-xs text-white">{character.roleAbilities.tech.fabrication}</span>
-                <button onClick={() => handleTechPointChange('fabrication', 1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">+</button>
+                <button onClick={() => handleTechPointChange('fabrication', -1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">-</button>
+                <span className="font-orbitron font-bold text-xs text-white min-w-[16px] text-center">{character.roleAbilities.tech.fabrication}</span>
+                <button onClick={() => handleTechPointChange('fabrication', 1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">+</button>
               </div>
             </div>
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <span className="text-xs text-zinc-200 font-bold">{t.invention}</span>
               <div className="flex items-center gap-1.5">
-                <button onClick={() => handleTechPointChange('invention', -1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">-</button>
-                <span className="font-orbitron font-bold text-xs text-white">{character.roleAbilities.tech.invention}</span>
-                <button onClick={() => handleTechPointChange('invention', 1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">+</button>
+                <button onClick={() => handleTechPointChange('invention', -1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">-</button>
+                <span className="font-orbitron font-bold text-xs text-white min-w-[16px] text-center">{character.roleAbilities.tech.invention}</span>
+                <button onClick={() => handleTechPointChange('invention', 1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">+</button>
               </div>
             </div>
           </div>
@@ -298,25 +298,25 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <span className="text-xs text-zinc-200 font-bold">{t.surgery}</span>
               <div className="flex items-center gap-1.5">
-                <button onClick={() => handleMedtechPointChange('surgery', -1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">-</button>
-                <span className="font-orbitron font-bold text-xs text-white">{character.roleAbilities.medtech.surgery}</span>
-                <button onClick={() => handleMedtechPointChange('surgery', 1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">+</button>
+                <button onClick={() => handleMedtechPointChange('surgery', -1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">-</button>
+                <span className="font-orbitron font-bold text-xs text-white min-w-[16px] text-center">{character.roleAbilities.medtech.surgery}</span>
+                <button onClick={() => handleMedtechPointChange('surgery', 1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">+</button>
               </div>
             </div>
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <span className="text-xs text-zinc-200 font-bold">{t.medicalTech}</span>
               <div className="flex items-center gap-1.5">
-                <button onClick={() => handleMedtechPointChange('medicalTech', -1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">-</button>
-                <span className="font-orbitron font-bold text-xs text-white">{character.roleAbilities.medtech.medicalTech}</span>
-                <button onClick={() => handleMedtechPointChange('medicalTech', 1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">+</button>
+                <button onClick={() => handleMedtechPointChange('medicalTech', -1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">-</button>
+                <span className="font-orbitron font-bold text-xs text-white min-w-[16px] text-center">{character.roleAbilities.medtech.medicalTech}</span>
+                <button onClick={() => handleMedtechPointChange('medicalTech', 1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">+</button>
               </div>
             </div>
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <span className="text-xs text-zinc-200 font-bold">{t.pharmaceuticals}</span>
               <div className="flex items-center gap-1.5">
-                <button onClick={() => handleMedtechPointChange('pharmaceuticals', -1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">-</button>
-                <span className="font-orbitron font-bold text-xs text-white">{character.roleAbilities.medtech.pharmaceuticals}</span>
-                <button onClick={() => handleMedtechPointChange('pharmaceuticals', 1)} className="w-5 h-5 bg-zinc-800 rounded text-xs">+</button>
+                <button onClick={() => handleMedtechPointChange('pharmaceuticals', -1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">-</button>
+                <span className="font-orbitron font-bold text-xs text-white min-w-[16px] text-center">{character.roleAbilities.medtech.pharmaceuticals}</span>
+                <button onClick={() => handleMedtechPointChange('pharmaceuticals', 1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">+</button>
               </div>
             </div>
           </div>

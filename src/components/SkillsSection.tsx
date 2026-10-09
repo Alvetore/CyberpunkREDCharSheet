@@ -151,7 +151,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
         </div>
 
         {/* Category Filter Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        <div className="flex items-center gap-1.5 overflow-x-auto touch-pan-x scrollbar-none pb-1 text-xs -mx-1 px-1">
           <SlidersHorizontal size={14} className="text-zinc-500 shrink-0 mr-1" />
           {CATEGORIES.map((cat) => (
             <button
@@ -160,7 +160,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 sfx.playClick();
                 setSelectedCategory(cat.key);
               }}
-              className={`px-2.5 py-1 rounded-full whitespace-nowrap transition text-[11px] font-semibold ${
+              className={`px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 transition text-[11px] font-semibold min-h-[30px] flex items-center justify-center ${
                 selectedCategory === cat.key
                   ? 'bg-red-600 text-white shadow-sm shadow-red-950'
                   : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
@@ -276,10 +276,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               </div>
 
               {/* Skill Level adjuster & Total Base */}
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {/* Level Controls */}
                 <div
-                  className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5"
+                  className="flex items-center gap-0.5 bg-zinc-950 border border-zinc-800 rounded px-1 py-0.5"
                   title={
                     skill.level < 10
                       ? lang === 'ru'
@@ -290,7 +290,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 >
                   <button
                     onClick={() => handleLevelChange(skill.id, -1)}
-                    className="text-zinc-500 hover:text-white font-bold text-xs w-4 text-center"
+                    className="text-zinc-400 hover:text-white font-bold text-sm w-6 h-6 flex items-center justify-center transition"
                   >
                     -
                   </button>
@@ -299,7 +299,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                   </span>
                   <button
                     onClick={() => handleLevelChange(skill.id, 1)}
-                    className="text-zinc-500 hover:text-white font-bold text-xs w-4 text-center"
+                    className="text-zinc-400 hover:text-white font-bold text-sm w-6 h-6 flex items-center justify-center transition"
                   >
                     +
                   </button>
@@ -309,7 +309,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 <button
                   onClick={() => onRollSkill(skill, effectiveBase)}
                   title={`Бросить ${lang === 'ru' ? skill.nameRu : skill.nameEn}: База (${effectiveBase}) + 1d10`}
-                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-mono font-bold border transition ${
+                  className={`flex items-center gap-1 px-2.5 py-1.5 min-h-[30px] rounded text-xs font-mono font-bold border transition ${
                     effectiveBase >= 14
                       ? 'bg-red-950/40 hover:bg-red-600 hover:text-white border-red-700 text-red-300'
                       : 'bg-zinc-950 hover:bg-zinc-800 border-zinc-800 text-zinc-200'

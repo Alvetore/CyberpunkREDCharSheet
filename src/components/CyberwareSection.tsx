@@ -219,7 +219,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
       {/* Add Cyberware Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
-          <div className="bg-zinc-900 border-2 border-cyan-500 w-full max-w-lg rounded-lg shadow-2xl p-4 sm:p-5 space-y-4">
+          <div className="bg-zinc-900 border-2 border-cyan-500 w-full max-w-lg rounded-lg shadow-2xl p-4 sm:p-5 space-y-4 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
               <h3 className="font-orbitron font-bold text-cyan-400 text-sm uppercase">
                 {t.addCyberware}
@@ -243,7 +243,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                   const preset = presets.find((p) => p.name === e.target.value);
                   if (preset) handleApplyPreset(preset);
                 }}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-xs"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-xs min-h-[38px]"
               >
                 <option value="">{lang === 'ru' ? 'Выберите из каталога...' : 'Select from catalog...'}</option>
                 {(lang === 'ru' ? CYBERWARE_PRESETS_RU : CYBERWARE_PRESETS_EN).map((p) => (
@@ -254,7 +254,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
                   {lang === 'ru' ? 'Название импланта' : 'Cyberware Name'}

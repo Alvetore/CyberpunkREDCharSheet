@@ -88,7 +88,7 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
 
         <button
           onClick={handleGenerateFullLifepath}
-          className="flex items-center gap-2 px-3.5 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-black font-orbitron font-black text-xs uppercase tracking-wider rounded transition shadow-md shadow-yellow-950"
+          className="flex items-center gap-2 px-3.5 py-2 min-h-[38px] bg-yellow-500 hover:bg-yellow-400 text-black font-orbitron font-black text-xs uppercase tracking-wider rounded transition shadow-md shadow-yellow-950"
         >
           <Sparkles size={14} />
           <span>{t.generateRandomLifepath}</span>
@@ -111,17 +111,17 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               </label>
               <button
                 onClick={() => rerollField('personality', CPR_LIFEPATH_TABLES.personalities)}
-                className="text-zinc-500 hover:text-yellow-400 p-0.5"
+                className="text-zinc-500 hover:text-yellow-400 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center rounded hover:bg-zinc-800 transition"
                 title={lang === 'ru' ? "Случайный выбор" : "Random roll"}
               >
-                <Dices size={12} />
+                <Dices size={14} />
               </button>
             </div>
             <textarea
               rows={2}
               value={lp.personality}
               onChange={(e) => updateField('personality', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 min-h-[52px]"
             />
           </div>
 
@@ -132,16 +132,16 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               </label>
               <button
                 onClick={() => rerollField('clothingStyle', CPR_LIFEPATH_TABLES.clothingStyles)}
-                className="text-zinc-500 hover:text-yellow-400 p-0.5"
+                className="text-zinc-500 hover:text-yellow-400 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center rounded hover:bg-zinc-800 transition"
               >
-                <Dices size={12} />
+                <Dices size={14} />
               </button>
             </div>
             <textarea
               rows={2}
               value={lp.clothingStyle}
               onChange={(e) => updateField('clothingStyle', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 min-h-[52px]"
             />
           </div>
 
@@ -152,16 +152,16 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               </label>
               <button
                 onClick={() => rerollField('hairstyle', CPR_LIFEPATH_TABLES.hairstyles)}
-                className="text-zinc-500 hover:text-yellow-400 p-0.5"
+                className="text-zinc-500 hover:text-yellow-400 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center rounded hover:bg-zinc-800 transition"
               >
-                <Dices size={12} />
+                <Dices size={14} />
               </button>
             </div>
             <input
               type="text"
               value={lp.hairstyle}
               onChange={(e) => updateField('hairstyle', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 min-h-[36px] text-xs text-zinc-100"
             />
           </div>
 
@@ -172,16 +172,16 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               </label>
               <button
                 onClick={() => rerollField('affectation', CPR_LIFEPATH_TABLES.affectations)}
-                className="text-zinc-500 hover:text-yellow-400 p-0.5"
+                className="text-zinc-500 hover:text-yellow-400 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center rounded hover:bg-zinc-800 transition"
               >
-                <Dices size={12} />
+                <Dices size={14} />
               </button>
             </div>
             <input
               type="text"
               value={lp.affectation}
               onChange={(e) => updateField('affectation', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 min-h-[36px] text-xs text-zinc-100"
             />
           </div>
         </div>
@@ -200,16 +200,16 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               </label>
               <button
                 onClick={() => rerollField('valueMost', CPR_LIFEPATH_TABLES.valueMost)}
-                className="text-zinc-500 hover:text-yellow-400 p-0.5"
+                className="text-zinc-500 hover:text-yellow-400 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center rounded hover:bg-zinc-800 transition"
               >
-                <Dices size={12} />
+                <Dices size={14} />
               </button>
             </div>
             <input
               type="text"
               value={lp.valueMost}
               onChange={(e) => updateField('valueMost', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 min-h-[36px] text-xs text-zinc-100"
             />
           </div>
 
@@ -220,16 +220,16 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               </label>
               <button
                 onClick={() => rerollField('feelingsAboutPeople', CPR_LIFEPATH_TABLES.feelingsAboutPeople)}
-                className="text-zinc-500 hover:text-yellow-400 p-0.5"
+                className="text-zinc-500 hover:text-yellow-400 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center rounded hover:bg-zinc-800 transition"
               >
-                <Dices size={12} />
+                <Dices size={14} />
               </button>
             </div>
             <textarea
               rows={2}
               value={lp.feelingsAboutPeople}
               onChange={(e) => updateField('feelingsAboutPeople', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 min-h-[52px]"
             />
           </div>
 
@@ -241,7 +241,7 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               type="text"
               value={lp.valuedPerson}
               onChange={(e) => updateField('valuedPerson', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 min-h-[36px] text-xs text-zinc-100"
             />
           </div>
 
@@ -253,7 +253,7 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               type="text"
               value={lp.valuedPossession}
               onChange={(e) => updateField('valuedPossession', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 min-h-[36px] text-xs text-zinc-100"
             />
           </div>
 
@@ -264,16 +264,16 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               </label>
               <button
                 onClick={() => rerollField('lifeGoals', CPR_LIFEPATH_TABLES.lifeGoals)}
-                className="text-zinc-500 hover:text-yellow-400 p-0.5"
+                className="text-zinc-500 hover:text-yellow-400 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center rounded hover:bg-zinc-800 transition"
               >
-                <Dices size={12} />
+                <Dices size={14} />
               </button>
             </div>
             <input
               type="text"
               value={lp.lifeGoals}
               onChange={(e) => updateField('lifeGoals', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 min-h-[36px] text-xs text-zinc-100"
             />
           </div>
         </div>
@@ -292,16 +292,16 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               </label>
               <button
                 onClick={() => rerollField('familyBackground', CPR_LIFEPATH_TABLES.familyBackgrounds)}
-                className="text-zinc-500 hover:text-yellow-400 p-0.5"
+                className="text-zinc-500 hover:text-yellow-400 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center rounded hover:bg-zinc-800 transition"
               >
-                <Dices size={12} />
+                <Dices size={14} />
               </button>
             </div>
             <textarea
               rows={2}
               value={lp.familyBackground}
               onChange={(e) => updateField('familyBackground', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 min-h-[52px]"
             />
           </div>
 
@@ -312,16 +312,16 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               </label>
               <button
                 onClick={() => rerollField('familyCrisis', CPR_LIFEPATH_TABLES.familyCrises)}
-                className="text-zinc-500 hover:text-yellow-400 p-0.5"
+                className="text-zinc-500 hover:text-yellow-400 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center rounded hover:bg-zinc-800 transition"
               >
-                <Dices size={12} />
+                <Dices size={14} />
               </button>
             </div>
             <textarea
               rows={2}
               value={lp.familyCrisis}
               onChange={(e) => updateField('familyCrisis', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 min-h-[52px]"
             />
           </div>
 
@@ -333,7 +333,7 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               type="text"
               value={lp.friends}
               onChange={(e) => updateField('friends', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 min-h-[36px] text-xs text-zinc-100"
             />
           </div>
 
@@ -345,7 +345,7 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               type="text"
               value={lp.enemies}
               onChange={(e) => updateField('enemies', e.target.value)}
-              className="w-full bg-zinc-950 border border-red-900/60 rounded px-2.5 py-1 text-xs text-zinc-100"
+              className="w-full bg-zinc-950 border border-red-900/60 rounded px-2.5 py-1.5 min-h-[36px] text-xs text-zinc-100"
             />
           </div>
         </div>

@@ -188,58 +188,60 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
 
       {/* Range DV Interactive Table Collapsible */}
       {showRangeMatrix && (
-        <div className="bg-zinc-900 border border-red-800/60 rounded-lg p-3 sm:p-4 shadow-xl overflow-x-auto">
-          <div className="flex items-center justify-between mb-2">
+        <div className="bg-zinc-900 border border-red-800/60 rounded-lg p-3 sm:p-4 shadow-xl space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1">
             <span className="text-xs font-orbitron font-bold text-yellow-400 uppercase">
               {lang === 'ru' ? 'Официальная таблица сложностей стрельбы (Cyberpunk RED Range DV Table)' : 'Cyberpunk RED Range DV Table'}
             </span>
-            <span className="text-[11px] text-zinc-400">
-              {lang === 'ru' ? '* Кликните на ячейку с DV для мгновенного броска атаки' : '* Click any DV cell to roll an immediate attack'}
+            <span className="text-[10px] text-zinc-400">
+              {lang === 'ru' ? '← Прокрутка по горизонтали • Кликните DV для атаки →' : '← Swipe horizontally • Click DV to roll attack →'}
             </span>
           </div>
 
-          <table className="w-full text-xs text-left border-collapse min-w-[700px]">
-            <thead>
-              <tr className="border-b border-zinc-800 text-zinc-400 font-mono text-[11px]">
-                <th className="py-2 px-2">{lang === 'ru' ? 'Категория оружия' : 'Weapon Category'}</th>
-                {CPR_RANGE_DISTANCES.map((dist) => (
-                  <th key={dist} className="py-2 px-1 text-center font-bold text-zinc-300">
-                    {dist}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {CPR_RANGE_DV_TABLE.map((row) => (
-                <tr key={row.category} className="border-b border-zinc-800/50 hover:bg-zinc-800/40">
-                  <td className="py-2 px-2 font-semibold text-zinc-200">{lang === 'ru' ? row.nameRu : row.category}</td>
-                  {row.dvs.map((dv, idx) => (
-                    <td key={idx} className="py-1 px-1 text-center">
-                      {dv !== null ? (
-                        <button
-                          onClick={() => {
-                            // Find matching weapon or default attack
-                            const matchedWeapon = character.weapons.find((w) =>
-                              w.category.toLowerCase().includes(row.category.toLowerCase().split(' ')[0])
-                            ) || character.weapons[0];
-                            if (matchedWeapon) {
-                              onRollWeaponAttack(matchedWeapon, dv, CPR_RANGE_DISTANCES[idx]);
-                            }
-                          }}
-                          title={lang === 'ru' ? `Бросить атаку против DV ${dv} на дистанции ${CPR_RANGE_DISTANCES[idx]}` : `Roll attack vs DV ${dv} at range ${CPR_RANGE_DISTANCES[idx]}`}
-                          className="px-2 py-1 bg-zinc-800 hover:bg-red-600 hover:text-white border border-zinc-700 hover:border-red-500 rounded font-mono font-bold text-zinc-200 transition text-[11px]"
-                        >
-                          {dv}
-                        </button>
-                      ) : (
-                        <span className="text-zinc-600 font-mono">-</span>
-                      )}
-                    </td>
+          <div className="overflow-x-auto touch-pan-x -mx-2 px-2 sm:mx-0 sm:px-0">
+            <table className="w-full text-xs text-left border-collapse min-w-[680px]">
+              <thead>
+                <tr className="border-b border-zinc-800 text-zinc-400 font-mono text-[11px]">
+                  <th className="py-2 px-2">{lang === 'ru' ? 'Категория оружия' : 'Weapon Category'}</th>
+                  {CPR_RANGE_DISTANCES.map((dist) => (
+                    <th key={dist} className="py-2 px-1 text-center font-bold text-zinc-300">
+                      {dist}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {CPR_RANGE_DV_TABLE.map((row) => (
+                  <tr key={row.category} className="border-b border-zinc-800/50 hover:bg-zinc-800/40">
+                    <td className="py-2 px-2 font-semibold text-zinc-200">{lang === 'ru' ? row.nameRu : row.category}</td>
+                    {row.dvs.map((dv, idx) => (
+                      <td key={idx} className="py-1 px-1 text-center">
+                        {dv !== null ? (
+                          <button
+                            onClick={() => {
+                              // Find matching weapon or default attack
+                              const matchedWeapon = character.weapons.find((w) =>
+                                w.category.toLowerCase().includes(row.category.toLowerCase().split(' ')[0])
+                              ) || character.weapons[0];
+                              if (matchedWeapon) {
+                                onRollWeaponAttack(matchedWeapon, dv, CPR_RANGE_DISTANCES[idx]);
+                              }
+                            }}
+                            title={lang === 'ru' ? `Бросить атаку против DV ${dv} на дистанции ${CPR_RANGE_DISTANCES[idx]}` : `Roll attack vs DV ${dv} at range ${CPR_RANGE_DISTANCES[idx]}`}
+                            className="px-2.5 py-1.5 min-h-[30px] min-w-[30px] bg-zinc-800 hover:bg-red-600 hover:text-white border border-zinc-700 hover:border-red-500 rounded font-mono font-bold text-zinc-200 transition text-xs inline-flex items-center justify-center"
+                          >
+                            {dv}
+                          </button>
+                        ) : (
+                          <span className="text-zinc-600 font-mono">-</span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -313,7 +315,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                     <button
                       disabled={weapon.currentAmmo <= 0}
                       onClick={() => handleFireSingle(weapon.id)}
-                      className="flex-1 py-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-xs font-semibold rounded transition disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="flex-1 py-2 sm:py-1 min-h-[36px] bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-xs font-semibold rounded transition disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
                     >
                       {t.fireSingle}
                     </button>
@@ -321,14 +323,14 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                       <button
                         disabled={weapon.currentAmmo < 10}
                         onClick={() => handleFireAutofire(weapon.id)}
-                        className="flex-1 py-1 bg-zinc-800 hover:bg-red-950 border border-zinc-700 text-red-300 text-xs font-semibold rounded transition disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="flex-1 py-2 sm:py-1 min-h-[36px] bg-zinc-800 hover:bg-red-950 border border-zinc-700 text-red-300 text-xs font-semibold rounded transition disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
                       >
                         {t.fireAutofire}
                       </button>
                     )}
                     <button
                       onClick={() => handleReload(weapon.id)}
-                      className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs font-semibold rounded transition flex items-center gap-1"
+                      className="px-2.5 py-2 sm:py-1 min-h-[36px] bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs font-semibold rounded transition flex items-center justify-center gap-1"
                       title={t.reload}
                     >
                       <RotateCcw size={13} />
@@ -340,7 +342,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => onRollWeaponAttack(weapon)}
-                    className="py-1.5 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 shadow-sm"
+                    className="py-2.5 sm:py-1.5 min-h-[38px] bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 shadow-sm"
                   >
                     <Crosshair size={14} />
                     {t.rollAttack}
@@ -348,7 +350,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
 
                   <button
                     onClick={() => onRollWeaponDamage(weapon)}
-                    className="py-1.5 bg-zinc-800 hover:bg-yellow-950/60 border border-yellow-700/60 text-yellow-300 font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5"
+                    className="py-2.5 sm:py-1.5 min-h-[38px] bg-zinc-800 hover:bg-yellow-950/60 border border-yellow-700/60 text-yellow-300 font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5"
                   >
                     <Flame size={14} />
                     {t.rollDamage} ({weapon.damage})
@@ -363,14 +365,14 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
       {/* Add Weapon Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
-          <div className="bg-zinc-900 border-2 border-red-600 w-full max-w-lg rounded-lg shadow-2xl p-4 sm:p-5 space-y-4">
+          <div className="bg-zinc-900 border-2 border-red-600 w-full max-w-lg rounded-lg shadow-2xl p-4 sm:p-5 space-y-4 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
               <h3 className="font-orbitron font-bold text-red-500 text-sm uppercase">
                 {t.addWeapon}
               </h3>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-zinc-400 hover:text-white"
+                className="text-zinc-400 hover:text-white p-1"
               >
                 ✕
               </button>
@@ -386,7 +388,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   const preset = WEAPON_PRESETS.find((p) => p.name === e.target.value);
                   if (preset) handleApplyPreset(preset);
                 }}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-2 text-zinc-100 text-sm focus:border-red-500 focus:outline-none min-h-[38px]"
               >
                 <option value="">{lang === 'ru' ? 'Выберите шаблон...' : 'Select template...'}</option>
                 {WEAPON_PRESETS.map((p) => (
@@ -397,7 +399,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
                   {t.weaponName}
@@ -406,7 +408,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   type="text"
                   value={newWeapon.name}
                   onChange={(e) => setNewWeapon({ ...newWeapon, name: e.target.value })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none min-h-[36px]"
                 />
               </div>
 
@@ -418,7 +420,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   type="text"
                   value={newWeapon.category}
                   onChange={(e) => setNewWeapon({ ...newWeapon, category: e.target.value as WeaponCategory })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none min-h-[36px]"
                 />
               </div>
 
@@ -430,7 +432,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   type="text"
                   value={newWeapon.damage}
                   onChange={(e) => setNewWeapon({ ...newWeapon, damage: e.target.value })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none min-h-[36px]"
                 />
               </div>
 
@@ -444,7 +446,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   max="2"
                   value={newWeapon.standardRof}
                   onChange={(e) => setNewWeapon({ ...newWeapon, standardRof: parseInt(e.target.value, 10) || 1 })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none min-h-[36px]"
                 />
               </div>
 
@@ -456,7 +458,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   type="number"
                   value={newWeapon.magCapacity}
                   onChange={(e) => setNewWeapon({ ...newWeapon, magCapacity: parseInt(e.target.value, 10) || 0 })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none min-h-[36px]"
                 />
               </div>
 
@@ -468,7 +470,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   type="text"
                   value={newWeapon.ammoType}
                   onChange={(e) => setNewWeapon({ ...newWeapon, ammoType: e.target.value })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none min-h-[36px]"
                 />
               </div>
             </div>

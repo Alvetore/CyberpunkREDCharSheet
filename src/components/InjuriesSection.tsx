@@ -194,13 +194,13 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
             <div className="flex items-center justify-between gap-2 pt-1 text-xs">
               <button
                 onClick={() => handleAblateArmor('head', 1)}
-                className="flex-1 py-1 bg-zinc-900 hover:bg-red-950 border border-zinc-800 text-red-300 rounded font-semibold transition"
+                className="flex-1 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-red-950 border border-zinc-800 text-red-300 rounded font-semibold transition flex items-center justify-center"
               >
                 {t.armorAblate}
               </button>
               <button
                 onClick={() => handleRestoreArmor('head')}
-                className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 rounded font-semibold transition flex items-center gap-1"
+                className="px-3 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 rounded font-semibold transition flex items-center justify-center gap-1"
                 title={t.armorRestore}
               >
                 <RotateCcw size={12} />
@@ -253,13 +253,13 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
             <div className="flex items-center justify-between gap-2 pt-1 text-xs">
               <button
                 onClick={() => handleAblateArmor('body', 1)}
-                className="flex-1 py-1 bg-zinc-900 hover:bg-red-950 border border-zinc-800 text-red-300 rounded font-semibold transition"
+                className="flex-1 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-red-950 border border-zinc-800 text-red-300 rounded font-semibold transition flex items-center justify-center"
               >
                 {t.armorAblate}
               </button>
               <button
                 onClick={() => handleRestoreArmor('body')}
-                className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 rounded font-semibold transition flex items-center gap-1"
+                className="px-3 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 rounded font-semibold transition flex items-center justify-center gap-1"
                 title={t.armorRestore}
               >
                 <RotateCcw size={12} />
@@ -285,20 +285,20 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             <button
               onClick={() => handleRollRandomInjury('head')}
-              className="px-2.5 py-1 bg-zinc-800 hover:bg-red-950 border border-zinc-700 text-red-400 text-xs font-semibold rounded flex items-center gap-1 transition"
+              className="flex-1 sm:flex-none px-3 py-1.5 min-h-[34px] bg-zinc-800 hover:bg-red-950 border border-zinc-700 text-red-400 text-xs font-semibold rounded flex items-center justify-center gap-1.5 transition"
             >
               <Dices size={13} />
-              <span>{lang === 'ru' ? 'Случайная в Голову (2d6)' : 'Random Head (2d6)'}</span>
+              <span>{lang === 'ru' ? 'В Голову (2d6)' : 'Head (2d6)'}</span>
             </button>
             <button
               onClick={() => handleRollRandomInjury('body')}
-              className="px-2.5 py-1 bg-zinc-800 hover:bg-red-950 border border-zinc-700 text-red-400 text-xs font-semibold rounded flex items-center gap-1 transition"
+              className="flex-1 sm:flex-none px-3 py-1.5 min-h-[34px] bg-zinc-800 hover:bg-red-950 border border-zinc-700 text-red-400 text-xs font-semibold rounded flex items-center justify-center gap-1.5 transition"
             >
               <Dices size={13} />
-              <span>{lang === 'ru' ? 'Случайная в Тело (2d6)' : 'Random Body (2d6)'}</span>
+              <span>{lang === 'ru' ? 'В Тело (2d6)' : 'Body (2d6)'}</span>
             </button>
           </div>
         </div>

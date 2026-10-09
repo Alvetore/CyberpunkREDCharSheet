@@ -396,7 +396,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fade-in no-print">
-      <div className="bg-zinc-900 border-2 border-red-600 w-full max-w-4xl rounded-lg shadow-2xl shadow-red-950 flex flex-col max-h-[92vh] overflow-hidden">
+      <div className="bg-zinc-900 border-2 border-red-600 w-full max-w-4xl rounded-lg shadow-2xl shadow-red-950 flex flex-col max-h-[94dvh] sm:max-h-[92vh] overflow-hidden">
         {/* Wizard Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-zinc-950 border-b border-red-800">
           <div className="flex items-center gap-2 text-red-500 font-orbitron font-bold">
@@ -410,14 +410,14 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
               sfx.playClick();
               onClose();
             }}
-            className="text-zinc-400 hover:text-white p-1 hover:bg-zinc-800 rounded transition"
+            className="text-zinc-400 hover:text-white p-1 hover:bg-zinc-800 rounded transition min-w-[32px] min-h-[32px] flex items-center justify-center"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Wizard Stepper Tabs */}
-        <div className="flex items-center border-b border-zinc-800 bg-zinc-950/70 overflow-x-auto text-xs font-orbitron font-semibold uppercase">
+        <div className="flex items-center border-b border-zinc-800 bg-zinc-950/70 overflow-x-auto touch-pan-x scrollbar-none text-xs font-orbitron font-semibold uppercase">
           {[
             { step: 1, title: lang === 'ru' ? '1. Метод и Роль' : '1. Method & Role' },
             { step: 2, title: method === 'pointbuy' ? (lang === 'ru' ? '2. Характеристики (62)' : '2. Stats (62 pts)') : (lang === 'ru' ? '2. Бросок характеристик' : '2. Stat Table Roll') },
@@ -432,12 +432,12 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                 sfx.playClick();
                 setCurrentStep(tab.step);
               }}
-              className={`flex-1 py-2.5 px-2.5 whitespace-nowrap text-center transition ${
+              className={`flex-initial sm:flex-1 py-2.5 px-3 whitespace-nowrap text-center transition shrink-0 min-h-[38px] flex items-center justify-center ${
                 currentStep === tab.step
                   ? 'text-red-500 border-b-2 border-red-500 bg-red-950/20'
                   : currentStep > tab.step
-                  ? 'text-zinc-200'
-                  : 'text-zinc-500'
+                  ? 'text-zinc-200 hover:text-white'
+                  : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
               {tab.title}
@@ -699,9 +699,21 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                           <span className="text-[10px] text-zinc-400 block truncate">{t[k]}</span>
                         </div>
                         <div className="font-orbitron font-black text-2xl text-white my-1.5">{stats[k]}</div>
-                        <div className="flex items-center justify-center gap-1.5 pt-1 border-t border-zinc-900">
-                          <button onClick={() => handleStatAdjust(k, -1)} disabled={stats[k] <= 2} className="w-6 h-6 bg-zinc-800 rounded font-bold">-</button>
-                          <button onClick={() => handleStatAdjust(k, 1)} disabled={stats[k] >= 8 || statsRemaining <= 0} className="w-6 h-6 bg-zinc-800 rounded font-bold">+</button>
+                        <div className="flex items-center justify-center gap-2 pt-1 border-t border-zinc-900">
+                          <button
+                            onClick={() => handleStatAdjust(k, -1)}
+                            disabled={stats[k] <= 2}
+                            className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 rounded font-bold text-sm flex items-center justify-center transition"
+                          >
+                            -
+                          </button>
+                          <button
+                            onClick={() => handleStatAdjust(k, 1)}
+                            disabled={stats[k] >= 8 || statsRemaining <= 0}
+                            className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 rounded font-bold text-sm flex items-center justify-center transition"
+                          >
+                            +
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -805,21 +817,21 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                           {lang === 'ru' ? 'Ур.' : 'Lvl'} {s.level}
                         </span>
                       ) : (
-                        <div className="flex items-center gap-1 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
+                        <div className="flex items-center gap-1.5 bg-zinc-900 px-1.5 py-1 rounded border border-zinc-800">
                           <button
                             onClick={() => handleSkillLevelAdjust(s.id, -1)}
                             disabled={s.level <= 0}
-                            className="w-4 text-center font-bold text-zinc-400 hover:text-white disabled:opacity-30"
+                            className="w-7 h-7 sm:w-6 sm:h-6 text-center font-bold text-sm text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 disabled:opacity-20 rounded flex items-center justify-center transition"
                           >
                             -
                           </button>
-                          <span className="font-orbitron font-bold text-xs text-white min-w-[16px] text-center">
+                          <span className="font-orbitron font-bold text-xs text-white min-w-[20px] text-center">
                             {s.level}
                           </span>
                           <button
                             onClick={() => handleSkillLevelAdjust(s.id, 1)}
                             disabled={s.level >= 6 || skillsRemaining < s.multiplier}
-                            className="w-4 text-center font-bold text-zinc-400 hover:text-white disabled:opacity-30"
+                            className="w-7 h-7 sm:w-6 sm:h-6 text-center font-bold text-sm text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 disabled:opacity-20 rounded flex items-center justify-center transition"
                           >
                             +
                           </button>
@@ -1150,7 +1162,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
         </div>
 
         {/* Wizard Footer Controls */}
-        <div className="px-4 py-3 bg-zinc-950 border-t border-zinc-850 flex items-center justify-between">
+        <div className="px-4 py-3 bg-zinc-950 border-t border-zinc-850 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => {
@@ -1158,7 +1170,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
               setCurrentStep(Math.max(1, currentStep - 1));
             }}
             disabled={currentStep === 1}
-            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 text-zinc-200 text-xs font-semibold rounded flex items-center gap-1 transition"
+            className="px-4 py-2 min-h-[40px] bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 text-zinc-200 text-xs font-semibold rounded flex items-center gap-1 transition"
           >
             <ChevronLeft size={16} />
             {lang === 'ru' ? 'Назад' : 'Back'}
@@ -1171,7 +1183,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                 sfx.playClick();
                 setCurrentStep(Math.min(6, currentStep + 1));
               }}
-              className="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded flex items-center gap-1 transition shadow-md shadow-red-950"
+              className="px-5 py-2 min-h-[40px] bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded flex items-center gap-1.5 transition shadow-md shadow-red-950"
             >
               {lang === 'ru' ? 'Далее' : 'Next'}
               <ChevronRight size={16} />
@@ -1180,7 +1192,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
             <button
               type="button"
               onClick={handleCompleteCreation}
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-orbitron font-black text-xs uppercase tracking-wider rounded flex items-center gap-1.5 transition shadow-lg shadow-emerald-950"
+              className="px-5 py-2 min-h-[40px] bg-emerald-600 hover:bg-emerald-500 text-white font-orbitron font-black text-xs uppercase tracking-wider rounded flex items-center gap-1.5 transition shadow-lg shadow-emerald-950"
             >
               <Check size={16} />
               {lang === 'ru' ? 'СОЗДАТЬ ПЕРСОНАЖА' : 'CREATE CHARACTER'}

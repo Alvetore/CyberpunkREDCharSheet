@@ -221,7 +221,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto touch-pan-x -mx-2 px-2 sm:mx-0 sm:px-0">
           <table className="w-full text-xs text-left border-collapse min-w-[550px]">
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-400 font-semibold uppercase text-[10px]">
@@ -242,7 +242,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
                     <div className="inline-flex items-center gap-1.5 bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
                       <button
                         onClick={() => handleAdjustQuantity(item.id, -1)}
-                        className="text-zinc-500 hover:text-white font-bold"
+                        className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white font-bold text-sm transition"
                       >
                         -
                       </button>
@@ -251,7 +251,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
                       </span>
                       <button
                         onClick={() => handleAdjustQuantity(item.id, 1)}
-                        className="text-zinc-500 hover:text-white font-bold"
+                        className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white font-bold text-sm transition"
                       >
                         +
                       </button>
@@ -279,7 +279,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
       {/* Add Gear Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
-          <div className="bg-zinc-900 border-2 border-red-600 w-full max-w-md rounded-lg shadow-2xl p-4 space-y-4">
+          <div className="bg-zinc-900 border-2 border-red-600 w-full max-w-md rounded-lg shadow-2xl p-4 space-y-4 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
               <h3 className="font-orbitron font-bold text-red-500 text-sm uppercase">
                 {t.addGear}

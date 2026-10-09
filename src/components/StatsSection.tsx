@@ -190,10 +190,10 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
       </div>
 
       {/* Vital Stats Cards: HP, Humanity, Luck, Death Save */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* HP CARD */}
         <div
-          className={`bg-zinc-900 border rounded-lg p-3 relative overflow-hidden transition-all ${
+          className={`bg-zinc-900 border rounded-lg p-3 sm:p-3.5 relative overflow-hidden transition-all ${
             isMortallyWounded
               ? 'border-red-600 bg-red-950/30 ring-1 ring-red-500'
               : isSeriouslyWounded
@@ -251,25 +251,25 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
           <div className="flex items-center justify-between gap-1 text-xs">
             <button
               onClick={() => handleHpChange(-5)}
-              className="px-2 py-0.5 bg-zinc-800 hover:bg-red-900 border border-zinc-700 text-red-300 rounded font-mono font-bold"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-red-900 border border-zinc-700 text-red-300 rounded font-mono font-bold text-center"
             >
               -5
             </button>
             <button
               onClick={() => handleHpChange(-1)}
-              className="px-2 py-0.5 bg-zinc-800 hover:bg-red-900 border border-zinc-700 text-red-300 rounded font-mono font-bold"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-red-900 border border-zinc-700 text-red-300 rounded font-mono font-bold text-center"
             >
               -1
             </button>
             <button
               onClick={() => handleHpChange(1)}
-              className="px-2 py-0.5 bg-zinc-800 hover:bg-emerald-900 border border-zinc-700 text-emerald-300 rounded font-mono font-bold"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-emerald-900 border border-zinc-700 text-emerald-300 rounded font-mono font-bold text-center"
             >
               +1
             </button>
             <button
               onClick={() => handleHpChange(5)}
-              className="px-2 py-0.5 bg-zinc-800 hover:bg-emerald-900 border border-zinc-700 text-emerald-300 rounded font-mono font-bold"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-emerald-900 border border-zinc-700 text-emerald-300 rounded font-mono font-bold text-center"
             >
               +5
             </button>
@@ -293,7 +293,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                 sfx.playClick();
                 onOpenDamageCalc();
               }}
-              className="w-full py-1 bg-red-950/60 hover:bg-red-800 border border-red-700/80 text-red-300 hover:text-white rounded text-[11px] font-bold font-orbitron uppercase tracking-wider flex items-center justify-center gap-1.5 transition shadow-sm"
+              className="w-full py-1.5 sm:py-1 min-h-[34px] bg-red-950/60 hover:bg-red-800 border border-red-700/80 text-red-300 hover:text-white rounded text-[11px] font-bold font-orbitron uppercase tracking-wider flex items-center justify-center gap-1.5 transition shadow-sm"
             >
               <HeartCrack size={13} />
               <span>{lang === 'ru' ? 'Расчет урона и абляции' : 'Damage & Ablation Calc'}</span>
@@ -302,7 +302,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
         </div>
 
         {/* HUMANITY CARD */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-3.5">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5 font-orbitron font-bold text-xs uppercase text-cyan-400">
               <Brain size={15} />
@@ -334,25 +334,25 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
           <div className="flex items-center justify-between gap-1 text-xs">
             <button
               onClick={() => handleHumanityChange(-5)}
-              className="px-2 py-0.5 bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center"
             >
               -5
             </button>
             <button
               onClick={() => handleHumanityChange(-1)}
-              className="px-2 py-0.5 bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center"
             >
               -1
             </button>
             <button
               onClick={() => handleHumanityChange(1)}
-              className="px-2 py-0.5 bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center"
             >
               +1
             </button>
             <button
               onClick={() => handleHumanityChange(5)}
-              className="px-2 py-0.5 bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center"
             >
               +5
             </button>
@@ -360,7 +360,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
         </div>
 
         {/* LUCK POINTS CARD */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-3.5">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5 font-orbitron font-bold text-xs uppercase text-yellow-400">
               <Sparkles size={15} />
@@ -371,7 +371,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                 sfx.playClick();
                 onUpdateCharacter({ ...character, luckCurrent: character.stats.LUCK });
               }}
-              className="text-xs text-zinc-400 hover:text-yellow-400 flex items-center gap-1 transition"
+              className="text-xs text-zinc-400 hover:text-yellow-400 flex items-center gap-1 transition min-h-[24px]"
               title={t.resetLuck}
             >
               <RotateCcw size={12} />
@@ -402,7 +402,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                 sfx.playClick();
                 onUpdateCharacter({ ...character, luckCurrent: Math.max(0, character.luckCurrent - 1) });
               }}
-              className="flex-1 py-0.5 bg-zinc-800 hover:bg-yellow-900 border border-zinc-700 text-yellow-300 rounded font-bold transition disabled:opacity-40"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[34px] bg-zinc-800 hover:bg-yellow-900 border border-zinc-700 text-yellow-300 rounded font-bold transition disabled:opacity-40"
             >
               {lang === 'ru' ? '-1 Потратить' : '-1 Spend'}
             </button>
@@ -415,7 +415,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                   luckCurrent: Math.min(character.stats.LUCK, character.luckCurrent + 1)
                 });
               }}
-              className="flex-1 py-0.5 bg-zinc-800 hover:bg-yellow-900 border border-zinc-700 text-yellow-300 rounded font-bold transition disabled:opacity-40"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[34px] bg-zinc-800 hover:bg-yellow-900 border border-zinc-700 text-yellow-300 rounded font-bold transition disabled:opacity-40"
             >
               {lang === 'ru' ? '+1 Добавить' : '+1 Add'}
             </button>
@@ -423,7 +423,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
         </div>
 
         {/* DEATH SAVE CARD */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-3.5">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5 font-orbitron font-bold text-xs uppercase text-red-500">
               <Skull size={15} />
@@ -441,7 +441,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                 {character.deathSavePenalties > 0 ? ` (+${character.deathSavePenalties})` : ''}
               </span>
             </span>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => {
                   sfx.playClick();
@@ -450,7 +450,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                     deathSavePenalties: Math.max(0, character.deathSavePenalties - 1)
                   });
                 }}
-                className="w-5 h-5 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center font-bold text-xs"
+                className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center font-bold text-sm"
               >
                 -
               </button>
@@ -462,7 +462,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                     deathSavePenalties: character.deathSavePenalties + 1
                   });
                 }}
-                className="w-5 h-5 bg-zinc-800 hover:bg-red-900 rounded text-red-300 flex items-center justify-center font-bold text-xs"
+                className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-red-900 rounded text-red-300 flex items-center justify-center font-bold text-sm"
               >
                 +
               </button>
@@ -471,7 +471,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
 
           <button
             onClick={onRollDeathSave}
-            className="w-full py-1.5 bg-red-900/60 hover:bg-red-800 border border-red-700 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5"
+            className="w-full py-2 sm:py-1.5 min-h-[36px] bg-red-900/60 hover:bg-red-800 border border-red-700 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 shadow-sm"
           >
             <Dices size={14} />
             {t.rollDeathSave}
@@ -528,20 +528,20 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                 <div className="flex items-center justify-center gap-1 pt-1 border-t border-zinc-900">
                   <button
                     onClick={() => handleStatChange(statKey, -1)}
-                    className="w-5 h-5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded text-xs font-bold transition"
+                    className="w-7 h-7 sm:w-5 sm:h-5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded text-sm sm:text-xs font-bold transition flex items-center justify-center"
                   >
                     -
                   </button>
                   <button
                     onClick={() => onRollStat(statKey, effectiveVal)}
                     title={lang === 'ru' ? `Бросок ${statKey} (1d10 + ${effectiveVal})` : `Roll ${statKey} (1d10 + ${effectiveVal})`}
-                    className="flex-1 py-0.5 bg-zinc-900 hover:bg-red-950 text-zinc-300 hover:text-red-400 rounded text-[10px] font-bold font-mono transition"
+                    className="flex-1 py-1 sm:py-0.5 min-h-[28px] bg-zinc-900 hover:bg-red-950 text-zinc-300 hover:text-red-400 rounded text-[11px] font-bold font-mono transition flex items-center justify-center"
                   >
                     1d10
                   </button>
                   <button
                     onClick={() => handleStatChange(statKey, 1)}
-                    className="w-5 h-5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded text-xs font-bold transition"
+                    className="w-7 h-7 sm:w-5 sm:h-5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded text-sm sm:text-xs font-bold transition flex items-center justify-center"
                   >
                     +
                   </button>

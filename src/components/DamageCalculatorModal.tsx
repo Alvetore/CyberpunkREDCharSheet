@@ -233,7 +233,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fade-in no-print">
-      <div className="bg-zinc-900 border-2 border-red-600 w-full max-w-xl rounded-lg shadow-2xl shadow-red-950 flex flex-col max-h-[90vh] overflow-hidden">
+      <div className="bg-zinc-900 border-2 border-red-600 w-full max-w-xl rounded-lg shadow-2xl shadow-red-950 flex flex-col max-h-[94dvh] sm:max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-zinc-950 border-b border-red-800">
           <div className="flex items-center gap-2 text-red-500 font-orbitron font-bold">
@@ -387,7 +387,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
 
             {damageInputMode === 'dice' ? (
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <input
                     type="text"
                     value={diceFormula}
@@ -396,9 +396,9 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                       setIsCalculated(false);
                     }}
                     placeholder="e.g. 3d6, 4d6, 5d6"
-                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-1.5 text-zinc-100 font-bold text-center text-sm focus:border-red-500 focus:outline-none font-mono"
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-zinc-100 font-bold text-center text-sm focus:border-red-500 focus:outline-none font-mono min-h-[38px]"
                   />
-                  <div className="flex gap-1">
+                  <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
                     {['2d6', '3d6', '4d6', '5d6'].map((preset) => (
                       <button
                         key={preset}
@@ -407,7 +407,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                           setDiceFormula(preset);
                           setIsCalculated(false);
                         }}
-                        className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded text-xs text-zinc-200 font-mono font-bold"
+                        className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded text-xs text-zinc-200 font-mono font-bold min-h-[34px] min-w-[40px] flex items-center justify-center transition"
                       >
                         {preset}
                       </button>
@@ -416,8 +416,8 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                 </div>
 
                 {rolledDice.length > 0 && (
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-950 p-2 rounded border border-zinc-850">
-                    <span>{lang === 'ru' ? 'Выпало на кубиках:' : 'Rolled Dice:'}</span>
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-950 p-2 rounded border border-zinc-850 overflow-x-auto">
+                    <span className="shrink-0">{lang === 'ru' ? 'Выпало на кубиках:' : 'Rolled Dice:'}</span>
                     <div className="flex gap-1">
                       {rolledDice.map((d, i) => (
                         <span
@@ -442,7 +442,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                   setManualDamage(parseInt(e.target.value, 10) || 0);
                   setIsCalculated(false);
                 }}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-1.5 text-zinc-100 font-bold text-center text-lg focus:border-red-500 focus:outline-none"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-zinc-100 font-bold text-center text-lg focus:border-red-500 focus:outline-none min-h-[42px]"
               />
             )}
           </div>
@@ -451,7 +451,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
           <button
             type="button"
             onClick={handleRollAndCalculate}
-            className="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-2 shadow-lg shadow-red-950"
+            className="w-full py-2.5 min-h-[42px] bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-2 shadow-lg shadow-red-950"
           >
             <Dices size={16} />
             {lang === 'ru' ? 'РАССЧИТАТЬ УРОН И АБЛЯЦИЮ' : 'CALCULATE DAMAGE & ABLATION'}
@@ -545,23 +545,25 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
               )}
 
               {/* Final Summary Banner */}
-              <div className="pt-2 border-t border-zinc-850 flex items-center justify-between">
+              <div className="pt-2 border-t border-zinc-850 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <div>
                   <span className="text-[10px] uppercase text-zinc-400 block font-semibold">
                     {lang === 'ru' ? 'Итоговый урон по ОЗ' : 'Final HP Damage'}
                   </span>
-                  <span className="font-orbitron font-black text-2xl text-red-500">
-                    -{calcResult.finalHpDamage} HP
-                  </span>
-                  <span className="text-zinc-500 text-xs ml-1.5">
-                    ({character.hpCurrent} ➔ {calcResult.newHp})
-                  </span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-orbitron font-black text-2xl text-red-500">
+                      -{calcResult.finalHpDamage} HP
+                    </span>
+                    <span className="text-zinc-500 text-xs">
+                      ({character.hpCurrent} ➔ {calcResult.newHp})
+                    </span>
+                  </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleApplyDamageToCharacter}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded shadow-md shadow-red-950 transition flex items-center gap-1.5"
+                  className="w-full sm:w-auto px-4 py-2.5 min-h-[42px] bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded shadow-md shadow-red-950 transition flex items-center justify-center gap-1.5"
                 >
                   <CheckCircle2 size={16} />
                   {lang === 'ru' ? 'ПРИМЕНИТЬ К ПЕРСОНАЖУ' : 'APPLY TO CHARACTER'}
