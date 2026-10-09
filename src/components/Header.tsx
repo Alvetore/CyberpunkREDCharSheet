@@ -15,7 +15,9 @@ import {
   Dice6,
   FileArchive,
   Wand2,
-  ShoppingCart
+  ShoppingCart,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -31,6 +33,8 @@ interface HeaderProps {
   onOpenDiceRoller: () => void;
   onOpenWizard: () => void;
   onOpenShop: () => void;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
   lang: Language;
   onToggleLang: () => void;
   soundEnabled: boolean;
@@ -52,6 +56,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenDiceRoller,
   onOpenWizard,
   onOpenShop,
+  theme,
+  onToggleTheme,
   lang,
   onToggleLang,
   soundEnabled,
@@ -247,6 +253,22 @@ export const Header: React.FC<HeaderProps> = ({
             className="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 rounded transition hidden md:inline-flex"
           >
             <Printer size={16} />
+          </button>
+
+          {/* Theme Toggle (Light / Dark) */}
+          <button
+            onClick={() => {
+              sfx.playClick();
+              onToggleTheme();
+            }}
+            title={theme === 'dark' ? t.themeLight : t.themeDark}
+            className={`p-1.5 border rounded transition ${
+              theme === 'dark'
+                ? 'bg-zinc-800 text-yellow-400 hover:text-yellow-300 border-zinc-700'
+                : 'bg-zinc-200 text-amber-600 hover:text-amber-700 border-zinc-300 shadow-sm'
+            }`}
+          >
+            {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
           </button>
 
           {/* Sound Toggle */}

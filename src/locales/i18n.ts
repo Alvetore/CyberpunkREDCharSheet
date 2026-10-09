@@ -16,6 +16,9 @@ export const translations = {
     sounds: 'Звуки',
     language: 'Язык',
     dualTerms: 'Англ. названия (EN)',
+    themeToggle: 'Тема оформления',
+    themeLight: 'Светлая тема (Arasaka Clean)',
+    themeDark: 'Тёмная тема (Night City Dark)',
     saveNotification: 'Сохранено автоматически',
 
     // Tabs
@@ -236,6 +239,9 @@ export const translations = {
     sounds: 'SFX',
     language: 'Language',
     dualTerms: 'Russian Names (RU)',
+    themeToggle: 'Toggle Theme',
+    themeLight: 'Light Theme (Corporate Clean)',
+    themeDark: 'Dark Theme (Night City Neon)',
     saveNotification: 'Saved automatically',
 
     // Tabs

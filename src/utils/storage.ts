@@ -3,6 +3,25 @@ import { createEmptyCharacter } from '../data/initialData';
 
 const CHARACTERS_STORAGE_KEY = 'cpr_characters_v1';
 const ACTIVE_CHAR_ID_KEY = 'cpr_active_char_id_v1';
+const THEME_STORAGE_KEY = 'cpr_theme_v1';
+
+export type AppTheme = 'dark' | 'light';
+
+export function getStoredTheme(): AppTheme {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === 'light' || saved === 'dark') return saved;
+  } catch {}
+  return 'dark';
+}
+
+export function saveStoredTheme(theme: AppTheme): void {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch (err) {
+    console.error('Failed to save theme to localStorage', err);
+  }
+}
 
 export function loadStoredCharacters(): Character[] {
   try {

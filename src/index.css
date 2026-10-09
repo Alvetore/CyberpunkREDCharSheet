@@ -63,6 +63,92 @@
   background: #ef4444;
 }
 
+/* Light Theme - Arasaka Corporate Clean */
+html.light {
+  color-scheme: light;
+  --color-zinc-950: #f4f4f5; /* Light app background */
+  --color-zinc-900: #ffffff; /* Clean white card panels */
+  --color-zinc-800: #e4e4e7; /* Subtle borders and card dividers */
+  --color-zinc-700: #d4d4d8; /* Distinct element borders */
+  --color-zinc-600: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-400: #52525b; /* High-contrast secondary text */
+  --color-zinc-300: #3f3f46;
+  --color-zinc-200: #18181b; /* Strong text */
+  --color-zinc-100: #09090b; /* Primary dark text */
+  --color-zinc-50: #000000;
+}
+
+html.light body {
+  background-color: var(--color-zinc-950);
+  color: var(--color-zinc-100);
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: #e4e4e7;
+}
+
+/* In light theme, text-white inside cards or badges (not inside colored buttons) adapts to dark */
+html.light .text-white:not(button):not(button *):not([class*="bg-red-"]):not([class*="bg-cyan-"]):not([class*="bg-yellow-"]):not([class*="bg-emerald-"]):not([class*="bg-purple-"]) {
+  color: #09090b;
+}
+
+/* Improve contrast of subtle badge backgrounds in light mode */
+html.light .bg-red-950\/20,
+html.light .bg-red-950\/30,
+html.light .bg-red-950\/40,
+html.light .bg-red-950\/60,
+html.light .bg-red-950\/70,
+html.light .bg-red-950 {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+html.light .bg-cyan-950\/20,
+html.light .bg-cyan-950\/30,
+html.light .bg-cyan-950 {
+  background-color: #cffafe;
+  color: #155e75;
+}
+
+html.light .bg-yellow-950\/20,
+html.light .bg-yellow-950\/40,
+html.light .bg-yellow-950\/70,
+html.light .bg-yellow-950 {
+  background-color: #fef9c3;
+  color: #854d0e;
+}
+
+html.light .bg-emerald-950 {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+html.light .bg-purple-950 {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+}
+
+/* Light mode inputs and selects */
+html.light input:not([type="checkbox"]):not([type="radio"]),
+html.light select,
+html.light textarea {
+  background-color: #ffffff;
+  color: #09090b;
+  border-color: #d4d4d8;
+}
+
+html.light input:not([type="checkbox"]):not([type="radio"]):focus,
+html.light select:focus,
+html.light textarea:focus {
+  background-color: #ffffff;
+  border-color: #dc2626;
+}
+
+html.light .scanlines {
+  background: none;
+}
+
 /* Print styles */
 @media print {
   body {

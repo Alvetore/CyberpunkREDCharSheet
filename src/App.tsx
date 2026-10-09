@@ -6,6 +6,9 @@ import {
   saveCharactersToStorage, 
   getActiveCharacterId, 
   setActiveCharacterId,
+  getStoredTheme,
+  saveStoredTheme,
+  AppTheme,
   exportSingleCharacter,
   exportAllCharacters,
   parseImportedJson
@@ -55,6 +58,25 @@ export const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('ru');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [dualTerms, setDualTerms] = useState<boolean>(true);
+  const [theme, setTheme] = useState<AppTheme>(() => getStoredTheme());
+
+  // Apply theme to document element
+  useEffect(() => {
+    saveStoredTheme(theme);
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    } else {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    }
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    sfx.playClick();
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   // Active navigation tab
   const [activeTab, setActiveTab] = useState<
@@ -290,6 +312,8 @@ export const App: React.FC = () => {
         onOpenDiceRoller={() => setIsDiceModalOpen(true)}
         onOpenWizard={() => setIsWizardOpen(true)}
         onOpenShop={() => handleOpenShop('all')}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
         lang={lang}
         onToggleLang={() => setLang(lang === 'ru' ? 'en' : 'ru')}
         soundEnabled={soundEnabled}
