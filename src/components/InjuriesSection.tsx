@@ -132,7 +132,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
           <div className="flex items-center gap-2">
             {(character.armor.head.penalty < 0 || character.armor.body.penalty < 0) && (
               <span className="text-xs text-amber-400 font-bold hidden sm:inline">
-                Штраф брони: {Math.min(character.armor.head.penalty, character.armor.body.penalty)}
+                {lang === 'ru' ? 'Штраф брони:' : 'Armor penalty:'} {Math.min(character.armor.head.penalty, character.armor.body.penalty)}
               </span>
             )}
 
@@ -144,7 +144,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
               className="flex items-center gap-1.5 px-3 py-1 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition shadow-md shadow-red-950"
             >
               <HeartCrack size={14} />
-              <span>Расчет урона и абляции</span>
+              <span>{lang === 'ru' ? 'Расчет урона и абляции' : 'Damage & Ablation Calc'}</span>
             </button>
           </div>
         </div>
@@ -175,7 +175,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
             >
               {PRESET_ARMOR_OPTIONS.map((p) => (
                 <option key={p.name} value={p.name}>
-                  {p.name} (SP {p.sp}{p.penalty < 0 ? `, Штраф ${p.penalty}` : ''})
+                  {p.name} (SP {p.sp}{p.penalty < 0 ? (lang === 'ru' ? `, Штраф ${p.penalty}` : `, Penalty ${p.penalty}`) : ''})
                 </option>
               ))}
             </select>
@@ -204,7 +204,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
                 title={t.armorRestore}
               >
                 <RotateCcw size={12} />
-                <span>Восстановить</span>
+                <span>{lang === 'ru' ? 'Восстановить' : 'Restore'}</span>
               </button>
             </div>
           </div>
@@ -234,7 +234,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
             >
               {PRESET_ARMOR_OPTIONS.map((p) => (
                 <option key={p.name} value={p.name}>
-                  {p.name} (SP {p.sp}{p.penalty < 0 ? `, Штраф ${p.penalty}` : ''})
+                  {p.name} (SP {p.sp}{p.penalty < 0 ? (lang === 'ru' ? `, Штраф ${p.penalty}` : `, Penalty ${p.penalty}`) : ''})
                 </option>
               ))}
             </select>
@@ -263,7 +263,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
                 title={t.armorRestore}
               >
                 <RotateCcw size={12} />
-                <span>Восстановить</span>
+                <span>{lang === 'ru' ? 'Восстановить' : 'Restore'}</span>
               </button>
             </div>
           </div>
@@ -280,7 +280,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
             </h2>
             {activeInjuries.length > 0 && (
               <span className="px-2 py-0.5 bg-red-950 text-red-400 border border-red-800 text-xs font-bold rounded-full animate-pulse">
-                Активных: {activeInjuries.length}
+                {lang === 'ru' ? 'Активных:' : 'Active:'} {activeInjuries.length}
               </span>
             )}
           </div>
@@ -291,14 +291,14 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
               className="px-2.5 py-1 bg-zinc-800 hover:bg-red-950 border border-zinc-700 text-red-400 text-xs font-semibold rounded flex items-center gap-1 transition"
             >
               <Dices size={13} />
-              <span>Случайная в Голову (2d6)</span>
+              <span>{lang === 'ru' ? 'Случайная в Голову (2d6)' : 'Random Head (2d6)'}</span>
             </button>
             <button
               onClick={() => handleRollRandomInjury('body')}
               className="px-2.5 py-1 bg-zinc-800 hover:bg-red-950 border border-zinc-700 text-red-400 text-xs font-semibold rounded flex items-center gap-1 transition"
             >
               <Dices size={13} />
-              <span>Случайная в Тело (2d6)</span>
+              <span>{lang === 'ru' ? 'Случайная в Тело (2d6)' : 'Random Body (2d6)'}</span>
             </button>
           </div>
         </div>
@@ -316,7 +316,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            {t.headInjuries} ({headInjuries.filter((i) => i.isActive).length} активных)
+            {t.headInjuries} ({headInjuries.filter((i) => i.isActive).length} {lang === 'ru' ? 'активных' : 'active'})
           </button>
           <button
             onClick={() => {
@@ -329,7 +329,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            {t.bodyInjuries} ({bodyInjuries.filter((i) => i.isActive).length} активных)
+            {t.bodyInjuries} ({bodyInjuries.filter((i) => i.isActive).length} {lang === 'ru' ? 'активных' : 'active'})
           </button>
         </div>
 
@@ -359,7 +359,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
                     {lang === 'ru' ? inj.nameRu : inj.nameEn}
                   </span>
                   <span className="font-mono text-[10px] text-zinc-500 bg-zinc-900 px-1.5 py-0.5 rounded">
-                    Бросок: {inj.rollNumber}
+                    {lang === 'ru' ? 'Бросок:' : 'Roll:'} {inj.rollNumber}
                   </span>
                 </div>
 
@@ -371,11 +371,11 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
                 <div className="flex items-center gap-3 text-[10px] text-zinc-400 mt-1.5 pt-1.5 border-t border-zinc-850">
                   {inj.quickFixDv > 0 && (
                     <span>
-                      Быстрое лечение: <strong className="text-yellow-400 font-mono">DV {inj.quickFixDv}</strong>
+                      {lang === 'ru' ? 'Быстрое лечение:' : 'Quick Fix:'} <strong className="text-yellow-400 font-mono">DV {inj.quickFixDv}</strong>
                     </span>
                   )}
                   <span>
-                    Операция / Лечение: <strong className="text-cyan-400 font-mono">DV {inj.treatmentDv}</strong>
+                    {lang === 'ru' ? 'Операция / Лечение:' : 'Treatment:'} <strong className="text-cyan-400 font-mono">DV {inj.treatmentDv}</strong>
                   </span>
                 </div>
               </div>

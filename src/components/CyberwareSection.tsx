@@ -20,7 +20,7 @@ interface CyberwareSectionProps {
   lang: Language;
 }
 
-const CYBERWARE_PRESETS: Partial<CyberwareItem>[] = [
+const CYBERWARE_PRESETS_RU: Partial<CyberwareItem>[] = [
   { name: 'Neural Link (Нейролинк)', category: 'Neuralware', installLocation: 'Spine/Brain', humanityCost: 7, description: 'Базовая шина для киберимплантов и разъемов.' },
   { name: 'Interface Plugs (Разъемы интерфейса)', category: 'Neuralware', installLocation: 'Wrists', humanityCost: 7, description: 'Штекеры прямого подключения к смартганам и деке.' },
   { name: 'Sandevistan (Сандевистан)', category: 'Neuralware', installLocation: 'Spine', humanityCost: 7, description: '+3 к инициативе при активации на 1 минуту.' },
@@ -31,6 +31,19 @@ const CYBERWARE_PRESETS: Partial<CyberwareItem>[] = [
   { name: 'Subdermal Armor (Подкожная броня)', category: 'Internal', installLocation: 'Body', humanityCost: 14, description: 'Подкожная защита: дает SP 11 на тело и голову без штрафа!' },
   { name: 'Cyberarm (Киберрука)', category: 'Cyberlimb', installLocation: 'Left/Right Arm', humanityCost: 7, description: 'Киберпротез руки с 4 слотами для оружия и инструментов.' },
   { name: 'Grafted Muscle and Bone Lace (Мышечно-костный каркас)', category: 'Internal', installLocation: 'Skeleton', humanityCost: 14, description: '+2 к характеристике BODY (ОЗ и спасбросок от смерти возрастают).' }
+];
+
+const CYBERWARE_PRESETS_EN: Partial<CyberwareItem>[] = [
+  { name: 'Neural Link', category: 'Neuralware', installLocation: 'Spine/Brain', humanityCost: 7, description: 'Standard baseline neural interface.' },
+  { name: 'Interface Plugs', category: 'Neuralware', installLocation: 'Wrists', humanityCost: 7, description: 'Direct neural interface plugs for smartguns and cyberdeck.' },
+  { name: 'Sandevistan', category: 'Neuralware', installLocation: 'Spine', humanityCost: 7, description: '+3 Initiative bonus for 1 minute on activation.' },
+  { name: 'Kerenzikov', category: 'Neuralware', installLocation: 'Spine', humanityCost: 14, description: 'Constant passive +2 bonus to Initiative.' },
+  { name: 'Cybereye', category: 'Cyberoptics', installLocation: 'Head', humanityCost: 7, description: 'Cybernetic eye with 3 option slots.' },
+  { name: 'Targeting Scope', category: 'Cyberoptics', installLocation: 'Cybereye', humanityCost: 3, description: '+1 bonus to Aimed Shot checks.' },
+  { name: 'Cyberaudio Suite', category: 'Cyberaudio', installLocation: 'Head', humanityCost: 7, description: 'Cyberaudio hearing suite with 3 option slots.' },
+  { name: 'Subdermal Armor', category: 'Internal', installLocation: 'Body', humanityCost: 14, description: 'Provides SP 11 to Head and Body without armor penalty.' },
+  { name: 'Cyberarm', category: 'Cyberlimb', installLocation: 'Left/Right Arm', humanityCost: 7, description: 'Cybernetic replacement arm with 4 option slots.' },
+  { name: 'Grafted Muscle & Bone Lace', category: 'Internal', installLocation: 'Skeleton', humanityCost: 14, description: '+2 bonus to BODY stat (boosts HP and Death Save).' }
 ];
 
 const CATEGORIES: CyberwareCategory[] = [
@@ -58,7 +71,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
     category: 'Neuralware',
     installLocation: 'Spine',
     humanityCost: 7,
-    description: 'Основа для нервных имплантов'
+    description: lang === 'ru' ? 'Основа для нервных имплантов' : 'Baseline neural interface foundation'
   });
 
   const totalHumanityLoss = character.cyberware.reduce((acc, c) => acc + (c.humanityCost || 0), 0);
@@ -88,9 +101,9 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
     sfx.playClick();
     const item: CyberwareItem = {
       id: 'cyb-' + Date.now(),
-      name: newItem.name || 'Имплант',
+      name: newItem.name || (lang === 'ru' ? 'Имплант' : 'Cyberware'),
       category: (newItem.category as CyberwareCategory) || 'Internal',
-      installLocation: newItem.installLocation || 'Тело',
+      installLocation: newItem.installLocation || (lang === 'ru' ? 'Тело' : 'Body'),
       humanityCost: newItem.humanityCost || 0,
       description: newItem.description || ''
     };
@@ -143,10 +156,10 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                 onOpenShop('cyberware');
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-950/60 hover:bg-yellow-600 border border-yellow-700/80 text-yellow-300 hover:text-black font-bold text-xs uppercase tracking-wider rounded transition font-orbitron"
-              title="Купить импланты из каталога DataPool"
+              title={lang === 'ru' ? "Купить импланты из каталога DataPool" : "Buy cyberware from DataPool catalog"}
             >
               <ShoppingCart size={14} className="text-yellow-400" />
-              <span>Каталог DataPool</span>
+              <span>{lang === 'ru' ? 'Каталог DataPool' : 'DataPool Catalog'}</span>
             </button>
           )}
 
@@ -188,7 +201,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                   <button
                     onClick={() => handleDeleteItem(item.id)}
                     className="text-zinc-500 hover:text-red-400 p-0.5 transition"
-                    title="Удалить имплант"
+                    title={lang === 'ru' ? "Удалить имплант" : "Delete cyberware"}
                   >
                     <Trash2 size={13} />
                   </button>
@@ -222,17 +235,18 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
             {/* Presets */}
             <div>
               <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                Каталог распространенных имплантов
+                {lang === 'ru' ? 'Каталог распространенных имплантов' : 'Common Cyberware Catalog'}
               </label>
               <select
                 onChange={(e) => {
-                  const preset = CYBERWARE_PRESETS.find((p) => p.name === e.target.value);
+                  const presets = lang === 'ru' ? CYBERWARE_PRESETS_RU : CYBERWARE_PRESETS_EN;
+                  const preset = presets.find((p) => p.name === e.target.value);
                   if (preset) handleApplyPreset(preset);
                 }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-xs"
               >
-                <option value="">Выберите из каталога...</option>
-                {CYBERWARE_PRESETS.map((p) => (
+                <option value="">{lang === 'ru' ? 'Выберите из каталога...' : 'Select from catalog...'}</option>
+                {(lang === 'ru' ? CYBERWARE_PRESETS_RU : CYBERWARE_PRESETS_EN).map((p) => (
                   <option key={p.name} value={p.name}>
                     {p.name} ({p.category}, {p.humanityCost} HL)
                   </option>
@@ -243,7 +257,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                  Название импланта
+                  {lang === 'ru' ? 'Название импланта' : 'Cyberware Name'}
                 </label>
                 <input
                   type="text"
@@ -255,7 +269,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                  Категория
+                  {lang === 'ru' ? 'Категория' : 'Category'}
                 </label>
                 <select
                   value={newItem.category}
@@ -272,7 +286,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                  Локация установки
+                  {t.installLocation || (lang === 'ru' ? 'Локация установки' : 'Install Location')}
                 </label>
                 <input
                   type="text"
@@ -284,7 +298,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                  Потеря человечности (HL)
+                  {t.humanityCost || (lang === 'ru' ? 'Потеря человечности (HL)' : 'Humanity Loss (HL)')}
                 </label>
                 <input
                   type="number"
@@ -297,7 +311,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
             <div>
               <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                Описание и системные правила
+                {lang === 'ru' ? 'Описание и системные правила' : 'Description & Rules'}
               </label>
               <textarea
                 rows={3}
@@ -312,13 +326,13 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                 onClick={() => setShowAddModal(false)}
                 className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded font-semibold"
               >
-                Отмена
+                {lang === 'ru' ? 'Отмена' : 'Cancel'}
               </button>
               <button
                 onClick={handleAddItem}
                 className="px-4 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs uppercase rounded font-orbitron"
               >
-                Установить
+                {lang === 'ru' ? 'Установить' : 'Install'}
               </button>
             </div>
           </div>

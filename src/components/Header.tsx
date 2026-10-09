@@ -143,11 +143,11 @@ export const Header: React.FC<HeaderProps> = ({
               sfx.playClick();
               onOpenWizard();
             }}
-            title="Конструктор персонажа (Point-Buy Wizard по правилам CPR)"
+            title={lang === 'ru' ? 'Конструктор персонажа (Point-Buy Wizard по правилам CPR)' : 'Character Creation Wizard (CPR Point-Buy & Fast Dirty)'}
             className="flex items-center gap-1 px-2 py-1.5 bg-red-950/70 hover:bg-red-600 border border-red-700 text-red-300 hover:text-white text-xs font-bold rounded transition font-orbitron"
           >
             <Wand2 size={14} className="text-yellow-400" />
-            <span className="hidden md:inline">Конструктор</span>
+            <span className="hidden md:inline">{lang === 'ru' ? 'Конструктор' : 'Wizard'}</span>
           </button>
 
           {/* DataPool Market Button */}
@@ -156,7 +156,7 @@ export const Header: React.FC<HeaderProps> = ({
               sfx.playClick();
               onOpenShop();
             }}
-            title="Магазин DataPool (оружие, броня, импланты, снаряжение)"
+            title={lang === 'ru' ? 'Магазин DataPool (оружие, броня, импланты, снаряжение)' : 'DataPool Market (Weapons, Armor, Implants, Gear)'}
             className="flex items-center gap-1 px-2 py-1.5 bg-yellow-950/70 hover:bg-yellow-600 border border-yellow-700 text-yellow-300 hover:text-black text-xs font-bold rounded transition font-orbitron shadow-sm"
           >
             <ShoppingCart size={14} className="text-yellow-400" />
@@ -274,7 +274,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Sound Toggle */}
           <button
             onClick={onToggleSound}
-            title={soundEnabled ? 'Звук включен' : 'Звук выключен'}
+            title={soundEnabled ? (lang === 'ru' ? 'Звук включен' : 'Sound ON') : (lang === 'ru' ? 'Звук выключен' : 'Sound OFF')}
             className={`p-1.5 border rounded transition ${
               soundEnabled
                 ? 'bg-zinc-800 text-yellow-400 border-zinc-700'

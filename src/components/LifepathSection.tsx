@@ -45,15 +45,15 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
       affectation: getRandomItem(CPR_LIFEPATH_TABLES.affectations),
       valueMost: getRandomItem(CPR_LIFEPATH_TABLES.valueMost),
       feelingsAboutPeople: getRandomItem(CPR_LIFEPATH_TABLES.feelingsAboutPeople),
-      valuedPerson: 'Близкий друг или напарник, выручивший в тяжелый момент',
-      valuedPossession: 'Личный предмет из прошлой жизни до прихода в Night City',
+      valuedPerson: lang === 'ru' ? 'Близкий друг или напарник, выручивший в тяжелый момент' : 'A close friend or partner who helped out in a pinch',
+      valuedPossession: lang === 'ru' ? 'Личный предмет из прошлой жизни до прихода в Night City' : 'A keepsake from past life before coming to Night City',
       familyBackground: getRandomItem(CPR_LIFEPATH_TABLES.familyBackgrounds),
       childhoodEnv: getRandomItem(CPR_LIFEPATH_TABLES.childhoodEnvs),
       familyCrisis: getRandomItem(CPR_LIFEPATH_TABLES.familyCrises),
       lifeGoals: getRandomItem(CPR_LIFEPATH_TABLES.lifeGoals),
-      friends: 'Свой человек в уличной банде или независимый техник',
-      tragicLoveAffairs: 'Любовь прервана смертью или предательством',
-      enemies: 'Корпорат или гангстер, жаждущий сведения счетов',
+      friends: lang === 'ru' ? 'Свой человек в уличной банде или независимый техник' : 'An ally in a street boostergang or independent techie',
+      tragicLoveAffairs: lang === 'ru' ? 'Любовь прервана смертью или предательством' : 'Love ended by death or betrayal',
+      enemies: lang === 'ru' ? 'Корпорат или гангстер, жаждущий сведения счетов' : 'A corp or gang leader looking to settle a score',
       roleLifepathNotes: lp.roleLifepathNotes || ''
     };
 
@@ -101,7 +101,7 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3.5 space-y-3">
           <div className="flex items-center gap-2 border-b border-zinc-800 pb-2 text-xs font-orbitron font-bold text-red-400 uppercase">
             <User size={15} />
-            <span>Стиль и Характер</span>
+            <span>{lang === 'ru' ? 'Стиль и Характер' : 'Style & Personality'}</span>
           </div>
 
           <div>
@@ -112,7 +112,7 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
               <button
                 onClick={() => rerollField('personality', CPR_LIFEPATH_TABLES.personalities)}
                 className="text-zinc-500 hover:text-yellow-400 p-0.5"
-                title="Случайный выбор"
+                title={lang === 'ru' ? "Случайный выбор" : "Random roll"}
               >
                 <Dices size={12} />
               </button>
@@ -190,7 +190,7 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3.5 space-y-3">
           <div className="flex items-center gap-2 border-b border-zinc-800 pb-2 text-xs font-orbitron font-bold text-yellow-400 uppercase">
             <Heart size={15} />
-            <span>Ценности и Мотивы</span>
+            <span>{lang === 'ru' ? 'Ценности и Мотивы' : 'Values & Motives'}</span>
           </div>
 
           <div>
@@ -282,7 +282,7 @@ export const LifepathSection: React.FC<LifepathSectionProps> = ({
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3.5 space-y-3">
           <div className="flex items-center gap-2 border-b border-zinc-800 pb-2 text-xs font-orbitron font-bold text-cyan-400 uppercase">
             <Users size={15} />
-            <span>Семья, Друзья и Враги</span>
+            <span>{lang === 'ru' ? 'Семья, Друзья и Враги' : 'Family, Friends & Enemies'}</span>
           </div>
 
           <div>

@@ -239,7 +239,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
           <div className="flex items-center gap-2 text-red-500 font-orbitron font-bold">
             <HeartCrack size={20} className="animate-pulse" />
             <span className="tracking-wider uppercase text-sm sm:text-base">
-              Калькулятор урона и абляции брони (CPR)
+              {lang === 'ru' ? 'Калькулятор урона и абляции брони (CPR)' : 'Damage & Armor Ablation Calculator (CPR)'}
             </span>
           </div>
           <button
@@ -260,7 +260,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
             {/* Hit Location */}
             <div>
               <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                Локация попадания
+                {lang === 'ru' ? 'Локация попадания' : 'Hit Location'}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -277,7 +277,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                   }`}
                 >
                   <ShieldCheck size={14} />
-                  <span>Тело (SP {character.armor.body.spCurrent})</span>
+                  <span>{lang === 'ru' ? 'Тело' : 'Body'} (SP {character.armor.body.spCurrent})</span>
                 </button>
 
                 <button
@@ -294,7 +294,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                   }`}
                 >
                   <Crosshair size={14} />
-                  <span>Голова x2 (SP {character.armor.head.spCurrent})</span>
+                  <span>{lang === 'ru' ? 'Голова x2' : 'Head x2'} (SP {character.armor.head.spCurrent})</span>
                 </button>
               </div>
             </div>
@@ -302,7 +302,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
             {/* Attack Type */}
             <div>
               <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                Тип атаки и боеприпасов
+                {lang === 'ru' ? 'Тип атаки и боеприпасов' : 'Attack & Ammo Type'}
               </label>
               <select
                 value={attackType}
@@ -312,9 +312,15 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                 }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-2 text-xs text-zinc-100 font-semibold focus:border-red-500 focus:outline-none"
               >
-                <option value="ranged">Стандартная / Огнестрел (Абляция -1 SP)</option>
-                <option value="melee">Холодное оружие / Боевые искусства (Игнорирует 50% SP!)</option>
-                <option value="ap">Бронебойные патроны (AP) (Абляция -2 SP!)</option>
+                <option value="ranged">
+                  {lang === 'ru' ? 'Стандартная / Огнестрел (Абляция -1 SP)' : 'Standard / Ranged (Ablation -1 SP)'}
+                </option>
+                <option value="melee">
+                  {lang === 'ru' ? 'Холодное оружие / Боевые искусства (Игнорирует 50% SP!)' : 'Melee / Martial Arts (Ignores 50% SP!)'}
+                </option>
+                <option value="ap">
+                  {lang === 'ru' ? 'Бронебойные патроны (AP) (Абляция -2 SP!)' : 'Armor-Piercing (AP) (Ablation -2 SP!)'}
+                </option>
               </select>
             </div>
           </div>
@@ -332,13 +338,13 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                 className="w-4 h-4 rounded accent-red-600 bg-zinc-900 border-zinc-700"
               />
               <span className="font-semibold text-zinc-200">
-                Защитный щит (Bulletproof Shield)
+                {lang === 'ru' ? 'Защитный щит (Bulletproof Shield)' : 'Bulletproof Shield'}
               </span>
             </label>
 
             {hasShield && (
               <div className="flex items-center gap-1.5">
-                <span className="text-zinc-400 text-[11px]">HP щита:</span>
+                <span className="text-zinc-400 text-[11px]">{lang === 'ru' ? 'HP щита:' : 'Shield HP:'}</span>
                 <input
                   type="number"
                   min="0"
@@ -355,7 +361,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs text-zinc-400 uppercase font-semibold">
-                Входящий урон
+                {lang === 'ru' ? 'Входящий урон' : 'Incoming Damage'}
               </label>
               <div className="flex gap-2 text-xs">
                 <button
@@ -365,7 +371,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                     damageInputMode === 'dice' ? 'bg-red-950 text-red-400 border border-red-800' : 'text-zinc-500'
                   }`}
                 >
-                  Бросить Nd6
+                  {lang === 'ru' ? 'Бросить Nd6' : 'Roll Nd6'}
                 </button>
                 <button
                   type="button"
@@ -374,7 +380,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                     damageInputMode === 'manual' ? 'bg-red-950 text-red-400 border border-red-800' : 'text-zinc-500'
                   }`}
                 >
-                  Число урона
+                  {lang === 'ru' ? 'Число урона' : 'Manual Flat'}
                 </button>
               </div>
             </div>
@@ -411,7 +417,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
 
                 {rolledDice.length > 0 && (
                   <div className="flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-950 p-2 rounded border border-zinc-850">
-                    <span>Выпало на кубиках:</span>
+                    <span>{lang === 'ru' ? 'Выпало на кубиках:' : 'Rolled Dice:'}</span>
                     <div className="flex gap-1">
                       {rolledDice.map((d, i) => (
                         <span
@@ -448,7 +454,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
             className="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-2 shadow-lg shadow-red-950"
           >
             <Dices size={16} />
-            РАССЧИТАТЬ УРОН И АБЛЯЦИЮ
+            {lang === 'ru' ? 'РАССЧИТАТЬ УРОН И АБЛЯЦИЮ' : 'CALCULATE DAMAGE & ABLATION'}
           </button>
 
           {/* RESULTS CARD */}
@@ -456,7 +462,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
             <div className="bg-zinc-950 border border-red-800 rounded-lg p-3 sm:p-4 space-y-3 animate-fade-in">
               <div className="flex items-center justify-between border-b border-zinc-850 pb-2">
                 <span className="font-orbitron font-bold text-xs uppercase text-yellow-400">
-                  Результат попадания ({hitLocation === 'head' ? 'Голова' : 'Тело'})
+                  {lang === 'ru' ? 'Результат попадания' : 'Hit Result'} ({hitLocation === 'head' ? (lang === 'ru' ? 'Голова' : 'Head') : (lang === 'ru' ? 'Тело' : 'Body')})
                 </span>
                 <span
                   className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
@@ -465,62 +471,62 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                       : 'bg-emerald-900 text-emerald-300'
                   }`}
                 >
-                  {calcResult.isPenetrated ? 'БРОНЯ ПРОБИТА!' : 'БРОНЯ ВЫДЕРЖАЛА!'}
+                  {calcResult.isPenetrated ? (lang === 'ru' ? 'БРОНЯ ПРОБИТА!' : 'ARMOR PENETRATED!') : (lang === 'ru' ? 'БРОНЯ ВЫДЕРЖАЛА!' : 'ARMOR DEFENDED!')}
                 </span>
               </div>
 
               {/* Step-by-step breakdown */}
               <div className="space-y-1.5 text-xs text-zinc-300 font-mono">
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Входящий урон:</span>
+                  <span className="text-zinc-500">{lang === 'ru' ? 'Входящий урон:' : 'Incoming Damage:'}</span>
                   <span className="font-bold text-white">{calcResult.totalDamageBeforeArmor}</span>
                 </div>
 
                 {hasShield && (
                   <div className="flex justify-between text-yellow-400">
-                    <span>Поглощено щитом:</span>
-                    <span>-{calcResult.shieldDamageTaken} HP ({calcResult.shieldDestroyed ? 'Щит РАЗРУШЕН!' : `Осталось ${calcResult.remainingShieldHp} HP`})</span>
+                    <span>{lang === 'ru' ? 'Поглощено щитом:' : 'Absorbed by Shield:'}</span>
+                    <span>-{calcResult.shieldDamageTaken} HP ({calcResult.shieldDestroyed ? (lang === 'ru' ? 'Щит РАЗРУШЕН!' : 'Shield DESTROYED!') : (lang === 'ru' ? `Осталось ${calcResult.remainingShieldHp} HP` : `${calcResult.remainingShieldHp} HP remaining`)})</span>
                   </div>
                 )}
 
                 <div className="flex justify-between">
                   <span className="text-zinc-500">
-                    SP брони ({currentArmor.name}):
+                    {lang === 'ru' ? 'SP брони' : 'Armor SP'} ({currentArmor.name}):
                   </span>
                   <span className="font-bold text-zinc-200">
-                    {currentSp} {attackType === 'melee' ? `➔ ${calcResult.effectiveSp} (игнор 50%)` : ''}
+                    {currentSp} {attackType === 'melee' ? (lang === 'ru' ? `➔ ${calcResult.effectiveSp} (игнор 50%)` : `➔ ${calcResult.effectiveSp} (50% ignored)`) : ''}
                   </span>
                 </div>
 
                 {calcResult.isPenetrated ? (
                   <>
                     <div className="flex justify-between text-red-400">
-                      <span>Пробивающий урон:</span>
+                      <span>{lang === 'ru' ? 'Пробивающий урон:' : 'Penetrating Damage:'}</span>
                       <span>{calcResult.penetratingDamage}</span>
                     </div>
 
                     {calcResult.headshotMultiplier > 1 && (
                       <div className="flex justify-between text-amber-400 font-bold">
-                        <span>Множитель выстрела в голову:</span>
-                        <span>x2 (+{calcResult.penetratingDamage} доп.)</span>
+                        <span>{lang === 'ru' ? 'Множитель выстрела в голову:' : 'Headshot Multiplier:'}</span>
+                        <span>x2 (+{calcResult.penetratingDamage} {lang === 'ru' ? 'доп.' : 'bonus'})</span>
                       </div>
                     )}
 
                     {calcResult.isCritInjury && (
                       <div className="flex justify-between text-amber-300 font-bold">
-                        <span>Критическое ранение (две 6):</span>
-                        <span>+5 урона напрямую в ОЗ!</span>
+                        <span>{lang === 'ru' ? 'Критическое ранение (две 6):' : 'Critical Injury (two 6s):'}</span>
+                        <span>{lang === 'ru' ? '+5 урона напрямую в ОЗ!' : '+5 damage directly to HP!'}</span>
                       </div>
                     )}
 
                     <div className="flex justify-between text-red-300">
-                      <span>Абляция брони ({attackType === 'ap' ? 'AP патроны' : 'стандарт'}):</span>
+                      <span>{lang === 'ru' ? 'Абляция брони' : 'Armor Ablation'} ({attackType === 'ap' ? (lang === 'ru' ? 'AP патроны' : 'AP ammo') : (lang === 'ru' ? 'стандарт' : 'standard')}):</span>
                       <span className="font-bold">-{calcResult.ablationAmount} SP ({currentSp} ➔ {calcResult.newSp})</span>
                     </div>
                   </>
                 ) : (
                   <div className="text-emerald-400 text-[11px] pt-1">
-                    Броня полностью поглотила урон. Броня не повреждена (абляция 0 SP).
+                    {lang === 'ru' ? 'Броня полностью поглотила урон. Броня не повреждена (абляция 0 SP).' : 'Armor absorbed all damage. Armor takes no damage (0 SP ablation).'}
                   </div>
                 )}
               </div>
@@ -530,10 +536,10 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                 <div className="p-2.5 bg-red-950/60 border border-red-600 rounded text-xs space-y-1">
                   <div className="flex items-center gap-1.5 font-orbitron font-bold text-red-400 uppercase">
                     <Flame size={14} />
-                    <span>Получена критическая травма: {calcResult.rolledInjury.nameRu}!</span>
+                    <span>{lang === 'ru' ? 'Получена критическая травма:' : 'Suffered Critical Injury:'} {lang === 'ru' ? calcResult.rolledInjury.nameRu : calcResult.rolledInjury.nameEn}!</span>
                   </div>
                   <div className="text-[11px] text-zinc-300">
-                    {calcResult.rolledInjury.effectRu}
+                    {lang === 'ru' ? calcResult.rolledInjury.effectRu : calcResult.rolledInjury.effectEn}
                   </div>
                 </div>
               )}
@@ -542,7 +548,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
               <div className="pt-2 border-t border-zinc-850 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] uppercase text-zinc-400 block font-semibold">
-                    Итоговый урон по ОЗ
+                    {lang === 'ru' ? 'Итоговый урон по ОЗ' : 'Final HP Damage'}
                   </span>
                   <span className="font-orbitron font-black text-2xl text-red-500">
                     -{calcResult.finalHpDamage} HP
@@ -558,7 +564,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                   className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded shadow-md shadow-red-950 transition flex items-center gap-1.5"
                 >
                   <CheckCircle2 size={16} />
-                  ПРИМЕНИТЬ К ПЕРСОНАЖУ
+                  {lang === 'ru' ? 'ПРИМЕНИТЬ К ПЕРСОНАЖУ' : 'APPLY TO CHARACTER'}
                 </button>
               </div>
             </div>

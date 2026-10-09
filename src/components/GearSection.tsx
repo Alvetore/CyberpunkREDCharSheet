@@ -20,21 +20,21 @@ interface GearSectionProps {
   lang: Language;
 }
 
-const LIFESTYLES = [
-  'Kibble (Киббл — 100 eb/мес)',
-  'Generic Prepak (Обычный полуфабрикат — 300 eb/мес)',
-  'Good Prepak (Качественные полуфабрикаты — 600 eb/мес)',
-  'Fresh Food (Настоящая свежая еда — 1500 eb/мес)'
+const LIFESTYLES: { id: string; nameRu: string; nameEn: string }[] = [
+  { id: 'kibble', nameRu: 'Kibble (Киббл — 100 eb/мес)', nameEn: 'Kibble (100 eb/mo)' },
+  { id: 'generic_prepak', nameRu: 'Generic Prepak (Обычный полуфабрикат — 300 eb/мес)', nameEn: 'Generic Prepak (300 eb/mo)' },
+  { id: 'good_prepak', nameRu: 'Good Prepak (Качественные полуфабрикаты — 600 eb/мес)', nameEn: 'Good Prepak (600 eb/mo)' },
+  { id: 'fresh_food', nameRu: 'Fresh Food (Настоящая свежая еда — 1500 eb/мес)', nameEn: 'Fresh Food (1500 eb/mo)' }
 ];
 
-const HOUSING_OPTIONS = [
-  'Living on the Street (Улица / Ночлежка — 0 eb)',
-  'Coffin Motel (Гроб-отель — 100 eb/мес)',
-  'Cube Hotel (Куб-отель — 500 eb/мес)',
-  'Cargo Container (Грузовой контейнер — 1000 eb/мес)',
-  'Studio Apartment (Квартира-студия — 1500 eb/мес)',
-  'Two-Bedroom Apartment (Двухкомнатная — 2500 eb/мес)',
-  'Corporate Executive Suite (Корпоративный пентхаус — 10000 eb/мес)'
+const HOUSING_OPTIONS: { id: string; nameRu: string; nameEn: string }[] = [
+  { id: 'street', nameRu: 'Living on the Street (Улица / Ночлежка — 0 eb)', nameEn: 'Living on the Street (0 eb)' },
+  { id: 'coffin', nameRu: 'Coffin Motel (Гроб-отель — 100 eb/мес)', nameEn: 'Coffin Motel (100 eb/mo)' },
+  { id: 'cube', nameRu: 'Cube Hotel (Куб-отель — 500 eb/мес)', nameEn: 'Cube Hotel (500 eb/mo)' },
+  { id: 'cargo', nameRu: 'Cargo Container (Грузовой контейнер — 1000 eb/мес)', nameEn: 'Cargo Container (1000 eb/mo)' },
+  { id: 'studio', nameRu: 'Studio Apartment (Квартира-студия — 1500 eb/мес)', nameEn: 'Studio Apartment (1500 eb/mo)' },
+  { id: 'two_bed', nameRu: 'Two-Bedroom Apartment (Двухкомнатная — 2500 eb/мес)', nameEn: 'Two-Bedroom Apartment (2500 eb/mo)' },
+  { id: 'corp', nameRu: 'Corporate Executive Suite (Корпоративный пентхаус — 10000 eb/мес)', nameEn: 'Corporate Executive Suite (10000 eb/mo)' }
 ];
 
 export const GearSection: React.FC<GearSectionProps> = ({
@@ -47,7 +47,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [newItem, setNewItem] = useState<Partial<GearItem>>({
-    name: 'Инструменты техника',
+    name: lang === 'ru' ? 'Инструменты техника' : 'Tech Tool Kit',
     category: 'Tools',
     quantity: 1,
     costEb: 100,
@@ -58,7 +58,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
     sfx.playClick();
     const item: GearItem = {
       id: 'gear-' + Date.now(),
-      name: newItem.name || 'Предмет',
+      name: newItem.name || (lang === 'ru' ? 'Предмет' : 'Item'),
       category: newItem.category || 'Gear',
       quantity: newItem.quantity || 1,
       costEb: newItem.costEb || 0,
@@ -132,15 +132,24 @@ export const GearSection: React.FC<GearSectionProps> = ({
             <span>{t.lifestyle}</span>
           </div>
           <select
-            value={character.lifestyle}
+            value={(() => {
+              const matched = LIFESTYLES.find(ls => ls.nameRu === character.lifestyle || ls.nameEn === character.lifestyle);
+              return matched ? (lang === 'ru' ? matched.nameRu : matched.nameEn) : character.lifestyle;
+            })()}
             onChange={(e) => onUpdateCharacter({ ...character, lifestyle: e.target.value })}
             className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-100"
           >
-            {LIFESTYLES.map((ls) => (
-              <option key={ls} value={ls}>
-                {ls}
-              </option>
-            ))}
+            {character.lifestyle && !LIFESTYLES.some(ls => ls.nameRu === character.lifestyle || ls.nameEn === character.lifestyle) && (
+              <option value={character.lifestyle}>{character.lifestyle}</option>
+            )}
+            {LIFESTYLES.map((ls) => {
+              const val = lang === 'ru' ? ls.nameRu : ls.nameEn;
+              return (
+                <option key={ls.id} value={val}>
+                  {val}
+                </option>
+              );
+            })}
           </select>
         </div>
 
@@ -151,15 +160,24 @@ export const GearSection: React.FC<GearSectionProps> = ({
             <span>{t.housing}</span>
           </div>
           <select
-            value={character.housing}
+            value={(() => {
+              const matched = HOUSING_OPTIONS.find(h => h.nameRu === character.housing || h.nameEn === character.housing);
+              return matched ? (lang === 'ru' ? matched.nameRu : matched.nameEn) : character.housing;
+            })()}
             onChange={(e) => onUpdateCharacter({ ...character, housing: e.target.value })}
             className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-100"
           >
-            {HOUSING_OPTIONS.map((h) => (
-              <option key={h} value={h}>
-                {h}
-              </option>
-            ))}
+            {character.housing && !HOUSING_OPTIONS.some(h => h.nameRu === character.housing || h.nameEn === character.housing) && (
+              <option value={character.housing}>{character.housing}</option>
+            )}
+            {HOUSING_OPTIONS.map((h) => {
+              const val = lang === 'ru' ? h.nameRu : h.nameEn;
+              return (
+                <option key={h.id} value={val}>
+                  {val}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>
@@ -183,10 +201,10 @@ export const GearSection: React.FC<GearSectionProps> = ({
                   onOpenShop('gear');
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-950/60 hover:bg-yellow-600 border border-yellow-700/80 text-yellow-300 hover:text-black font-bold text-xs uppercase tracking-wider rounded transition font-orbitron"
-                title="Купить снаряжение из каталога DataPool"
+                title={lang === 'ru' ? "Купить снаряжение из каталога DataPool" : "Buy gear from DataPool catalog"}
               >
                 <ShoppingCart size={14} className="text-yellow-400" />
-                <span>Каталог DataPool</span>
+                <span>{lang === 'ru' ? 'Каталог DataPool' : 'DataPool Catalog'}</span>
               </button>
             )}
 
@@ -208,11 +226,11 @@ export const GearSection: React.FC<GearSectionProps> = ({
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-400 font-semibold uppercase text-[10px]">
                 <th className="py-2 px-2">{t.itemName}</th>
-                <th className="py-2 px-2">Категория</th>
+                <th className="py-2 px-2">{lang === 'ru' ? 'Категория' : 'Category'}</th>
                 <th className="py-2 px-2 text-center">{t.quantity}</th>
                 <th className="py-2 px-2 text-right">{t.cost}</th>
                 <th className="py-2 px-2">{t.notes}</th>
-                <th className="py-2 px-2 text-right">Действия</th>
+                <th className="py-2 px-2 text-right">{lang === 'ru' ? 'Действия' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
@@ -290,7 +308,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
                   <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                    Категория
+                    {lang === 'ru' ? 'Категория' : 'Category'}
                   </label>
                   <input
                     type="text"
@@ -331,13 +349,13 @@ export const GearSection: React.FC<GearSectionProps> = ({
                 onClick={() => setShowAddModal(false)}
                 className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded"
               >
-                Отмена
+                {lang === 'ru' ? 'Отмена' : 'Cancel'}
               </button>
               <button
                 onClick={handleAddItem}
                 className="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase rounded"
               >
-                Добавить
+                {lang === 'ru' ? 'Добавить' : 'Add'}
               </button>
             </div>
           </div>

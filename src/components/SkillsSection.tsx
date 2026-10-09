@@ -145,7 +145,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               className="px-2.5 py-1.5 bg-zinc-800 hover:bg-red-600/80 text-zinc-200 hover:text-white border border-zinc-700 rounded text-xs font-semibold flex items-center gap-1 transition"
             >
               <Plus size={14} />
-              <span className="hidden sm:inline">Свой</span>
+              <span className="hidden sm:inline">{lang === 'ru' ? 'Свой' : 'Custom'}</span>
             </button>
           </div>
         </div>
@@ -181,7 +181,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
             <input
               type="text"
-              placeholder="Название (RU)"
+              placeholder={lang === 'ru' ? "Название (RU)" : "Name (RU)"}
               value={customNameRu}
               onChange={(e) => setCustomNameRu(e.target.value)}
               className="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100"
@@ -200,7 +200,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
             >
               {['INT', 'REF', 'DEX', 'TECH', 'COOL', 'WILL', 'LUCK', 'MOVE', 'BODY', 'EMP'].map((st) => (
                 <option key={st} value={st}>
-                  Характеристика: {st}
+                  {lang === 'ru' ? 'Характеристика:' : 'Stat:'} {st}
                 </option>
               ))}
             </select>
@@ -217,7 +217,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 onClick={handleAddCustomSkill}
                 className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase rounded"
               >
-                Создать
+                {lang === 'ru' ? 'Создать' : 'Create'}
               </button>
             </div>
           </div>
@@ -257,7 +257,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                     <button
                       onClick={() => handleDeleteCustomSkill(skill.id)}
                       className="text-zinc-600 hover:text-red-400 p-0.5 ml-auto"
-                      title="Удалить пользовательский навык"
+                      title={lang === 'ru' ? "Удалить пользовательский навык" : "Delete custom skill"}
                     >
                       <Trash2 size={12} />
                     </button>
@@ -285,7 +285,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                       ? lang === 'ru'
                         ? `След. уровень: ${(skill.level + 1) * 20 * skill.multiplier} IP`
                         : `Next level: ${(skill.level + 1) * 20 * skill.multiplier} IP`
-                      : 'Макс. ранг'
+                      : (lang === 'ru' ? 'Макс. ранг' : 'Max Rank')
                   }
                 >
                   <button

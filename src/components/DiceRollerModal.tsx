@@ -29,7 +29,7 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
   const t = translations[lang];
 
   // Roll form states
-  const [checkTitle, setCheckTitle] = useState('Проверка навыка / характеристики');
+  const [checkTitle, setCheckTitle] = useState(lang === 'ru' ? 'Проверка навыка / характеристики' : 'Skill / Stat Check');
   const [baseVal, setBaseVal] = useState<number>(10);
   const [luckSpent, setLuckSpent] = useState<number>(0);
   const [situationalMod, setSituationalMod] = useState<number>(0);
@@ -37,7 +37,7 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
 
   // Damage form states
   const [damageFormula, setDamageFormula] = useState('3d6');
-  const [damageTitle, setDamageTitle] = useState('Урон оружия');
+  const [damageTitle, setDamageTitle] = useState(lang === 'ru' ? 'Урон оружия' : 'Weapon Damage');
 
   // Active tab inside roller: 'check' | 'damage' | 'history'
   const [activeTab, setActiveTab] = useState<'check' | 'damage' | 'history'>('check');
@@ -46,15 +46,15 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
 
   const handleRollCheck = () => {
     const dvNumber = targetDv.trim() === '' ? undefined : parseInt(targetDv, 10);
-    const modifiers = situationalMod !== 0 ? [{ name: 'Модификатор', val: situationalMod }] : [];
+    const modifiers = situationalMod !== 0 ? [{ name: lang === 'ru' ? 'Модификатор' : 'Modifier', val: situationalMod }] : [];
 
     // Seriously / Mortally Wounded automatic penalty check
     const hpMax = 10 + 5 * Math.ceil((character.stats.BODY + character.stats.WILL) / 2);
     const seriouslyWoundedThreshold = Math.ceil(hpMax / 2);
     if (character.hpCurrent <= 0) {
-      modifiers.push({ name: 'Смертельно ранен', val: -4 });
+      modifiers.push({ name: lang === 'ru' ? 'Смертельно ранен' : 'Mortally Wounded', val: -4 });
     } else if (character.hpCurrent <= seriouslyWoundedThreshold) {
-      modifiers.push({ name: 'Тяжело ранен', val: -2 });
+      modifiers.push({ name: lang === 'ru' ? 'Тяжело ранен' : 'Seriously Wounded', val: -2 });
     }
 
     const result = executeCyberpunkCheck({
@@ -62,7 +62,8 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
       baseVal: baseVal,
       luckSpent: luckSpent,
       modifiers,
-      targetDv: isNaN(dvNumber as number) ? undefined : dvNumber
+      targetDv: isNaN(dvNumber as number) ? undefined : dvNumber,
+      lang
     });
 
     // Deduct luck if spent
@@ -78,12 +79,12 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
   };
 
   const handleRollDamage = () => {
-    const result = executeDamageRoll(damageTitle, damageFormula);
+    const result = executeDamageRoll(damageTitle, damageFormula, lang);
     onAddRollResult(result);
   };
 
   const handleRollDeathSave = () => {
-    const result = executeDeathSave(character.stats.BODY, character.deathSavePenalties);
+    const result = executeDeathSave(character.stats.BODY, character.deathSavePenalties, lang);
     onAddRollResult(result);
   };
 
@@ -216,7 +217,7 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
             <div className="space-y-4">
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                  Название броска
+                  {lang === 'ru' ? 'Название броска' : 'Roll Title'}
                 </label>
                 <input
                   type="text"
@@ -257,7 +258,7 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
                 {/* Spend Luck */}
                 <div>
                   <label className="text-xs text-yellow-400 uppercase font-semibold block mb-1">
-                    {t.luckPoints} (Доступно: {character.luckCurrent})
+                    {t.luckPoints} ({lang === 'ru' ? 'Доступно:' : 'Available:'} {character.luckCurrent})
                   </label>
                   <input
                     type="number"
@@ -285,7 +286,9 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
 
               {/* Quick DV Presets */}
               <div className="flex items-center gap-1.5 flex-wrap text-xs text-zinc-400">
-                <span className="font-semibold uppercase text-zinc-500">Пресеты DV:</span>
+                <span className="font-semibold uppercase text-zinc-500">
+                  {lang === 'ru' ? 'Пресеты DV:' : 'DV Presets:'}
+                </span>
                 {[9, 13, 15, 17, 21, 24, 29].map((dv) => (
                   <button
                     key={dv}
@@ -305,7 +308,7 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
                   className="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-sm tracking-wider uppercase rounded shadow-lg shadow-red-950 transition flex items-center justify-center gap-2"
                 >
                   <Dices size={18} />
-                  БРОСИТЬ 1D10
+                  {lang === 'ru' ? 'БРОСИТЬ 1D10' : 'ROLL 1D10'}
                 </button>
 
                 <button
@@ -324,7 +327,7 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
             <div className="space-y-4">
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                  Название источника урона
+                  {lang === 'ru' ? 'Название источника урона' : 'Damage Source Name'}
                 </label>
                 <input
                   type="text"
@@ -336,7 +339,7 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
 
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                  Формула урона
+                  {lang === 'ru' ? 'Формула урона' : 'Damage Formula'}
                 </label>
                 <input
                   type="text"
@@ -349,7 +352,9 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
 
               {/* Quick damage presets */}
               <div className="flex items-center gap-2 flex-wrap text-xs">
-                <span className="font-semibold uppercase text-zinc-500">Пресеты:</span>
+                <span className="font-semibold uppercase text-zinc-500">
+                  {lang === 'ru' ? 'Пресеты:' : 'Presets:'}
+                </span>
                 {['1d6', '2d6', '3d6', '4d6', '5d6', '6d6', '8d6'].map((preset) => (
                   <button
                     key={preset}
@@ -364,9 +369,11 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
 
               <div className="p-3 bg-zinc-950/80 border border-zinc-800 rounded text-xs text-zinc-400">
                 <span className="text-yellow-400 font-bold block mb-1">
-                  Правило Cyberpunk RED (Критическое ранение):
+                  {lang === 'ru' ? 'Правило Cyberpunk RED (Критическое ранение):' : 'Cyberpunk RED Rule (Critical Injury):'}
                 </span>
-                Если при броске урона выпадают как минимум две шестёрки (6, 6), цель получает дополнительно +5 урона напрямую в ОЗ и критическую травму!
+                {lang === 'ru'
+                  ? 'Если при броске урона выпадают как минимум две шестёрки (6, 6), цель получает дополнительно +5 урона напрямую в ОЗ и критическую травму!'
+                  : 'If at least two sixes (6, 6) are rolled for damage, the target takes +5 bonus damage directly to HP and suffers a Critical Injury!'}
               </div>
 
               <button
@@ -383,7 +390,7 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
           {activeTab === 'history' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs text-zinc-400 pb-2 border-b border-zinc-800">
-                <span>Всего бросков: {rollHistory.length}</span>
+                <span>{lang === 'ru' ? 'Всего бросков:' : 'Total rolls:'} {rollHistory.length}</span>
                 {rollHistory.length > 0 && (
                   <button
                     onClick={() => {
@@ -400,7 +407,7 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
 
               {rollHistory.length === 0 ? (
                 <div className="text-center py-8 text-zinc-500 text-sm">
-                  История бросков пуста
+                  {lang === 'ru' ? 'История бросков пуста' : 'Roll history is empty'}
                 </div>
               ) : (
                 <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
@@ -416,17 +423,23 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
                       <div className="text-zinc-400 mt-1">{roll.summary}</div>
                       <div className="flex items-center gap-2 mt-1">
                         {roll.isCritSuccess && (
-                          <span className="text-yellow-400 font-bold uppercase">Крит (+10)</span>
+                          <span className="text-yellow-400 font-bold uppercase">
+                            {lang === 'ru' ? 'Крит (+10)' : 'Crit (+10)'}
+                          </span>
                         )}
                         {roll.isCritFail && (
-                          <span className="text-red-400 font-bold uppercase">Провал (-1)</span>
+                          <span className="text-red-400 font-bold uppercase">
+                            {lang === 'ru' ? 'Провал (-1)' : 'Fumble (-1)'}
+                          </span>
                         )}
                         {roll.isCritInjury && (
-                          <span className="text-amber-400 font-bold uppercase">+5 Крит. травма</span>
+                          <span className="text-amber-400 font-bold uppercase">
+                            {lang === 'ru' ? '+5 Крит. травма' : '+5 Crit Injury'}
+                          </span>
                         )}
                         {roll.isSuccess !== undefined && (
                           <span className={roll.isSuccess ? 'text-emerald-400' : 'text-red-400'}>
-                            {roll.isSuccess ? 'УСПЕХ' : 'ПРОВАЛ'} (DV {roll.targetDv})
+                            {roll.isSuccess ? (lang === 'ru' ? 'УСПЕХ' : 'SUCCESS') : (lang === 'ru' ? 'ПРОВАЛ' : 'FAILURE')} (DV {roll.targetDv})
                           </span>
                         )}
                         <span className="text-zinc-600 text-[10px] ml-auto">

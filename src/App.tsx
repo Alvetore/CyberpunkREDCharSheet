@@ -134,7 +134,7 @@ export const App: React.FC = () => {
   };
 
   const handleNewCharacter = () => {
-    const newChar = createEmptyCharacter(`Новый бегущий #${characters.length + 1}`, 'Solo');
+    const newChar = createEmptyCharacter(lang === 'ru' ? `Новый бегущий #${characters.length + 1}` : `New Edgerunner #${characters.length + 1}`, 'Solo');
     setCharacters((prev) => [...prev, newChar]);
     setActiveId(newChar.id);
   };
@@ -144,7 +144,7 @@ export const App: React.FC = () => {
     const duplicated: Character = {
       ...JSON.parse(JSON.stringify(activeChar)),
       id: 'char-' + Date.now(),
-      name: `${activeChar.name} (Копия)`,
+      name: `${activeChar.name} (${lang === 'ru' ? 'Копия' : 'Copy'})`,
       handle: `${activeChar.handle || 'Ghost'} Copy`,
       createdAt: Date.now(),
       updatedAt: Date.now()
@@ -155,7 +155,7 @@ export const App: React.FC = () => {
 
   const handleDeleteCharacter = () => {
     if (characters.length <= 1) return;
-    const confirmed = window.confirm(`Удалить персонажа "${activeChar.name}"?`);
+    const confirmed = window.confirm(lang === 'ru' ? `Удалить персонажа "${activeChar.name}"?` : `Delete character "${activeChar.name}"?`);
     if (!confirmed) return;
 
     const remaining = characters.filter((c) => c.id !== activeChar.id);
@@ -174,7 +174,7 @@ export const App: React.FC = () => {
   const handleImportCharacter = (jsonText: string) => {
     const parsed = parseImportedJson(jsonText);
     if (!parsed) {
-      alert('Ошибка: некорректный формат файла JSON.');
+      alert(lang === 'ru' ? 'Ошибка: некорректный формат файла JSON.' : 'Error: Invalid JSON file format.');
       return;
     }
 
@@ -182,18 +182,18 @@ export const App: React.FC = () => {
       // Multiple characters backup
       setCharacters(parsed);
       setActiveId(parsed[0]?.id || '');
-      alert(`Успешно импортировано ${parsed.length} персонажей!`);
+      alert(lang === 'ru' ? `Успешно импортировано ${parsed.length} персонажей!` : `Successfully imported ${parsed.length} characters!`);
     } else {
       // Single character
       const char = parsed as Character;
       if (!char.id || !char.name || !char.stats) {
-        alert('Файл не содержит корректных данных персонажа Cyberpunk RED.');
+        alert(lang === 'ru' ? 'Файл не содержит корректных данных персонажа Cyberpunk RED.' : 'File does not contain valid Cyberpunk RED character data.');
         return;
       }
       char.id = 'imported-' + Date.now();
       setCharacters((prev) => [...prev, char]);
       setActiveId(char.id);
-      alert(`Персонаж "${char.name}" успешно импортирован!`);
+      alert(lang === 'ru' ? `Персонаж "${char.name}" успешно импортирован!` : `Character "${char.name}" successfully imported!`);
     }
   };
 
@@ -205,9 +205,10 @@ export const App: React.FC = () => {
   // Roll Handlers
   const handleRollStat = (statKey: StatKey, statVal: number) => {
     const result = executeCyberpunkCheck({
-      title: `Проверка ${statKey} (${t[statKey]})`,
+      title: lang === 'ru' ? `Проверка ${statKey} (${t[statKey]})` : `${statKey} Check (${t[statKey]})`,
       type: 'stat',
-      baseVal: statVal
+      baseVal: statVal,
+      lang
     });
     addRollResult(result);
   };
@@ -221,24 +222,26 @@ export const App: React.FC = () => {
     const base = activeChar.stats.REF + armorPenalty + soloInit;
 
     const result = executeCyberpunkCheck({
-      title: `Инициатива (${activeChar.name})`,
+      title: lang === 'ru' ? `Инициатива (${activeChar.name})` : `Initiative (${activeChar.name})`,
       type: 'initiative',
-      baseVal: base
+      baseVal: base,
+      lang
     });
     addRollResult(result);
   };
 
   const handleRollDeathSave = () => {
-    const result = executeDeathSave(activeChar.stats.BODY, activeChar.deathSavePenalties);
+    const result = executeDeathSave(activeChar.stats.BODY, activeChar.deathSavePenalties, lang);
     addRollResult(result);
   };
 
   const handleRollSkill = (skill: Skill, effectiveBase: number) => {
     const skillName = lang === 'ru' ? skill.nameRu : skill.nameEn;
     const result = executeCyberpunkCheck({
-      title: `Навык: ${skillName}`,
+      title: lang === 'ru' ? `Навык: ${skillName}` : `Skill: ${skillName}`,
       type: 'skill',
-      baseVal: effectiveBase
+      baseVal: effectiveBase,
+      lang
     });
     addRollResult(result);
   };
@@ -256,16 +259,17 @@ export const App: React.FC = () => {
     const baseVal = statVal + skillLvl + armorPenalty + woundPenalty;
 
     const result = executeCyberpunkCheck({
-      title: `Атака: ${weapon.name}${rangeStr ? ` (${rangeStr})` : ''}`,
+      title: lang === 'ru' ? `Атака: ${weapon.name}${rangeStr ? ` (${rangeStr})` : ''}` : `Attack: ${weapon.name}${rangeStr ? ` (${rangeStr})` : ''}`,
       type: 'attack',
       baseVal,
-      targetDv
+      targetDv,
+      lang
     });
     addRollResult(result);
   };
 
   const handleRollWeaponDamage = (weapon: Weapon) => {
-    const result = executeDamageRoll(`Урон: ${weapon.name}`, weapon.damage);
+    const result = executeDamageRoll(lang === 'ru' ? `Урон: ${weapon.name}` : `Damage: ${weapon.name}`, weapon.damage, lang);
     addRollResult(result);
   };
 
@@ -277,7 +281,8 @@ export const App: React.FC = () => {
       title: `NET: ${actionName}`,
       type: 'net',
       baseVal,
-      targetDv: dv
+      targetDv: dv,
+      lang
     });
     addRollResult(result);
   };
@@ -287,7 +292,7 @@ export const App: React.FC = () => {
     const baseVal = interfaceRank + prog.atkBonus;
 
     const result = executeCyberpunkCheck({
-      title: `NET Атака: ${prog.name} (ATK +${prog.atkBonus})`,
+      title: lang === 'ru' ? `NET Атака: ${prog.name} (ATK +${prog.atkBonus})` : `NET Attack: ${prog.name} (ATK +${prog.atkBonus})`,
       type: 'net',
       baseVal
     });
@@ -462,7 +467,7 @@ export const App: React.FC = () => {
             }`}
           >
             <FileText size={15} />
-            <span>{t.tabNotes || 'Заметки'}</span>
+            <span>{t.tabNotes || (lang === 'ru' ? 'Заметки' : 'Notes')}</span>
             {activeChar.notes && (
               <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 ml-0.5" />
             )}

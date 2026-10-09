@@ -115,7 +115,9 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
 
           <button
             onClick={() => handleInsertTemplate(
-              `### 📅 Сессия [${new Date().toLocaleDateString()}]:\n- **Место:** \n- **События:** \n- **Итоги:** `
+              lang === 'ru'
+                ? `### 📅 Сессия [${new Date().toLocaleDateString()}]:\n- **Место:** \n- **События:** \n- **Итоги:** `
+                : `### 📅 Session [${new Date().toLocaleDateString()}]:\n- **Location:** \n- **Events:** \n- **Outcome:** `
             )}
             className="flex items-center gap-1 px-2 py-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px]"
           >
@@ -125,7 +127,9 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
 
           <button
             onClick={() => handleInsertTemplate(
-              `- **👤 NPC / Контакт:** [Имя]\n  - Роль: \n  - Связь: \n  - Отношение: \n  - Заметки: `
+              lang === 'ru'
+                ? `- **👤 NPC / Контакт:** [Имя]\n  - Роль: \n  - Связь: \n  - Отношение: \n  - Заметки: `
+                : `- **👤 NPC / Contact:** [Name]\n  - Role: \n  - Affiliation: \n  - Attitude: \n  - Notes: `
             )}
             className="flex items-center gap-1 px-2 py-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px]"
           >
@@ -135,7 +139,9 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
 
           <button
             onClick={() => handleInsertTemplate(
-              `- **🎯 Контракт:** [Название/Цель]\n  - Заказчик: \n  - Задача: \n  - Награда: [eb]\n  - Дедлайн / Риски: `
+              lang === 'ru'
+                ? `- **🎯 Контракт:** [Название/Цель]\n  - Заказчик: \n  - Задача: \n  - Награда: [eb]\n  - Дедлайн / Риски: `
+                : `- **🎯 Contract:** [Name/Target]\n  - Employer: \n  - Objective: \n  - Reward: [eb]\n  - Deadline / Risks: `
             )}
             className="flex items-center gap-1 px-2 py-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px]"
           >
@@ -145,7 +151,9 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
 
           <button
             onClick={() => handleInsertTemplate(
-              `- **📦 Лут / Схрон:** \n  - Предметы: \n  - Локация / Пароль: `
+              lang === 'ru'
+                ? `- **📦 Лут / Схрон:** \n  - Предметы: \n  - Локация / Пароль: `
+                : `- **📦 Loot / Stash:** \n  - Items: \n  - Location / Code: `
             )}
             className="flex items-center gap-1 px-2 py-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px]"
           >
@@ -155,7 +163,9 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
 
           <button
             onClick={() => handleInsertTemplate(
-              `- **💀 Долг / Враг:** [Кто]\n  - Сумма / Причина: \n  - Срок расплаты: `
+              lang === 'ru'
+                ? `- **💀 Долг / Враг:** [Кто]\n  - Сумма / Причина: \n  - Срок расплаты: `
+                : `- **💀 Debt / Nemesis:** [Who]\n  - Amount / Reason: \n  - Due Date: `
             )}
             className="flex items-center gap-1 px-2 py-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px]"
           >

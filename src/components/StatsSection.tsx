@@ -207,7 +207,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               <span>{t.hp}</span>
             </div>
             <span className="font-mono text-xs text-zinc-400">
-              Порог: {seriouslyWoundedThreshold}
+              {lang === 'ru' ? 'Порог:' : 'Threshold:'} {seriouslyWoundedThreshold}
             </span>
           </div>
 
@@ -228,7 +228,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               </span>
             ) : (
               <span className="px-2 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold text-[10px] uppercase rounded">
-                Норма
+                {lang === 'ru' ? 'Норма' : 'Normal'}
               </span>
             )}
           </div>
@@ -296,7 +296,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               className="w-full py-1 bg-red-950/60 hover:bg-red-800 border border-red-700/80 text-red-300 hover:text-white rounded text-[11px] font-bold font-orbitron uppercase tracking-wider flex items-center justify-center gap-1.5 transition shadow-sm"
             >
               <HeartCrack size={13} />
-              <span>Расчет урона и абляции</span>
+              <span>{lang === 'ru' ? 'Расчет урона и абляции' : 'Damage & Ablation Calc'}</span>
             </button>
           </div>
         </div>
@@ -375,7 +375,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               title={t.resetLuck}
             >
               <RotateCcw size={12} />
-              <span>Сброс</span>
+              <span>{lang === 'ru' ? 'Сброс' : 'Reset'}</span>
             </button>
           </div>
 
@@ -404,7 +404,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               }}
               className="flex-1 py-0.5 bg-zinc-800 hover:bg-yellow-900 border border-zinc-700 text-yellow-300 rounded font-bold transition disabled:opacity-40"
             >
-              -1 Потратить
+              {lang === 'ru' ? '-1 Потратить' : '-1 Spend'}
             </button>
             <button
               disabled={character.luckCurrent >= character.stats.LUCK}
@@ -417,7 +417,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               }}
               className="flex-1 py-0.5 bg-zinc-800 hover:bg-yellow-900 border border-zinc-700 text-yellow-300 rounded font-bold transition disabled:opacity-40"
             >
-              +1 Добавить
+              {lang === 'ru' ? '+1 Добавить' : '+1 Add'}
             </button>
           </div>
         </div>
@@ -430,7 +430,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               <span>{t.deathSave}</span>
             </div>
             <span className="font-mono text-xs text-zinc-400">
-              Штраф: +{character.deathSavePenalties}
+              {lang === 'ru' ? 'Штраф: +' : 'Penalty: +'}{character.deathSavePenalties}
             </span>
           </div>
 
@@ -534,7 +534,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                   </button>
                   <button
                     onClick={() => onRollStat(statKey, effectiveVal)}
-                    title={`Бросок ${statKey} (1d10 + ${effectiveVal})`}
+                    title={lang === 'ru' ? `Бросок ${statKey} (1d10 + ${effectiveVal})` : `Roll ${statKey} (1d10 + ${effectiveVal})`}
                     className="flex-1 py-0.5 bg-zinc-900 hover:bg-red-950 text-zinc-300 hover:text-red-400 rounded text-[10px] font-bold font-mono transition"
                   >
                     1d10

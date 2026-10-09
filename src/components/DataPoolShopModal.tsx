@@ -81,7 +81,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         originalId: w.id,
         name: w.name,
         type: 'weapon',
-        categoryLabel: `Оружие (${w.category})`,
+        categoryLabel: lang === 'ru' ? `Оружие (${w.category})` : `Weapon (${w.category})`,
         costEb: w.costEb,
         description: w.notes,
         weaponData: w
@@ -95,9 +95,9 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         originalId: a.id,
         name: a.name,
         type: 'armor',
-        categoryLabel: a.location === 'shield' ? 'Щит' : a.location === 'head' ? 'Шлем' : 'Броня',
+        categoryLabel: a.location === 'shield' ? (lang === 'ru' ? 'Щит' : 'Shield') : a.location === 'head' ? (lang === 'ru' ? 'Шлем' : 'Helmet') : (lang === 'ru' ? 'Броня' : 'Armor'),
         costEb: a.costEb,
-        description: a.notes || `ОС: ${a.spMax}, Штраф: ${a.penalty}`,
+        description: a.notes || (lang === 'ru' ? `ОС: ${a.spMax}, Штраф: ${a.penalty}` : `SP: ${a.spMax}, Penalty: ${a.penalty}`),
         armorData: a
       });
     });
@@ -109,7 +109,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         originalId: c.id,
         name: c.name,
         type: 'cyberware',
-        categoryLabel: `Имплант (${c.category})`,
+        categoryLabel: lang === 'ru' ? `Имплант (${c.category})` : `Cyberware (${c.category})`,
         costEb: c.costEb,
         description: c.description,
         cyberwareData: c
@@ -123,7 +123,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         originalId: g.id,
         name: g.name,
         type: 'gear',
-        categoryLabel: g.category === 'Consumable' ? 'Расходник' : 'Снаряжение',
+        categoryLabel: g.category === 'Consumable' ? (lang === 'ru' ? 'Расходник' : 'Consumable') : (lang === 'ru' ? 'Снаряжение' : 'Gear'),
         costEb: g.costEb,
         description: g.notes,
         gearData: g
@@ -131,7 +131,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
     });
 
     return list;
-  }, []);
+  }, [lang]);
 
   // Filtered and sorted items
   const filteredItems = useMemo(() => {
@@ -281,7 +281,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                   {lang === 'ru' ? 'Рынок Найт-Сити · DataPool' : 'Night Market · DataPool'}
                 </h2>
                 <span className="text-[10px] bg-red-950 text-red-300 border border-red-800 px-1.5 py-0.5 rounded font-mono">
-                  500+ предметов
+                  {lang === 'ru' ? '500+ предметов' : '500+ items'}
                 </span>
               </div>
               <span className="text-[11px] text-zinc-400">
@@ -526,7 +526,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                                 : 'bg-red-950 text-red-400 border border-red-800/80'
                             }`}
                           >
-                            {isFreeMode ? '0 eb (ГМ)' : `${item.costEb} eb`}
+                            {isFreeMode ? (lang === 'ru' ? '0 eb (ГМ)' : '0 eb (GM)') : `${item.costEb} eb`}
                           </span>
                         </div>
                       </div>
@@ -537,14 +537,14 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                         {item.type === 'weapon' && item.weaponData && (
                           <>
                             <span className="bg-red-950/60 text-red-300 border border-red-800 px-1.5 py-0.5 rounded">
-                              Урон: <strong>{item.weaponData.damage}</strong>
+                              {lang === 'ru' ? 'Урон:' : 'DMG:'} <strong>{item.weaponData.damage}</strong>
                             </span>
                             <span className="bg-zinc-900 text-zinc-300 border border-zinc-800 px-1.5 py-0.5 rounded">
                               ROF: <strong>{item.weaponData.standardRof}</strong>
                             </span>
                             {item.weaponData.magCapacity > 0 && (
                               <span className="bg-zinc-900 text-zinc-300 border border-zinc-800 px-1.5 py-0.5 rounded">
-                                Маг: <strong>{item.weaponData.magCapacity}</strong>
+                                {lang === 'ru' ? 'Маг:' : 'Mag:'} <strong>{item.weaponData.magCapacity}</strong>
                               </span>
                             )}
                             <span className="bg-zinc-900 text-zinc-400 border border-zinc-800 px-1.5 py-0.5 rounded">
@@ -557,15 +557,15 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                         {item.type === 'armor' && item.armorData && (
                           <>
                             <span className="bg-cyan-950 text-cyan-300 border border-cyan-800 px-1.5 py-0.5 rounded">
-                              ОС: <strong>{item.armorData.spMax}</strong>
+                              {lang === 'ru' ? 'ОС:' : 'SP:'} <strong>{item.armorData.spMax}</strong>
                             </span>
                             {item.armorData.penalty !== 0 && (
                               <span className="bg-red-950 text-red-300 border border-red-800 px-1.5 py-0.5 rounded">
-                                Штраф: <strong>{item.armorData.penalty}</strong>
+                                {lang === 'ru' ? 'Штраф:' : 'Pen:'} <strong>{item.armorData.penalty}</strong>
                               </span>
                             )}
                             <span className="bg-zinc-900 text-zinc-400 border border-zinc-800 px-1.5 py-0.5 rounded">
-                              {item.armorData.location === 'shield' ? 'Щит (HP)' : item.armorData.location === 'head' ? 'Голова' : 'Тело'}
+                              {item.armorData.location === 'shield' ? (lang === 'ru' ? 'Щит (HP)' : 'Shield (HP)') : item.armorData.location === 'head' ? (lang === 'ru' ? 'Голова' : 'Head') : (lang === 'ru' ? 'Тело' : 'Body')}
                             </span>
                           </>
                         )}
@@ -574,7 +574,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                         {item.type === 'cyberware' && item.cyberwareData && (
                           <>
                             <span className="bg-purple-950 text-purple-300 border border-purple-800 px-1.5 py-0.5 rounded">
-                              Потеря ПЧ: <strong>{item.cyberwareData.humanityCostFormula || item.cyberwareData.humanityCost}</strong>
+                              {lang === 'ru' ? 'Потеря ПЧ:' : 'HL:'} <strong>{item.cyberwareData.humanityCostFormula || item.cyberwareData.humanityCost}</strong>
                             </span>
                             <span className="bg-zinc-900 text-zinc-400 border border-zinc-800 px-1.5 py-0.5 rounded">
                               {item.cyberwareData.installLocation}
@@ -596,12 +596,12 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                             >
                               {isExpanded ? (
                                 <>
-                                  <span>Свернуть</span>
+                                  <span>{lang === 'ru' ? 'Свернуть' : 'Collapse'}</span>
                                   <ChevronUp size={12} />
                                 </>
                               ) : (
                                 <>
-                                  <span>Подробнее</span>
+                                  <span>{lang === 'ru' ? 'Подробнее' : 'Details'}</span>
                                   <ChevronDown size={12} />
                                 </>
                               )}
@@ -614,7 +614,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                     {/* Buy Action Button */}
                     <div className="pt-2 border-t border-zinc-900 flex items-center justify-between gap-2 mt-2">
                       <span className="text-[10px] text-zinc-500 font-mono">
-                        {item.type === 'cyberware' && item.cyberwareData?.humanityCost ? `-${item.cyberwareData.humanityCost} Человечности` : ''}
+                        {item.type === 'cyberware' && item.cyberwareData?.humanityCost ? `-${item.cyberwareData.humanityCost} ${lang === 'ru' ? 'Человечности' : 'Humanity'}` : ''}
                       </span>
 
                       <button
@@ -640,7 +640,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         {/* Footer */}
         <div className="bg-zinc-950 px-4 py-2.5 border-t border-zinc-800 flex items-center justify-between text-xs text-zinc-400">
           <div className="flex items-center gap-1 text-[11px]">
-            <span>Показано: {filteredItems.length} товаров</span>
+            <span>{lang === 'ru' ? `Показано: ${filteredItems.length} товаров` : `Showing: ${filteredItems.length} items`}</span>
             <span className="text-zinc-600">•</span>
             <a
               href="https://alec-leon.github.io/data-pool/"

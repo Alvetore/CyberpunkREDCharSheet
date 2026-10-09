@@ -103,7 +103,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
         <div className="flex items-center gap-2">
           <Award size={18} className="text-red-500" />
           <h2 className="font-orbitron font-bold text-sm text-red-500 uppercase tracking-wider">
-            {t.roleAbilityTitle}: {role} (Ранг {rank})
+            {t.roleAbilityTitle}: {role} ({lang === 'ru' ? 'Ранг' : 'Rank'} {rank})
           </h2>
         </div>
       </div>
@@ -113,10 +113,10 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
         <div className="space-y-3">
           <div className="flex items-center justify-between text-xs text-zinc-300">
             <span className="font-semibold text-yellow-400">
-              {t.soloCombatAwareness}: Распределено {soloPointsAllocated} / {rank} очков
+              {t.soloCombatAwareness}: {lang === 'ru' ? `Распределено ${soloPointsAllocated} / ${rank} очков` : `Allocated ${soloPointsAllocated} / ${rank} points`}
             </span>
             <span className="text-zinc-500 text-[11px]">
-              (Очки можно перераспределять вне боя или с затратой действия)
+              {lang === 'ru' ? '(Очки можно перераспределять вне боя или с затратой действия)' : '(Points can be reallocated out of combat or by spending an action)'}
             </span>
           </div>
 
@@ -125,7 +125,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <div>
                 <span className="font-bold text-xs text-zinc-200 block">{t.threatDetection}</span>
-                <span className="text-[10px] text-zinc-500">+к Восприятию против засад</span>
+                <span className="text-[10px] text-zinc-500">{lang === 'ru' ? '+к Восприятию против засад' : '+Perception vs ambushes'}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
@@ -150,7 +150,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <div>
                 <span className="font-bold text-xs text-zinc-200 block">{t.initiativeReaction}</span>
-                <span className="text-[10px] text-zinc-500">+к броску Инициативы</span>
+                <span className="text-[10px] text-zinc-500">{lang === 'ru' ? '+к броску Инициативы' : '+to Initiative rolls'}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
@@ -175,7 +175,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <div>
                 <span className="font-bold text-xs text-zinc-200 block">{t.precisionAttack}</span>
-                <span className="text-[10px] text-zinc-500">+к прицельным атакам</span>
+                <span className="text-[10px] text-zinc-500">{lang === 'ru' ? '+к прицельным атакам' : '+to aimed attacks'}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
@@ -200,7 +200,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <div>
                 <span className="font-bold text-xs text-zinc-200 block">{t.spotWeakness}</span>
-                <span className="text-[10px] text-zinc-500">+к урону первой успешной атаки</span>
+                <span className="text-[10px] text-zinc-500">{lang === 'ru' ? '+к урону первой успешной атаки' : '+damage on first hit'}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
@@ -225,7 +225,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <div>
                 <span className="font-bold text-xs text-zinc-200 block">{t.damageAbsorb}</span>
-                <span className="text-[10px] text-zinc-500">Снижает получаемый урон</span>
+                <span className="text-[10px] text-zinc-500">{lang === 'ru' ? 'Снижает получаемый урон' : 'Reduces damage received'}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
@@ -327,7 +327,11 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
       {role === 'Netrunner' && (
         <div className="p-3 bg-zinc-950 border border-cyan-800/60 rounded text-xs text-cyan-300 flex items-center justify-between">
           <span>
-            Интерфейс: Ранг {character.roleAbilities.netrunner.interfaceRank}. Управление кибердекой и сетевые действия доступны во вкладке <strong>&quot;Нетраннинг&quot;</strong>.
+            {lang === 'ru' ? (
+              <>Интерфейс: Ранг {character.roleAbilities.netrunner.interfaceRank}. Управление кибердекой и сетевые действия доступны во вкладке <strong>&quot;Нетраннинг&quot;</strong>.</>
+            ) : (
+              <>Interface: Rank {character.roleAbilities.netrunner.interfaceRank}. Cyberdeck management and Net actions are located in the <strong>&quot;Netrunning&quot;</strong> tab.</>
+            )}
           </span>
         </div>
       )}
@@ -336,7 +340,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
       {role !== 'Solo' && role !== 'Tech' && role !== 'Medtech' && role !== 'Netrunner' && (
         <div className="space-y-2">
           <label className="text-xs text-zinc-400 block">
-            Детали способности роли ({role}):
+            {lang === 'ru' ? `Детали способности роли (${role}):` : `Role Ability Details (${role}):`}
           </label>
           <input
             type="text"

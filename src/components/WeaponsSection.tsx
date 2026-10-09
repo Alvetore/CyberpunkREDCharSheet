@@ -60,7 +60,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
     currentAmmo: 8,
     ammoType: 'Heavy Pistol Ammo',
     concealable: true,
-    notes: 'Стандартный пистолет',
+    notes: lang === 'ru' ? 'Стандартный пистолет' : 'Standard pistol',
     skillId: 'handgun'
   });
 
@@ -107,7 +107,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
     sfx.playClick();
     const weapon: Weapon = {
       id: 'weap-' + Date.now(),
-      name: newWeapon.name || 'Оружие',
+      name: newWeapon.name || (lang === 'ru' ? 'Оружие' : 'Weapon'),
       category: (newWeapon.category as WeaponCategory) || 'Heavy Pistol',
       damage: newWeapon.damage || '3d6',
       standardRof: newWeapon.standardRof || 1,
@@ -154,10 +154,10 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 onOpenShop('weapons');
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-950/60 hover:bg-yellow-600 border border-yellow-700/80 text-yellow-300 hover:text-black font-bold text-xs uppercase tracking-wider rounded transition font-orbitron"
-              title="Купить оружие из каталога DataPool"
+              title={lang === 'ru' ? "Купить оружие из каталога DataPool" : "Buy weapons from DataPool catalog"}
             >
               <ShoppingCart size={14} className="text-yellow-400" />
-              <span>Каталог DataPool</span>
+              <span>{lang === 'ru' ? 'Каталог DataPool' : 'DataPool Catalog'}</span>
             </button>
           )}
 
@@ -191,17 +191,17 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
         <div className="bg-zinc-900 border border-red-800/60 rounded-lg p-3 sm:p-4 shadow-xl overflow-x-auto">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-orbitron font-bold text-yellow-400 uppercase">
-              Официальная таблица сложностей стрельбы (Cyberpunk RED Range DV Table)
+              {lang === 'ru' ? 'Официальная таблица сложностей стрельбы (Cyberpunk RED Range DV Table)' : 'Cyberpunk RED Range DV Table'}
             </span>
             <span className="text-[11px] text-zinc-400">
-              * Кликните на ячейку с DV для мгновенного броска атаки
+              {lang === 'ru' ? '* Кликните на ячейку с DV для мгновенного броска атаки' : '* Click any DV cell to roll an immediate attack'}
             </span>
           </div>
 
           <table className="w-full text-xs text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-400 font-mono text-[11px]">
-                <th className="py-2 px-2">Категория оружия</th>
+                <th className="py-2 px-2">{lang === 'ru' ? 'Категория оружия' : 'Weapon Category'}</th>
                 {CPR_RANGE_DISTANCES.map((dist) => (
                   <th key={dist} className="py-2 px-1 text-center font-bold text-zinc-300">
                     {dist}
@@ -212,7 +212,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
             <tbody>
               {CPR_RANGE_DV_TABLE.map((row) => (
                 <tr key={row.category} className="border-b border-zinc-800/50 hover:bg-zinc-800/40">
-                  <td className="py-2 px-2 font-semibold text-zinc-200">{row.nameRu}</td>
+                  <td className="py-2 px-2 font-semibold text-zinc-200">{lang === 'ru' ? row.nameRu : row.category}</td>
                   {row.dvs.map((dv, idx) => (
                     <td key={idx} className="py-1 px-1 text-center">
                       {dv !== null ? (
@@ -226,7 +226,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                               onRollWeaponAttack(matchedWeapon, dv, CPR_RANGE_DISTANCES[idx]);
                             }
                           }}
-                          title={`Бросить атаку против DV ${dv} на дистанции ${CPR_RANGE_DISTANCES[idx]}`}
+                          title={lang === 'ru' ? `Бросить атаку против DV ${dv} на дистанции ${CPR_RANGE_DISTANCES[idx]}` : `Roll attack vs DV ${dv} at range ${CPR_RANGE_DISTANCES[idx]}`}
                           className="px-2 py-1 bg-zinc-800 hover:bg-red-600 hover:text-white border border-zinc-700 hover:border-red-500 rounded font-mono font-bold text-zinc-200 transition text-[11px]"
                         >
                           {dv}
@@ -261,7 +261,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                       {weapon.name}
                       {weapon.concealable && (
                         <span className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.2 rounded font-sans">
-                          Скрытое
+                          {lang === 'ru' ? 'Скрытое' : 'Concealable'}
                         </span>
                       )}
                     </h3>
@@ -271,14 +271,14 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   <button
                     onClick={() => handleDeleteWeapon(weapon.id)}
                     className="text-zinc-500 hover:text-red-400 p-1 transition"
-                    title="Удалить оружие"
+                    title={lang === 'ru' ? 'Удалить оружие' : 'Delete weapon'}
                   >
                     <Trash2 size={15} />
                   </button>
                 </div>
 
                 {/* Weapon Stats Badge */}
-                <div className="grid grid-cols-3 gap-2 my-2.5 text-center bg-zinc-950 p-2 rounded border border-zinc-850">
+                <div className="grid grid-cols-3 gap-2 my-2.5 text-center bg-zinc-950 p-2 rounded border border-zinc-855">
                   <div>
                     <span className="text-[10px] uppercase text-zinc-500 block">{t.damage}</span>
                     <span className="font-orbitron font-extrabold text-sm text-yellow-400">
@@ -294,7 +294,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   <div>
                     <span className="text-[10px] uppercase text-zinc-500 block">{t.ammo}</span>
                     <span className={`font-orbitron font-extrabold text-sm ${isOutOfAmmo ? 'text-red-500 font-black animate-pulse' : 'text-zinc-200'}`}>
-                      {isMelee ? 'Ближний бой' : `${weapon.currentAmmo} / ${weapon.magCapacity}`}
+                      {isMelee ? (lang === 'ru' ? 'Ближний бой' : 'Melee') : `${weapon.currentAmmo} / ${weapon.magCapacity}`}
                     </span>
                   </div>
                 </div>
@@ -379,7 +379,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
             {/* Presets dropdown */}
             <div>
               <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                Быстрый шаблон оружия
+                {lang === 'ru' ? 'Быстрый шаблон оружия' : 'Quick Weapon Template'}
               </label>
               <select
                 onChange={(e) => {
@@ -388,7 +388,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-sm focus:border-red-500 focus:outline-none"
               >
-                <option value="">Выберите шаблон...</option>
+                <option value="">{lang === 'ru' ? 'Выберите шаблон...' : 'Select template...'}</option>
                 {WEAPON_PRESETS.map((p) => (
                   <option key={p.name} value={p.name}>
                     {p.name} ({p.damage}, ROF {p.standardRof})
@@ -436,7 +436,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
 
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                  {t.rof} (1 или 2)
+                  {t.rof} ({lang === 'ru' ? '1 или 2' : '1 or 2'})
                 </label>
                 <input
                   type="number"
@@ -462,7 +462,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
 
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                  Тип патронов
+                  {lang === 'ru' ? 'Тип патронов' : 'Ammo Type'}
                 </label>
                 <input
                   type="text"
@@ -490,13 +490,13 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 onClick={() => setShowAddModal(false)}
                 className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold rounded"
               >
-                Отмена
+                {lang === 'ru' ? 'Отмена' : 'Cancel'}
               </button>
               <button
                 onClick={handleAddWeapon}
                 className="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase rounded"
               >
-                Добавить
+                {lang === 'ru' ? 'Добавить' : 'Add'}
               </button>
             </div>
           </div>

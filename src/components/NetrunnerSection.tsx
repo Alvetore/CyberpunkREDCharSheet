@@ -48,7 +48,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
     defBonus: 0,
     rezMax: 7,
     rezCurrent: 7,
-    effect: 'Наносит 3d6 урона вражеской программе или Black ICE',
+    effect: lang === 'ru' ? 'Наносит 3d6 урона вражеской программе или Black ICE' : 'Deals 3d6 damage to enemy Program or Black ICE',
     isInstalled: true
   });
 
@@ -86,7 +86,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
     sfx.playClick();
     const prog: ProgramItem = {
       id: 'prog-' + Date.now(),
-      name: newProg.name || 'Программа',
+      name: newProg.name || (lang === 'ru' ? 'Программа' : 'Program'),
       category: (newProg.category as ProgramCategory) || 'Booster',
       atkBonus: newProg.atkBonus || 0,
       defBonus: newProg.defBonus || 0,
@@ -129,7 +129,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
             </div>
 
             <div className="bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded text-center">
-              <span className="text-[10px] uppercase text-zinc-400 block">Действий в ход</span>
+              <span className="text-[10px] uppercase text-zinc-400 block">{lang === 'ru' ? 'Действий в ход' : 'Actions / Turn'}</span>
               <span className="font-orbitron font-extrabold text-lg text-yellow-400">
                 {netActionsPerTurn} NET
               </span>
@@ -158,7 +158,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
 
           <div>
             <label className="text-zinc-400 block mb-1 uppercase font-semibold text-[10px]">
-              {t.programSlots} (Установлено: {installedPrograms.length} / {character.cyberdeck.programSlotsMax})
+              {t.programSlots} ({lang === 'ru' ? 'Установлено' : 'Installed'}: {installedPrograms.length} / {character.cyberdeck.programSlotsMax})
             </label>
             <input
               type="number"
@@ -178,7 +178,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
 
           <div>
             <label className="text-zinc-400 block mb-1 uppercase font-semibold text-[10px]">
-              {t.hardwareSlots} (Слоты железа)
+              {t.hardwareSlots} ({lang === 'ru' ? 'Слоты железа' : 'Hardware Slots'})
             </label>
             <input
               type="number"
@@ -203,105 +203,105 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
         <div className="flex items-center gap-2 mb-3 border-b border-zinc-800 pb-2">
           <Terminal size={16} className="text-cyan-400" />
           <h3 className="font-orbitron font-bold text-xs text-cyan-400 uppercase tracking-wider">
-            {t.netActions} (1d10 + Интерфейс {interfaceRank})
+            {t.netActions} (1d10 + {lang === 'ru' ? 'Интерфейс' : 'Interface'} {interfaceRank})
           </h3>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {/* Scanner */}
           <button
-            onClick={() => onRollInterfaceAction('Сканирование архитектуры (Scanner)', 8)}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Сканирование архитектуры (Scanner)' : 'Scanner Action', 8)}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
               <span className="flex items-center gap-1.5"><Eye size={13} /> Scanner</span>
               <span className="text-[10px] text-cyan-400 font-mono">DV 8</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">Поиск узлов и точек доступа</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Поиск узлов и точек доступа' : 'Find nodes and access points'}</div>
           </button>
 
           {/* Backdoor */}
           <button
-            onClick={() => onRollInterfaceAction('Взлом шлюза (Backdoor)')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Взлом шлюза (Backdoor)' : 'Backdoor Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
               <span className="flex items-center gap-1.5"><Lock size={13} /> Backdoor</span>
-              <span className="text-[10px] text-zinc-400 font-mono">DV Пароля</span>
+              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'DV Пароля' : 'Password DV'}</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">Взлом закрытого шлюза</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Взлом закрытого шлюза' : 'Break through locked gate'}</div>
           </button>
 
           {/* Pathfinder */}
           <button
-            onClick={() => onRollInterfaceAction('Разведка архитектуры (Pathfinder)')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Разведка архитектуры (Pathfinder)' : 'Pathfinder Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
               <span className="flex items-center gap-1.5"><Compass size={13} /> Pathfinder</span>
-              <span className="text-[10px] text-zinc-400 font-mono">DV Этажа</span>
+              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'DV Этажа' : 'Floor DV'}</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">Карта архитектуры и Black ICE</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Карта архитектуры и Black ICE' : 'Map architecture and Black ICE'}</div>
           </button>
 
           {/* Control Node */}
           <button
-            onClick={() => onRollInterfaceAction('Управление узлом (Control)')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Управление узлом (Control)' : 'Control Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
               <span className="flex items-center gap-1.5"><Sliders size={13} /> Control</span>
-              <span className="text-[10px] text-zinc-400 font-mono">DV Узла</span>
+              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'DV Узла' : 'Node DV'}</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">Перехват турелей, камер, дверей</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Перехват турелей, камер, дверей' : 'Control turrets, cameras, doors'}</div>
           </button>
 
           {/* Eye-Dee */}
           <button
-            onClick={() => onRollInterfaceAction('Идентификация данных (Eye-Dee)')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Идентификация данных (Eye-Dee)' : 'Eye-Dee Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
               <span className="flex items-center gap-1.5"><Eye size={13} /> Eye-Dee</span>
-              <span className="text-[10px] text-zinc-400 font-mono">DV Файла</span>
+              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'DV Файла' : 'File DV'}</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">Анализ файлов и содержимого</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Анализ файлов и содержимого' : 'Inspect files and contents'}</div>
           </button>
 
           {/* Virus */}
           <button
-            onClick={() => onRollInterfaceAction('Внедрение вируса (Virus)')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Внедрение вируса (Virus)' : 'Virus Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
               <span className="flex items-center gap-1.5"><Zap size={13} /> Virus</span>
-              <span className="text-[10px] text-zinc-400 font-mono">DV Сложности</span>
+              <span className="text-[10px] text-zinc-400 font-mono">{lang === 'ru' ? 'DV Сложности' : 'Virus DV'}</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">Создание постоянного эффекта</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Создание постоянного эффекта' : 'Create persistent effect'}</div>
           </button>
 
           {/* Slide */}
           <button
-            onClick={() => onRollInterfaceAction('Бегство от ICE (Slide)')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Бегство от ICE (Slide)' : 'Slide Action')}
             className="p-2.5 bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 group-hover:text-cyan-300">
               <span className="flex items-center gap-1.5"><LogOut size={13} /> Slide</span>
               <span className="text-[10px] text-zinc-400 font-mono">vs ICE Percept</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">Уход от преследования Black ICE</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Уход от преследования Black ICE' : 'Flee pursuing Black ICE'}</div>
           </button>
 
           {/* Safe Jack Out */}
           <button
-            onClick={() => onRollInterfaceAction('Экстренное отключение (Jack Out)')}
+            onClick={() => onRollInterfaceAction(lang === 'ru' ? 'Экстренное отключение (Jack Out)' : 'Jack Out Action')}
             className="p-2.5 bg-zinc-950 hover:bg-red-950/40 border border-zinc-800 hover:border-red-600 rounded text-left transition group"
           >
             <div className="flex items-center justify-between text-xs font-bold text-red-300">
               <span className="flex items-center gap-1.5"><LogOut size={13} /> Jack Out</span>
               <span className="text-[10px] text-red-400 font-mono">SAFE / DUMP</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">Безопасный разрыв соединения</div>
+            <div className="text-[10px] text-zinc-500 mt-1">{lang === 'ru' ? 'Безопасный разрыв соединения' : 'Safe disconnection from Net'}</div>
           </button>
         </div>
       </div>
@@ -370,7 +370,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                     <button
                       onClick={() => handleDeleteProgram(prog.id)}
                       className="text-zinc-600 hover:text-red-400 p-0.5"
-                      title="Удалить программу"
+                      title={lang === 'ru' ? "Удалить программу" : "Delete program"}
                     >
                       <Trash2 size={13} />
                     </button>
@@ -422,7 +422,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                         : 'bg-cyan-950 text-cyan-400 border border-cyan-800'
                     }`}
                   >
-                    {prog.isInstalled ? 'Извлечь' : 'Установить в деку'}
+                    {prog.isInstalled ? (lang === 'ru' ? 'Извлечь' : 'Uninstall') : (lang === 'ru' ? 'Установить в деку' : 'Install to Deck')}
                   </button>
 
                   {prog.category === 'Attacker' || prog.category === 'Black ICE' ? (
@@ -431,15 +431,15 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                       className="px-2.5 py-1 bg-red-900/60 hover:bg-red-800 border border-red-700 text-white rounded text-[11px] font-bold flex items-center gap-1"
                     >
                       <Flame size={12} />
-                      Атака (ATK +{prog.atkBonus})
+                      {lang === 'ru' ? 'Атака' : 'Attack'} (ATK +{prog.atkBonus})
                     </button>
                   ) : (
                     <button
-                      onClick={() => onRollInterfaceAction(`Активация ${prog.name}`, undefined, prog.atkBonus)}
+                      onClick={() => onRollInterfaceAction(lang === 'ru' ? `Активация ${prog.name}` : `Activate ${prog.name}`, undefined, prog.atkBonus)}
                       className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[11px] font-bold flex items-center gap-1"
                     >
                       <Dices size={12} />
-                      Запустить
+                      {lang === 'ru' ? 'Запустить' : 'Run'}
                     </button>
                   )}
                 </div>
@@ -468,7 +468,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
             {/* Presets */}
             <div>
               <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                Шаблон программы
+                {lang === 'ru' ? 'Шаблон программы' : 'Program Template'}
               </label>
               <select
                 onChange={(e) => {
@@ -479,7 +479,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                 }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-xs"
               >
-                <option value="">Выберите программу...</option>
+                <option value="">{lang === 'ru' ? 'Выберите программу...' : 'Select program...'}</option>
                 {PRESET_PROGRAMS.map((p) => (
                   <option key={p.name} value={p.name}>
                     {p.name} ({p.category} - {p.effect})
@@ -490,7 +490,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="text-[11px] text-zinc-400 uppercase block mb-1">Название</label>
+                <label className="text-[11px] text-zinc-400 uppercase block mb-1">{lang === 'ru' ? 'Название' : 'Name'}</label>
                 <input
                   type="text"
                   value={newProg.name}
@@ -500,7 +500,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
               </div>
 
               <div>
-                <label className="text-[11px] text-zinc-400 uppercase block mb-1">Класс</label>
+                <label className="text-[11px] text-zinc-400 uppercase block mb-1">{lang === 'ru' ? 'Класс' : 'Class'}</label>
                 <select
                   value={newProg.category}
                   onChange={(e) => setNewProg({ ...newProg, category: e.target.value as ProgramCategory })}
@@ -514,7 +514,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
               </div>
 
               <div>
-                <label className="text-[11px] text-zinc-400 uppercase block mb-1">Бонус атаки (ATK)</label>
+                <label className="text-[11px] text-zinc-400 uppercase block mb-1">{lang === 'ru' ? 'Бонус атаки (ATK)' : 'Attack Bonus (ATK)'}</label>
                 <input
                   type="number"
                   value={newProg.atkBonus}
@@ -524,7 +524,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
               </div>
 
               <div>
-                <label className="text-[11px] text-zinc-400 uppercase block mb-1">REZ (Прочность)</label>
+                <label className="text-[11px] text-zinc-400 uppercase block mb-1">{lang === 'ru' ? 'REZ (Прочность)' : 'REZ (HP)'}</label>
                 <input
                   type="number"
                   value={newProg.rezMax}
@@ -535,7 +535,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
             </div>
 
             <div>
-              <label className="text-[11px] text-zinc-400 uppercase block mb-1">Эффект</label>
+              <label className="text-[11px] text-zinc-400 uppercase block mb-1">{lang === 'ru' ? 'Эффект' : 'Effect'}</label>
               <input
                 type="text"
                 value={newProg.effect}
@@ -549,13 +549,13 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                 onClick={() => setShowAddProgram(false)}
                 className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded"
               >
-                Отмена
+                {lang === 'ru' ? 'Отмена' : 'Cancel'}
               </button>
               <button
                 onClick={handleAddProgram}
                 className="px-4 py-1 bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs uppercase rounded"
               >
-                Добавить
+                {lang === 'ru' ? 'Добавить' : 'Add'}
               </button>
             </div>
           </div>

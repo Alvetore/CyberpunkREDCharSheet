@@ -17,11 +17,13 @@ export interface RollCheckOptions {
   luckSpent?: number;
   modifiers?: { name: string; val: number }[];
   targetDv?: number;
+  lang?: 'ru' | 'en';
 }
 
 export function executeCyberpunkCheck(options: RollCheckOptions): RollResult {
   sfx.playDiceRoll();
 
+  const isRu = options.lang !== 'en';
   const firstDie = rollD10();
   let d10Total = firstDie;
   let isCritSuccess = false;
@@ -73,14 +75,14 @@ export function executeCyberpunkCheck(options: RollCheckOptions): RollResult {
 
   let summary = `1d10(${firstDie})`;
   if (isCritSuccess) {
-    summary += ` + Крит(+${explodedD10s[0]})`;
+    summary += isRu ? ` + Крит(+${explodedD10s[0]})` : ` + Crit(+${explodedD10s[0]})`;
   } else if (isCritFail && critFailD10) {
-    summary += ` - Провал(-${critFailD10})`;
+    summary += isRu ? ` - Провал(-${critFailD10})` : ` - Fumble(-${critFailD10})`;
   }
-  summary += ` + База(${options.baseVal})`;
-  if (luck > 0) summary += ` + Удача(${luck})`;
+  summary += isRu ? ` + База(${options.baseVal})` : ` + Base(${options.baseVal})`;
+  if (luck > 0) summary += isRu ? ` + Удача(${luck})` : ` + Luck(${luck})`;
   if (modSum !== 0) {
-    summary += ` ${modSum > 0 ? '+' : ''}${modSum}(мод.)`;
+    summary += ` ${modSum > 0 ? '+' : ''}${modSum}${isRu ? '(мод.)' : '(mod)'}`;
   }
   summary += ` = ${total}`;
 
@@ -106,9 +108,10 @@ export function executeCyberpunkCheck(options: RollCheckOptions): RollResult {
   };
 }
 
-export function executeDamageRoll(title: string, formula: string): RollResult {
+export function executeDamageRoll(title: string, formula: string, lang: 'ru' | 'en' = 'ru'): RollResult {
   sfx.playDiceRoll();
 
+  const isRu = lang !== 'en';
   // Parse formula like "3d6", "4d6+2", "5d6"
   const match = formula.match(/^(\d+)d6(?:\+(\d+))?$/i);
   const numDice = match ? parseInt(match[1], 10) : 3;
@@ -138,7 +141,7 @@ export function executeDamageRoll(title: string, formula: string): RollResult {
 
   let summary = `[${diceResults.join(', ')}] = ${sum}`;
   if (flatBonus > 0) summary += ` + ${flatBonus}`;
-  if (isCritInjury) summary += ` + 5 (КРИТ. ТРАВМА!)`;
+  if (isCritInjury) summary += isRu ? ` + 5 (КРИТ. ТРАВМА!)` : ` + 5 (CRIT INJURY!)`;
   summary += ` = ${total}`;
 
   return {
@@ -154,9 +157,10 @@ export function executeDamageRoll(title: string, formula: string): RollResult {
   };
 }
 
-export function executeDeathSave(bodyStat: number, penalty: number): RollResult {
+export function executeDeathSave(bodyStat: number, penalty: number, lang: 'ru' | 'en' = 'ru'): RollResult {
   sfx.playDiceRoll();
 
+  const isRu = lang !== 'en';
   const die = rollD10();
   const effectiveRoll = die + penalty;
   // CPR Rule: Roll 1d10 + penalties. If roll >= BODY, character fails. Must roll < BODY!
@@ -168,12 +172,14 @@ export function executeDeathSave(bodyStat: number, penalty: number): RollResult 
     setTimeout(() => sfx.playCritFailure(), 100);
   }
 
-  const summary = `1d10(${die}) + Штраф(${penalty}) = ${effectiveRoll} vs BODY(${bodyStat})`;
+  const summary = isRu
+    ? `1d10(${die}) + Штраф(${penalty}) = ${effectiveRoll} vs BODY(${bodyStat})`
+    : `1d10(${die}) + Penalty(${penalty}) = ${effectiveRoll} vs BODY(${bodyStat})`;
 
   return {
     id: 'roll-ds-' + Date.now(),
     timestamp: Date.now(),
-    title: 'Спасбросок от смерти (Death Save)',
+    title: isRu ? 'Спасбросок от смерти (Death Save)' : 'Death Save',
     type: 'death_save',
     d10Result: die,
     total: effectiveRoll,
