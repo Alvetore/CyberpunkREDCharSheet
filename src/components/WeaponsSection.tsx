@@ -40,7 +40,7 @@ interface WeaponsSectionProps {
   onRollWeaponDamage: (weapon: Weapon) => void;
   onRollCustomCheck?: (title: string, baseVal: number, targetDv?: number, modifiers?: { name: string; val: number }[]) => void;
   onRollCustomDamage?: (title: string, formula: string) => void;
-  onOpenShop?: (category?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear') => void;
+  onOpenShop?: (category?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' | 'vehicles') => void;
   lang: Language;
 }
 

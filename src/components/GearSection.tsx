@@ -16,7 +16,7 @@ import {
 interface GearSectionProps {
   character: Character;
   onUpdateCharacter: (char: Character) => void;
-  onOpenShop?: (category?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear') => void;
+  onOpenShop?: (category?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' | 'vehicles') => void;
   lang: Language;
 }
 

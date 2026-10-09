@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Character, Weapon, ArmorItem, CyberwareItem, GearItem } from '../types/character';
+import { Character, Weapon, ArmorItem, CyberwareItem, GearItem, Vehicle } from '../types/character';
 import { Language } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { 
@@ -11,6 +11,12 @@ import {
   CatalogArmorItem,
   CatalogCyberwareItem
 } from '../data/datapoolCatalog';
+import {
+  DATAPOOL_ALL_VEHICLES,
+  DATAPOOL_VEHICLE_UPGRADES,
+  CatalogVehicleItem,
+  CatalogVehicleUpgrade
+} from '../data/datapoolVehicles';
 import { 
   ShoppingCart, 
   X, 
@@ -27,7 +33,8 @@ import {
   ExternalLink,
   Plus,
   Minus,
-  Sparkles
+  Sparkles,
+  Car
 } from 'lucide-react';
 
 interface DataPoolShopModalProps {
@@ -36,16 +43,16 @@ interface DataPoolShopModalProps {
   character: Character;
   onUpdateCharacter: (char: Character) => void;
   lang: Language;
-  initialCategory?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear';
+  initialCategory?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' | 'vehicles';
 }
 
-type ShopTab = 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear';
+type ShopTab = 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' | 'vehicles';
 
 interface UnifiedShopItem {
   id: string;
   originalId: string;
   name: string;
-  type: 'weapon' | 'armor' | 'cyberware' | 'gear';
+  type: 'weapon' | 'armor' | 'cyberware' | 'gear' | 'vehicle' | 'vehicle_upgrade';
   categoryLabel: string;
   costEb: number;
   description: string;
@@ -53,6 +60,8 @@ interface UnifiedShopItem {
   armorData?: CatalogArmorItem;
   cyberwareData?: CatalogCyberwareItem;
   gearData?: GearItem;
+  vehicleData?: CatalogVehicleItem;
+  vehicleUpgradeData?: CatalogVehicleUpgrade;
 }
 
 export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
@@ -64,6 +73,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
   initialCategory = 'all'
 }) => {
   const [activeTab, setActiveTab] = useState<ShopTab>(initialCategory);
+  const [vehicleSubFilter, setVehicleSubFilter] = useState<'all' | 'Ground' | 'Sea' | 'Air' | 'Bicycle' | 'upgrades'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'default' | 'price_asc' | 'price_desc'>('default');
   const [isFreeMode, setIsFreeMode] = useState(false);
@@ -130,6 +140,37 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
       });
     });
 
+    // Vehicles
+    DATAPOOL_ALL_VEHICLES.forEach((v) => {
+      const catRu = v.category === 'Ground' ? 'Наземный' : v.category === 'Sea' ? 'Водный' : v.category === 'Air' ? 'Воздушный' : 'Велосипед';
+      list.push({
+        id: 'shop-' + v.id,
+        originalId: v.id,
+        name: lang === 'ru' ? v.name : (v.nameEn || v.name),
+        type: 'vehicle',
+        categoryLabel: lang === 'ru' ? `Транспорт (${catRu})` : `Vehicle (${v.category})`,
+        costEb: v.costEb,
+        description: lang === 'ru' ? v.descriptionRu : (v.descriptionEn || v.descriptionRu),
+        vehicleData: v
+      });
+    });
+
+    // Vehicle Upgrades
+    DATAPOOL_VEHICLE_UPGRADES.forEach((u) => {
+      list.push({
+        id: 'shop-' + u.id,
+        originalId: u.id,
+        name: lang === 'ru' ? u.nameRu : u.nameEn,
+        type: 'vehicle_upgrade',
+        categoryLabel: lang === 'ru' ? 'Модернизация ТС' : 'Vehicle Upgrade',
+        costEb: u.costEb,
+        description: lang === 'ru'
+          ? `${u.descriptionRu} (Подходит: ${u.applicableCategory}, Ранг: ${u.nomadRank})`
+          : `${u.descriptionEn} (Applicable: ${u.applicableCategory}, Rank: ${u.nomadRank})`,
+        vehicleUpgradeData: u
+      });
+    });
+
     return list;
   }, [lang]);
 
@@ -141,6 +182,13 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
       if (activeTab === 'armor' && item.type !== 'armor') return false;
       if (activeTab === 'cyberware' && item.type !== 'cyberware') return false;
       if (activeTab === 'gear' && item.type !== 'gear') return false;
+      if (activeTab === 'vehicles') {
+        if (item.type !== 'vehicle' && item.type !== 'vehicle_upgrade') return false;
+        if (vehicleSubFilter === 'upgrades' && item.type !== 'vehicle_upgrade') return false;
+        if (vehicleSubFilter !== 'all' && vehicleSubFilter !== 'upgrades') {
+          if (item.type !== 'vehicle' || item.vehicleData?.category !== vehicleSubFilter) return false;
+        }
+      }
 
       // Search query
       if (searchQuery.trim()) {
@@ -157,7 +205,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
       if (sortBy === 'price_desc') return b.costEb - a.costEb;
       return 0;
     });
-  }, [allItems, activeTab, searchQuery, sortBy]);
+  }, [allItems, activeTab, vehicleSubFilter, searchQuery, sortBy]);
 
   if (!isOpen) return null;
 
@@ -247,6 +295,47 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
           quantity: 1,
           costEb: item.gearData.costEb,
           notes: item.gearData.notes
+        };
+        updatedChar.gear = [...updatedChar.gear, newGear];
+      }
+    } else if (item.type === 'vehicle' && item.vehicleData) {
+      const newVeh: Vehicle = {
+        id: 'veh-dp-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        name: item.vehicleData.name,
+        model: item.vehicleData.name,
+        category: item.vehicleData.category,
+        sdpMax: item.vehicleData.sdpMax,
+        sdpCurrent: item.vehicleData.sdpMax,
+        armorSp: item.vehicleData.armorSp,
+        seats: item.vehicleData.seats,
+        speedCombat: item.vehicleData.speedCombat,
+        speedNarrative: item.vehicleData.speedNarrative,
+        costEb: item.vehicleData.costEb,
+        notes: lang === 'ru' ? item.vehicleData.descriptionRu : (item.vehicleData.descriptionEn || item.vehicleData.descriptionRu),
+        nomadRankReq: item.vehicleData.nomadRankReq,
+        upgrades: []
+      };
+      updatedChar.vehicles = [...(updatedChar.vehicles || []), newVeh];
+    } else if (item.type === 'vehicle_upgrade' && item.vehicleUpgradeData) {
+      const upgTitle = lang === 'ru' ? item.vehicleUpgradeData.nameRu : item.vehicleUpgradeData.nameEn;
+      if (updatedChar.vehicles && updatedChar.vehicles.length > 0) {
+        // Install on first vehicle
+        const updatedVehicles = [...updatedChar.vehicles];
+        const existingUpg = updatedVehicles[0].upgrades || [];
+        updatedVehicles[0] = {
+          ...updatedVehicles[0],
+          upgrades: [...existingUpg, upgTitle]
+        };
+        updatedChar.vehicles = updatedVehicles;
+      } else {
+        // Add to gear
+        const newGear: GearItem = {
+          id: 'gear-vehupg-' + Date.now(),
+          name: upgTitle,
+          category: lang === 'ru' ? 'Модернизация ТС' : 'Vehicle Upgrade',
+          quantity: 1,
+          costEb: item.vehicleUpgradeData.costEb,
+          notes: lang === 'ru' ? item.vehicleUpgradeData.descriptionRu : item.vehicleUpgradeData.descriptionEn
         };
         updatedChar.gear = [...updatedChar.gear, newGear];
       }
@@ -480,7 +569,55 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
               <span>{lang === 'ru' ? 'Снаряжение' : 'Gear & Items'}</span>
               <span className="text-[10px] opacity-75">({DATAPOOL_GEAR.length})</span>
             </button>
+
+            <button
+              onClick={() => {
+                sfx.playClick();
+                setActiveTab('vehicles');
+              }}
+              className={`px-3 py-1.5 rounded font-bold transition flex items-center gap-1.5 shrink-0 min-h-[36px] ${
+                activeTab === 'vehicles'
+                  ? 'bg-amber-600 text-white shadow-md'
+                  : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+              }`}
+            >
+              <Car size={13} />
+              <span>{lang === 'ru' ? 'Транспорт' : 'Vehicles'}</span>
+              <span className="text-[10px] opacity-75">({DATAPOOL_ALL_VEHICLES.length + DATAPOOL_VEHICLE_UPGRADES.length})</span>
+            </button>
           </div>
+
+          {/* Sub-filters for Vehicles */}
+          {activeTab === 'vehicles' && (
+            <div className="flex items-center gap-1.5 overflow-x-auto touch-pan-x scrollbar-none pt-1">
+              <span className="text-[11px] text-zinc-400 font-semibold shrink-0">
+                {lang === 'ru' ? 'Категория:' : 'Type:'}
+              </span>
+              {[
+                { key: 'all', labelRu: 'Все', labelEn: 'All' },
+                { key: 'Ground', labelRu: 'Наземный', labelEn: 'Ground' },
+                { key: 'Sea', labelRu: 'Водный', labelEn: 'Sea' },
+                { key: 'Air', labelRu: 'Воздушный', labelEn: 'Air' },
+                { key: 'Bicycle', labelRu: 'Велосипеды', labelEn: 'Bicycles' },
+                { key: 'upgrades', labelRu: 'Модернизации', labelEn: 'Upgrades' },
+              ].map((sub) => (
+                <button
+                  key={sub.key}
+                  onClick={() => {
+                    sfx.playClick();
+                    setVehicleSubFilter(sub.key as any);
+                  }}
+                  className={`px-2.5 py-1 rounded text-[11px] font-semibold transition shrink-0 ${
+                    vehicleSubFilter === sub.key
+                      ? 'bg-amber-500 text-black font-bold shadow'
+                      : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                  }`}
+                >
+                  {lang === 'ru' ? sub.labelRu : sub.labelEn}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Items List Content */}
@@ -578,6 +715,46 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                             </span>
                             <span className="bg-zinc-900 text-zinc-400 border border-zinc-800 px-1.5 py-0.5 rounded">
                               {item.cyberwareData.installLocation}
+                            </span>
+                          </>
+                        )}
+
+                        {/* Vehicle specs */}
+                        {item.type === 'vehicle' && item.vehicleData && (
+                          <>
+                            <span className="bg-amber-950 text-amber-300 border border-amber-800 px-1.5 py-0.5 rounded">
+                              {lang === 'ru' ? 'ПЗТ:' : 'SDP:'} <strong>{item.vehicleData.sdpMax}</strong>
+                            </span>
+                            <span className="bg-zinc-900 text-zinc-300 border border-zinc-800 px-1.5 py-0.5 rounded">
+                              {lang === 'ru' ? 'Мест:' : 'Seats:'} <strong>{item.vehicleData.seats}</strong>
+                            </span>
+                            <span className="bg-zinc-900 text-zinc-300 border border-zinc-800 px-1.5 py-0.5 rounded">
+                              {item.vehicleData.speedCombat}
+                            </span>
+                            <span className="bg-zinc-900 text-zinc-400 border border-zinc-800 px-1.5 py-0.5 rounded">
+                              {item.vehicleData.speedNarrative}
+                            </span>
+                            {item.vehicleData.armorSp !== undefined && item.vehicleData.armorSp > 0 && (
+                              <span className="bg-cyan-950 text-cyan-300 border border-cyan-800 px-1.5 py-0.5 rounded">
+                                {lang === 'ru' ? 'ОС:' : 'SP:'} <strong>{item.vehicleData.armorSp}</strong>
+                              </span>
+                            )}
+                            {item.vehicleData.nomadRankReq !== undefined && item.vehicleData.nomadRankReq > 0 && (
+                              <span className="bg-purple-950 text-purple-300 border border-purple-800 px-1.5 py-0.5 rounded">
+                                {lang === 'ru' ? `Кочевник ${item.vehicleData.nomadRankReq}` : `Nomad ${item.vehicleData.nomadRankReq}`}
+                              </span>
+                            )}
+                          </>
+                        )}
+
+                        {/* Vehicle Upgrade specs */}
+                        {item.type === 'vehicle_upgrade' && item.vehicleUpgradeData && (
+                          <>
+                            <span className="bg-amber-950 text-amber-300 border border-amber-800 px-1.5 py-0.5 rounded">
+                              {lang === 'ru' ? `Кочевник ${item.vehicleUpgradeData.nomadRank}` : `Nomad ${item.vehicleUpgradeData.nomadRank}`}
+                            </span>
+                            <span className="bg-zinc-900 text-zinc-300 border border-zinc-800 px-1.5 py-0.5 rounded">
+                              {item.vehicleUpgradeData.applicableCategory}
                             </span>
                           </>
                         )}

@@ -28,10 +28,24 @@ export const translations = {
     tabCyberware: 'Киберимпланты',
     tabInjuries: 'Травмы и Броня',
     tabGear: 'Снаряжение и Деньги',
+    tabVehicles: 'Гараж и Транспорт',
     tabLifepath: 'Жизненный путь',
     tabNotes: 'Заметки',
     tabDice: 'Дайсроллер',
     openShop: 'Магазин DataPool',
+
+    // Vehicles & Garage
+    vehiclesTitle: 'ГАРАЖ И ТРАНСПОРТ',
+    addVehicle: 'Добавить транспорт',
+    emptyGarage: 'В гараже пока нет техники. Купите транспорт в DataPool или добавьте собственный.',
+    sdp: 'ПЗТ (SDP)',
+    restoreSdp: 'Починить (100% ПЗТ)',
+    seats: 'Мест',
+    speedCombat: 'Боевая скорость',
+    speedNarrative: 'Скорость',
+    vehicleUpgrades: 'Модернизации',
+    rollDrive: 'Вождение / Пилотирование',
+    rollRam: 'Таранный урон',
 
     // Character identity
     name: 'Имя персонажа',
@@ -289,10 +303,24 @@ export const translations = {
     tabCyberware: 'Cyberware',
     tabInjuries: 'Injuries & Armor',
     tabGear: 'Gear & Economy',
+    tabVehicles: 'Garage & Vehicles',
     tabLifepath: 'Lifepath',
     tabNotes: 'Notes',
     tabDice: 'Dice Roller',
     openShop: 'DataPool Shop',
+
+    // Vehicles & Garage
+    vehiclesTitle: 'GARAGE & VEHICLES',
+    addVehicle: 'Add Vehicle',
+    emptyGarage: 'No vehicles in garage yet. Purchase one from the DataPool market or add a custom one.',
+    sdp: 'SDP (Structure)',
+    restoreSdp: 'Repair (100% SDP)',
+    seats: 'Seats',
+    speedCombat: 'Combat Speed',
+    speedNarrative: 'Speed',
+    vehicleUpgrades: 'Upgrades',
+    rollDrive: 'Drive / Pilot Check',
+    rollRam: 'Ram Damage',
 
     // Character identity
     name: 'Character Name',

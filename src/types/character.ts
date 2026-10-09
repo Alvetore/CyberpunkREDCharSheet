@@ -202,6 +202,25 @@ export interface GearItem {
   notes: string;
 }
 
+export type VehicleCategory = 'Ground' | 'Sea' | 'Air' | 'Bicycle';
+
+export interface Vehicle {
+  id: string;
+  name: string;
+  model: string;
+  category: VehicleCategory;
+  sdpMax: number; // Structural Damage Points (ПЗТ)
+  sdpCurrent: number;
+  armorSp?: number; // Armor SP
+  seats: number | string;
+  speedCombat: string; // e.g. "20 СКО"
+  speedNarrative: string; // e.g. "161 км/ч"
+  costEb: number;
+  notes: string;
+  nomadRankReq?: number;
+  upgrades?: string[];
+}
+
 export interface SoloAbility {
   threatDetection: number;
   initiativeReaction: number;
@@ -280,6 +299,7 @@ export interface Character {
   cyberdeck: Cyberdeck;
   programs: ProgramItem[];
   gear: GearItem[];
+  vehicles?: Vehicle[];
   lifepath: Lifepath;
   roleAbilities: RoleAbilities;
 

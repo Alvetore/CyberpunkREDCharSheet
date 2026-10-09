@@ -727,6 +727,8 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
       { id: 'gear-3', name: 'Аптечка (Medtech Bag / First Aid Kit)', category: 'Medical', quantity: 1, costEb: 50, notes: 'Для проверок First Aid.' }
     ],
 
+    vehicles: [],
+
     lifepath: {
       culturalOrigin: 'Северная Америка (Английский, Уличный сленг)',
       languages: 'Streetslang, English',

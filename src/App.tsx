@@ -32,6 +32,7 @@ import { DamageCalculatorModal } from './components/DamageCalculatorModal';
 import { CharacterWizardModal } from './components/CharacterWizardModal';
 import { NotesSection } from './components/NotesSection';
 import { DataPoolShopModal } from './components/DataPoolShopModal';
+import { VehiclesSection } from './components/VehiclesSection';
 
 import { 
   Crosshair, 
@@ -44,7 +45,8 @@ import {
   HeartCrack,
   Sparkles,
   FileText,
-  ShoppingCart
+  ShoppingCart,
+  Car
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -80,7 +82,7 @@ export const App: React.FC = () => {
 
   // Active navigation tab
   const [activeTab, setActiveTab] = useState<
-    'main' | 'skills' | 'netrunner' | 'cyberware' | 'injuries' | 'gear' | 'lifepath' | 'notes'
+    'main' | 'skills' | 'netrunner' | 'cyberware' | 'injuries' | 'gear' | 'vehicles' | 'lifepath' | 'notes'
   >('main');
 
   // Dice Roller Modal state
@@ -93,9 +95,9 @@ export const App: React.FC = () => {
 
   // DataPool Shop Modal state
   const [isShopOpen, setIsShopOpen] = useState(false);
-  const [shopCategory, setShopCategory] = useState<'all' | 'weapons' | 'armor' | 'cyberware' | 'gear'>('all');
+  const [shopCategory, setShopCategory] = useState<'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' | 'vehicles'>('all');
 
-  const handleOpenShop = (cat: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' = 'all') => {
+  const handleOpenShop = (cat: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' | 'vehicles' = 'all') => {
     setShopCategory(cat);
     setIsShopOpen(true);
   };
@@ -467,6 +469,26 @@ export const App: React.FC = () => {
           <button
             onClick={() => {
               sfx.playClick();
+              setActiveTab('vehicles');
+            }}
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
+              activeTab === 'vehicles'
+                ? 'text-amber-500 border-b-2 border-amber-500 bg-amber-950/20'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <Car size={15} />
+            <span>{t.tabVehicles}</span>
+            {activeChar.vehicles && activeChar.vehicles.length > 0 && (
+              <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-800 px-1.5 py-0.5 rounded-full font-bold ml-0.5">
+                {activeChar.vehicles.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => {
+              sfx.playClick();
               setActiveTab('lifepath');
             }}
             className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
@@ -562,6 +584,17 @@ export const App: React.FC = () => {
             <GearSection
               character={activeChar}
               onUpdateCharacter={handleUpdateActiveCharacter}
+              onOpenShop={handleOpenShop}
+              lang={lang}
+            />
+          )}
+
+          {activeTab === 'vehicles' && (
+            <VehiclesSection
+              character={activeChar}
+              onUpdateCharacter={handleUpdateActiveCharacter}
+              onRollCustomCheck={handleRollCustomCheck}
+              onRollCustomDamage={handleRollCustomDamage}
               onOpenShop={handleOpenShop}
               lang={lang}
             />
