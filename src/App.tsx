@@ -33,6 +33,7 @@ import { CharacterWizardModal } from './components/CharacterWizardModal';
 import { NotesSection } from './components/NotesSection';
 import { DataPoolShopModal } from './components/DataPoolShopModal';
 import { VehiclesSection } from './components/VehiclesSection';
+import { SectionNav, NavigationTab } from './components/SectionNav';
 
 import { 
   Crosshair, 
@@ -81,9 +82,7 @@ export const App: React.FC = () => {
   };
 
   // Active navigation tab
-  const [activeTab, setActiveTab] = useState<
-    'main' | 'skills' | 'netrunner' | 'cyberware' | 'injuries' | 'gear' | 'vehicles' | 'lifepath' | 'notes'
-  >('main');
+  const [activeTab, setActiveTab] = useState<NavigationTab>('main');
 
   // Dice Roller Modal state
   const [isDiceModalOpen, setIsDiceModalOpen] = useState(false);
@@ -366,159 +365,13 @@ export const App: React.FC = () => {
           lang={lang}
         />
 
-        {/* Navigation Tabs (Smooth touch scrolling on mobile) */}
-        <div className="border-b border-zinc-800 flex items-center gap-1 overflow-x-auto touch-pan-x scrollbar-none no-print pt-1 -mx-2.5 px-2.5 sm:mx-0 sm:px-0">
-          <button
-            onClick={() => {
-              sfx.playClick();
-              setActiveTab('main');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
-              activeTab === 'main'
-                ? 'text-red-500 border-b-2 border-red-500 bg-red-950/20'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <Crosshair size={15} />
-            <span>{t.tabMain}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              sfx.playClick();
-              setActiveTab('skills');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
-              activeTab === 'skills'
-                ? 'text-red-500 border-b-2 border-red-500 bg-red-950/20'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <BookOpen size={15} />
-            <span>{t.tabSkills}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              sfx.playClick();
-              setActiveTab('netrunner');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
-              activeTab === 'netrunner'
-                ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-950/20'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <Cpu size={15} />
-            <span>{t.tabNetrunner}</span>
-            {activeChar.role === 'Netrunner' && (
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping ml-0.5" />
-            )}
-          </button>
-
-          <button
-            onClick={() => {
-              sfx.playClick();
-              setActiveTab('injuries');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
-              activeTab === 'injuries'
-                ? 'text-red-500 border-b-2 border-red-500 bg-red-950/20'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <HeartCrack size={15} />
-            <span>{t.tabInjuries}</span>
-            {activeChar.criticalInjuries.some((i) => i.isActive) && (
-              <span className="text-[10px] bg-red-600 text-white px-1.5 rounded-full font-bold">
-                !
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => {
-              sfx.playClick();
-              setActiveTab('cyberware');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
-              activeTab === 'cyberware'
-                ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-950/20'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <ShieldAlert size={15} />
-            <span>{t.tabCyberware}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              sfx.playClick();
-              setActiveTab('gear');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
-              activeTab === 'gear'
-                ? 'text-red-500 border-b-2 border-red-500 bg-red-950/20'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <Package size={15} />
-            <span>{t.tabGear}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              sfx.playClick();
-              setActiveTab('vehicles');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
-              activeTab === 'vehicles'
-                ? 'text-amber-500 border-b-2 border-amber-500 bg-amber-950/20'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <Car size={15} />
-            <span>{t.tabVehicles}</span>
-            {activeChar.vehicles && activeChar.vehicles.length > 0 && (
-              <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-800 px-1.5 py-0.5 rounded-full font-bold ml-0.5">
-                {activeChar.vehicles.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => {
-              sfx.playClick();
-              setActiveTab('lifepath');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
-              activeTab === 'lifepath'
-                ? 'text-yellow-400 border-b-2 border-yellow-400 bg-yellow-950/20'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <Compass size={15} />
-            <span>{t.tabLifepath}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              sfx.playClick();
-              setActiveTab('notes');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 font-orbitron font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shrink-0 min-h-[38px] ${
-              activeTab === 'notes'
-                ? 'text-yellow-400 border-b-2 border-yellow-400 bg-yellow-950/20'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <FileText size={15} />
-            <span>{t.tabNotes || (lang === 'ru' ? 'Заметки' : 'Notes')}</span>
-            {activeChar.notes && (
-              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 ml-0.5" />
-            )}
-          </button>
-        </div>
+        {/* Modern Categorized Navigation Hub (Zero horizontal overflow) */}
+        <SectionNav
+          activeTab={activeTab}
+          onChangeTab={setActiveTab}
+          character={activeChar}
+          lang={lang}
+        />
 
         {/* Tab Contents */}
         <div className="tab-pane">

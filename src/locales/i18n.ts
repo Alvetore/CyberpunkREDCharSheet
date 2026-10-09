@@ -34,6 +34,13 @@ export const translations = {
     tabDice: 'Дайсроллер',
     openShop: 'Магазин DataPool',
 
+    // Section Categories & Navigation
+    navCategoryCombat: 'Бой и Навыки',
+    navCategoryInventory: 'Снаряжение и Гараж',
+    navCategoryDossier: 'Досье и Заметки',
+    navViewHubs: 'По категориям',
+    navViewGrid: 'Все 9 разделов',
+
     // Vehicles & Garage
     vehiclesTitle: 'ГАРАЖ И ТРАНСПОРТ',
     addVehicle: 'Добавить транспорт',
@@ -308,6 +315,13 @@ export const translations = {
     tabNotes: 'Notes',
     tabDice: 'Dice Roller',
     openShop: 'DataPool Shop',
+
+    // Section Categories & Navigation
+    navCategoryCombat: 'Combat & Skills',
+    navCategoryInventory: 'Gear & Garage',
+    navCategoryDossier: 'Dossier & Notes',
+    navViewHubs: 'By Categories',
+    navViewGrid: 'All 9 Sections',
 
     // Vehicles & Garage
     vehiclesTitle: 'GARAGE & VEHICLES',
