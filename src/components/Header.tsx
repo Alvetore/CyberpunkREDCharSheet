@@ -101,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="bg-red-600 text-black font-black px-2 sm:px-2.5 py-1 text-xs sm:text-base tracking-widest clip-cyber font-orbitron uppercase border-b-2 border-yellow-400">
             CP-RED
           </div>
-          <div>
+          <div className="hidden sm:block">
             <h1 className="font-orbitron font-extrabold text-sm sm:text-base md:text-lg tracking-wider text-red-500 uppercase flex items-center gap-1.5">
               <span>{t.appTitle}</span>
               <span className="text-xs font-rajdhani font-semibold text-zinc-400 hidden xl:inline">
@@ -112,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Center: Character Switcher Dropdown */}
-        <div className="flex items-center gap-1.5 flex-1 max-w-[200px] sm:max-w-[260px] md:max-w-[280px]">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0 max-w-[150px] xs:max-w-[200px] sm:max-w-[260px] md:max-w-[280px]">
           <select
             value={activeChar.id}
             onChange={(e) => {
@@ -130,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Quick Primary Actions (Visible on Mobile & Desktop) */}
-        <div className="flex items-center gap-1 sm:gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           {/* Character Wizard */}
           <button
             onClick={() => {

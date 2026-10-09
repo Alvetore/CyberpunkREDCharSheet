@@ -326,7 +326,7 @@ export const App: React.FC = () => {
   if (!activeChar) return null;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-rajdhani selection:bg-red-600 selection:text-white">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-rajdhani selection:bg-red-600 selection:text-white overflow-x-hidden w-full max-w-full">
       {/* Top Navbar */}
       <Header
         characters={characters}
@@ -352,7 +352,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-2.5 sm:p-4 md:p-5 space-y-4 pb-24 sm:pb-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-2.5 sm:p-4 md:p-5 space-y-4 pb-24 sm:pb-8 min-w-0">
         {/* Core Stats always visible on top */}
         <StatsSection
           character={activeChar}

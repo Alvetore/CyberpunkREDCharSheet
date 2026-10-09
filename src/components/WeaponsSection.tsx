@@ -697,12 +697,12 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
               </div>
 
               {/* Style selector pills */}
-              <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800">
+              <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800 overflow-x-auto touch-pan-x scrollbar-none max-w-full flex-wrap sm:flex-nowrap">
                 {(['Karate', 'Judo', 'Taekwondo', 'Aikido'] as MartialArtsStyle[]).map((st) => (
                   <button
                     key={st}
                     onClick={() => handleSelectMaStyle(st)}
-                    className={`px-2.5 py-1 text-xs font-orbitron font-bold rounded transition ${
+                    className={`px-2.5 py-1 text-xs font-orbitron font-bold rounded transition shrink-0 ${
                       currentMaStyle === st
                         ? 'bg-cyan-600 text-white shadow'
                         : 'text-zinc-400 hover:text-zinc-200'
