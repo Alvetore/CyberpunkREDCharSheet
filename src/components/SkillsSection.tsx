@@ -12,7 +12,77 @@ import {
   SlidersHorizontal,
   ShieldAlert,
   HeartPulse,
-  X
+  X,
+  type LucideIcon,
+  // Awareness
+  Eye,
+  Footprints,
+  Focus,
+  ScanEye,
+  MessageSquareText,
+  // Body
+  Activity,
+  Dumbbell,
+  Ghost,
+  Music,
+  // Control
+  Route,
+  Car,
+  Plane,
+  Ship,
+  // Education
+  Briefcase,
+  Calculator,
+  FileText,
+  Tent,
+  Lightbulb,
+  MapPin,
+  PenTool,
+  Fingerprint,
+  Binary,
+  FlaskConical,
+  GraduationCap,
+  PawPrint,
+  Library,
+  Swords,
+  Languages,
+  // Fighting
+  Zap,
+  Hand,
+  ShieldCheck,
+  Sword,
+  // Performance
+  Drama,
+  Music2,
+  // Ranged
+  Flame,
+  Crosshair,
+  Target,
+  ArrowUpRight,
+  Bomb,
+  // Social
+  Coins,
+  Shirt,
+  HelpCircle,
+  MessagesSquare,
+  Compass,
+  ScanFace,
+  Scale,
+  Megaphone,
+  Sparkles,
+  // Technique
+  Lock,
+  Palette,
+  HandCoins,
+  Cpu,
+  Hammer,
+  Wrench,
+  Stethoscope,
+  Bandage,
+  Anchor,
+  FileSignature,
+  Camera,
+  Terminal
 } from 'lucide-react';
 
 interface SkillsSectionProps {
@@ -42,6 +112,104 @@ const CATEGORY_MAP: CategoryConfig[] = [
   { key: 'Social', translationKey: 'catSocial', col: 2 },
   { key: 'Technique', translationKey: 'catTechnique', col: 2 },
 ];
+
+export const CATEGORY_ICON_MAP: Record<SkillCategory, LucideIcon> = {
+  Awareness: Eye,
+  Body: Activity,
+  Control: Route,
+  Education: GraduationCap,
+  Fighting: Swords,
+  Performance: Sparkles,
+  Ranged: Crosshair,
+  Social: MessagesSquare,
+  Technique: Wrench,
+};
+
+export const SKILL_ICON_MAP: Record<string, LucideIcon> = {
+  // Awareness
+  perception: Eye,
+  tracking: Footprints,
+  concentration: Focus,
+  conceal_reveal: ScanEye,
+  lip_reading: MessageSquareText,
+
+  // Body
+  contortionist: Activity,
+  athletics: Dumbbell,
+  endurance: HeartPulse,
+  stealth: Ghost,
+  resist_torture: ShieldAlert,
+  dance: Music,
+
+  // Control
+  riding: Route,
+  drive_land: Car,
+  pilot_air: Plane,
+  pilot_sea: Ship,
+
+  // Education
+  gamble: Dices,
+  business: Briefcase,
+  accounting: Calculator,
+  bureaucracy: FileText,
+  wilderness_survival: Tent,
+  deduction: Lightbulb,
+  local_expert: MapPin,
+  composition: PenTool,
+  criminology: Fingerprint,
+  cryptography: Binary,
+  science: FlaskConical,
+  education: GraduationCap,
+  animal_handling: PawPrint,
+  library_search: Library,
+  tactics: Swords,
+  language_streetslang: Languages,
+
+  // Fighting
+  martial_arts: Zap,
+  brawling: Hand,
+  evasion: ShieldCheck,
+  melee_weapon: Sword,
+
+  // Performance
+  acting: Drama,
+  play_instrument: Music2,
+
+  // Ranged
+  autofire: Flame,
+  shoulder_arms: Crosshair,
+  handgun: Target,
+  archery: ArrowUpRight,
+  heavy_weapons: Bomb,
+
+  // Social
+  bribery: Coins,
+  wardrobe_style: Shirt,
+  interrogation: HelpCircle,
+  conversation: MessagesSquare,
+  streetwise: Compass,
+  human_perception: ScanFace,
+  trading: Scale,
+  persuasion: Megaphone,
+  personal_grooming: Sparkles,
+
+  // Technique
+  air_vehicle_tech: Plane,
+  land_vehicle_tech: Car,
+  pick_lock: Lock,
+  demolitions: Bomb,
+  paint_draw_sculpt: Palette,
+  pick_pocket: HandCoins,
+  cybertech: Cpu,
+  weaponstech: Hammer,
+  basic_tech: Wrench,
+  paramedic: Stethoscope,
+  first_aid: Bandage,
+  sea_vehicle_tech: Anchor,
+  forgery: FileSignature,
+  photography_film: Camera,
+  electronics_security: Terminal,
+};
 
 const STAT_DISPLAY_RU: Record<StatKey, string> = {
   INT: 'ИНТ',
@@ -162,6 +330,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   // Render an individual category table
   const renderCategoryTable = (catConfig: CategoryConfig) => {
     const categoryTitle = (t[catConfig.translationKey] as string) || catConfig.key;
+    const CategoryIcon = CATEGORY_ICON_MAP[catConfig.key] || BookOpen;
     
     // Filter and sort skills belonging to this category
     const skillsInCat = character.skills.filter((s) => s.category === catConfig.key);
@@ -192,6 +361,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
         <div className="flex items-center justify-between bg-zinc-950 px-3 py-2 border-b border-red-700/80">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-1.5 h-3.5 bg-red-600 rounded-xs shrink-0" />
+            <CategoryIcon size={14} className="text-red-500 shrink-0" />
             <h3 className="font-orbitron font-bold text-xs sm:text-sm text-red-500 uppercase tracking-wider truncate">
               {categoryTitle}
             </h3>
@@ -226,49 +396,56 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 effectiveBase
               } = getSkillDetails(skill);
 
+              const SkillIcon = SKILL_ICON_MAP[skill.id] || CATEGORY_ICON_MAP[skill.category] || BookOpen;
+
               return (
                 <div
                   key={skill.id}
                   className="flex items-center justify-between px-2.5 sm:px-3 py-1.5 hover:bg-zinc-800/40 transition group"
                 >
-                  {/* Left: Skill title + stat badge + dual term */}
-                  <div className="min-w-0 flex-1 pr-2">
-                    <div className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
-                      <span className={`text-xs transition ${
-                        skill.level > 0 ? 'font-bold text-zinc-100 group-hover:text-red-300' : 'font-medium text-zinc-300 group-hover:text-zinc-100'
-                      }`}>
-                        {lang === 'ru' ? nameRu : nameEn}
-                      </span>
-
-                      {multiplier === 2 && (
-                        <span
-                          className="text-[9px] font-bold text-red-400 bg-red-950/80 border border-red-800 px-1 py-0.2 rounded shrink-0 cursor-help"
-                          title={t.x2Notice}
-                        >
-                          (х2)
+                  {/* Left: Skill icon + Skill title + stat badge + dual term */}
+                  <div className="min-w-0 flex-1 pr-2 flex items-center gap-2">
+                    <div className="w-5 h-5 rounded flex items-center justify-center bg-zinc-950/70 border border-zinc-800/80 group-hover:border-red-900/60 group-hover:bg-red-950/20 shrink-0 transition">
+                      <SkillIcon size={12} className="text-red-400/80 group-hover:text-red-300 shrink-0 transition" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
+                        <span className={`text-xs transition ${
+                          skill.level > 0 ? 'font-bold text-zinc-100 group-hover:text-red-300' : 'font-medium text-zinc-300 group-hover:text-zinc-100'
+                        }`}>
+                          {lang === 'ru' ? nameRu : nameEn}
                         </span>
-                      )}
 
-                      <span className="text-[10px] font-mono font-bold text-amber-500/90 shrink-0">
-                        ({lang === 'ru' ? STAT_DISPLAY_RU[skill.stat] : skill.stat})
-                      </span>
+                        {multiplier === 2 && (
+                          <span
+                            className="text-[9px] font-bold text-red-400 bg-red-950/80 border border-red-800 px-1 py-0.2 rounded shrink-0 cursor-help"
+                            title={t.x2Notice}
+                          >
+                            (х2)
+                          </span>
+                        )}
 
-                      {skill.isCustom && (
-                        <button
-                          onClick={() => handleDeleteCustomSkill(skill.id)}
-                          className="text-zinc-600 hover:text-red-400 p-0.5 transition"
-                          title={lang === 'ru' ? 'Удалить навык' : 'Delete skill'}
-                        >
-                          <Trash2 size={11} />
-                        </button>
+                        <span className="text-[10px] font-mono font-bold text-amber-500/90 shrink-0">
+                          ({lang === 'ru' ? STAT_DISPLAY_RU[skill.stat] : skill.stat})
+                        </span>
+
+                        {skill.isCustom && (
+                          <button
+                            onClick={() => handleDeleteCustomSkill(skill.id)}
+                            className="text-zinc-600 hover:text-red-400 p-0.5 transition"
+                            title={lang === 'ru' ? 'Удалить навык' : 'Delete skill'}
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        )}
+                      </div>
+
+                      {dualTerms && (
+                        <div className="text-[10px] text-zinc-500 truncate leading-tight mt-0.5">
+                          {lang === 'ru' ? nameEn : nameRu}
+                        </div>
                       )}
                     </div>
-
-                    {dualTerms && (
-                      <div className="text-[10px] text-zinc-500 truncate leading-tight mt-0.5">
-                        {lang === 'ru' ? nameEn : nameRu}
-                      </div>
-                    )}
                   </div>
 
                   {/* Right: Stepper (УР), Stat (ХАР), Roll Button (ОСН) */}
@@ -413,30 +590,35 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               sfx.playClick();
               setSelectedCategory('all');
             }}
-            className={`px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 transition text-[11px] font-semibold min-h-[30px] flex items-center justify-center ${
+            className={`px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 transition text-[11px] font-semibold min-h-[30px] flex items-center justify-center gap-1.5 ${
               selectedCategory === 'all'
                 ? 'bg-red-600 text-white shadow-sm shadow-red-950'
                 : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
             }`}
           >
-            {t.allCategories}
+            <BookOpen size={12} className="shrink-0" />
+            <span>{t.allCategories}</span>
           </button>
-          {CATEGORY_MAP.map((cat) => (
-            <button
-              key={cat.key}
-              onClick={() => {
-                sfx.playClick();
-                setSelectedCategory(cat.key);
-              }}
-              className={`px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 transition text-[11px] font-semibold min-h-[30px] flex items-center justify-center ${
-                selectedCategory === cat.key
-                  ? 'bg-red-600 text-white shadow-sm shadow-red-950'
-                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-              }`}
-            >
-              {t[cat.translationKey] as string}
-            </button>
-          ))}
+          {CATEGORY_MAP.map((cat) => {
+            const CatIcon = CATEGORY_ICON_MAP[cat.key];
+            return (
+              <button
+                key={cat.key}
+                onClick={() => {
+                  sfx.playClick();
+                  setSelectedCategory(cat.key);
+                }}
+                className={`px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 transition text-[11px] font-semibold min-h-[30px] flex items-center justify-center gap-1.5 ${
+                  selectedCategory === cat.key
+                    ? 'bg-red-600 text-white shadow-sm shadow-red-950'
+                    : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+                }`}
+              >
+                {CatIcon && <CatIcon size={12} className="shrink-0" />}
+                <span>{t[cat.translationKey] as string}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
