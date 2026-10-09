@@ -61,6 +61,56 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
     });
   };
 
+  const handleRepairArmor = (loc: 'head' | 'body' | 'shield', amount = 1) => {
+    sfx.playClick();
+    const current = character.armor[loc];
+    if (!current) return;
+    const updated = {
+      ...current,
+      spCurrent: Math.min(current.spMax, current.spCurrent + amount)
+    };
+    onUpdateCharacter({
+      ...character,
+      armor: { ...character.armor, [loc]: updated }
+    });
+  };
+
+  const getSelectedPresetName = (armorItem?: ArmorItem) => {
+    if (!armorItem) return '';
+    // 1. Exact match
+    const exact = PRESET_ARMOR_OPTIONS.find((p) => p.name === armorItem.name);
+    if (exact) return exact.name;
+
+    // 2. Partial match
+    const nameLower = armorItem.name.toLowerCase();
+    const partial = PRESET_ARMOR_OPTIONS.find(
+      (p) =>
+        nameLower.includes(p.name.toLowerCase()) ||
+        p.name.toLowerCase().includes(nameLower)
+    );
+    if (partial) return partial.name;
+
+    // 3. Keyword + SP match
+    const spMatch = PRESET_ARMOR_OPTIONS.find((p) => {
+      if (p.sp !== armorItem.spMax) return false;
+      if (nameLower.includes('leather') || nameLower.includes('кож')) return p.name.includes('Leather') || p.name.includes('Кожа');
+      if (nameLower.includes('kevlar') || nameLower.includes('кевлар')) return p.name.includes('Kevlar') || p.name.includes('Кевлар');
+      if (nameLower.includes('light') || nameLower.includes('легк') || nameLower.includes('лёгк')) return p.name.includes('Light');
+      if (nameLower.includes('medium') || nameLower.includes('средн')) return p.name.includes('Medium');
+      if (nameLower.includes('heavy') || nameLower.includes('тяж')) return p.name.includes('Heavy');
+      if (nameLower.includes('flak') || nameLower.includes('осколоч')) return p.name.includes('Flak');
+      if (nameLower.includes('metalgear') || nameLower.includes('металгир')) return p.name.includes('Metalgear');
+      return true;
+    });
+    if (spMatch) return spMatch.name;
+
+    // 4. Fallback match by SP
+    const pureSp = PRESET_ARMOR_OPTIONS.find((p) => p.sp === armorItem.spMax && !p.name.includes('щит') && !p.name.includes('Shield'));
+    if (pureSp) return pureSp.name;
+
+    return armorItem.name;
+  };
+
   const handleApplyArmorPreset = (loc: 'head' | 'body', presetName: string) => {
     const preset = PRESET_ARMOR_OPTIONS.find((p) => p.name === presetName);
     if (!preset) return;
@@ -149,124 +199,222 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className={`grid grid-cols-1 ${character.armor.shield ? 'lg:grid-cols-3 md:grid-cols-2' : 'md:grid-cols-2'} gap-3`}>
           {/* Head Armor Card */}
-          <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="font-orbitron font-bold text-xs text-zinc-100 uppercase block">
-                  {t.headArmor}
-                </span>
-                <span className="text-[11px] text-zinc-400">{character.armor.head.name}</span>
+          {(() => {
+            const headPresetSelected = getSelectedPresetName(character.armor.head);
+            return (
+              <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-orbitron font-bold text-xs text-zinc-100 uppercase block">
+                      {t.headArmor}
+                    </span>
+                    <span className="text-[11px] text-zinc-400">{character.armor.head.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-orbitron font-black text-2xl text-red-400">
+                      {character.armor.head.spCurrent}
+                      <span className="text-zinc-600 text-sm"> / {character.armor.head.spMax}</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Presets dropdown */}
+                <select
+                  value={headPresetSelected}
+                  onChange={(e) => handleApplyArmorPreset('head', e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-xs rounded px-2 py-1.5 text-zinc-200 focus:border-red-500 focus:outline-none"
+                >
+                  {!PRESET_ARMOR_OPTIONS.some((p) => p.name === headPresetSelected) && (
+                    <option value={headPresetSelected}>
+                      {character.armor.head.name} ({lang === 'ru' ? 'ОС' : 'SP'} {character.armor.head.spMax})
+                    </option>
+                  )}
+                  {PRESET_ARMOR_OPTIONS.filter((p) => !p.name.includes('щит') && !p.name.includes('Shield')).map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name} ({lang === 'ru' ? 'ОС' : 'SP'} {p.sp}{p.penalty < 0 ? (lang === 'ru' ? `, Штраф ${p.penalty}` : `, Penalty ${p.penalty}`) : ''})
+                    </option>
+                  ))}
+                </select>
+
+                {/* SP Bar */}
+                <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
+                  <div
+                    className="h-full bg-red-600 transition-all"
+                    style={{
+                      width: `${Math.round((character.armor.head.spCurrent / Math.max(1, character.armor.head.spMax)) * 100)}%`
+                    }}
+                  />
+                </div>
+
+                {/* Controls */}
+                <div className="flex items-center justify-between gap-1.5 pt-1 text-xs">
+                  <button
+                    onClick={() => handleAblateArmor('head', 1)}
+                    disabled={character.armor.head.spCurrent <= 0}
+                    className="flex-1 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-red-950 disabled:opacity-30 border border-zinc-800 text-red-300 rounded font-semibold transition flex items-center justify-center active:scale-95"
+                    title={lang === 'ru' ? 'Снизить ОС на 1 при пробитии уроном' : 'Ablate SP by 1'}
+                  >
+                    -1 {lang === 'ru' ? 'ОС' : 'SP'}
+                  </button>
+                  <button
+                    onClick={() => handleRepairArmor('head', 1)}
+                    disabled={character.armor.head.spCurrent >= character.armor.head.spMax}
+                    className="flex-1 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-zinc-800 text-emerald-300 rounded font-semibold transition flex items-center justify-center active:scale-95"
+                    title={lang === 'ru' ? 'Починить 1 пункт ОС' : 'Repair 1 SP point'}
+                  >
+                    +1 {lang === 'ru' ? 'ОС' : 'SP'}
+                  </button>
+                  <button
+                    onClick={() => handleRestoreArmor('head')}
+                    disabled={character.armor.head.spCurrent >= character.armor.head.spMax}
+                    className="px-2.5 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-zinc-800 text-zinc-300 rounded font-semibold transition flex items-center justify-center gap-1 active:scale-95"
+                    title={t.armorRestore}
+                  >
+                    <RotateCcw size={12} />
+                    <span className="hidden sm:inline">{lang === 'ru' ? 'Все' : 'All'}</span>
+                  </button>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="font-orbitron font-black text-2xl text-red-400">
-                  {character.armor.head.spCurrent}
-                  <span className="text-zinc-600 text-sm"> / {character.armor.head.spMax}</span>
-                </span>
-              </div>
-            </div>
-
-            {/* Presets dropdown */}
-            <select
-              value={character.armor.head.name}
-              onChange={(e) => handleApplyArmorPreset('head', e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 text-xs rounded px-2 py-1 text-zinc-200"
-            >
-              {PRESET_ARMOR_OPTIONS.map((p) => (
-                <option key={p.name} value={p.name}>
-                  {p.name} ({lang === 'ru' ? 'ОС' : 'SP'} {p.sp}{p.penalty < 0 ? (lang === 'ru' ? `, Штраф ${p.penalty}` : `, Penalty ${p.penalty}`) : ''})
-                </option>
-              ))}
-            </select>
-
-            {/* SP Bar */}
-            <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
-              <div
-                className="h-full bg-red-600 transition-all"
-                style={{
-                  width: `${Math.round((character.armor.head.spCurrent / Math.max(1, character.armor.head.spMax)) * 100)}%`
-                }}
-              />
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center justify-between gap-2 pt-1 text-xs">
-              <button
-                onClick={() => handleAblateArmor('head', 1)}
-                className="flex-1 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-red-950 border border-zinc-800 text-red-300 rounded font-semibold transition flex items-center justify-center"
-              >
-                {t.armorAblate}
-              </button>
-              <button
-                onClick={() => handleRestoreArmor('head')}
-                className="px-3 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 rounded font-semibold transition flex items-center justify-center gap-1"
-                title={t.armorRestore}
-              >
-                <RotateCcw size={12} />
-                <span>{lang === 'ru' ? 'Восстановить' : 'Restore'}</span>
-              </button>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Body Armor Card */}
-          <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="font-orbitron font-bold text-xs text-zinc-100 uppercase block">
-                  {t.bodyArmor}
-                </span>
-                <span className="text-[11px] text-zinc-400">{character.armor.body.name}</span>
+          {(() => {
+            const bodyPresetSelected = getSelectedPresetName(character.armor.body);
+            return (
+              <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-orbitron font-bold text-xs text-zinc-100 uppercase block">
+                      {t.bodyArmor}
+                    </span>
+                    <span className="text-[11px] text-zinc-400">{character.armor.body.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-orbitron font-black text-2xl text-red-400">
+                      {character.armor.body.spCurrent}
+                      <span className="text-zinc-600 text-sm"> / {character.armor.body.spMax}</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Presets dropdown */}
+                <select
+                  value={bodyPresetSelected}
+                  onChange={(e) => handleApplyArmorPreset('body', e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-xs rounded px-2 py-1.5 text-zinc-200 focus:border-red-500 focus:outline-none"
+                >
+                  {!PRESET_ARMOR_OPTIONS.some((p) => p.name === bodyPresetSelected) && (
+                    <option value={bodyPresetSelected}>
+                      {character.armor.body.name} ({lang === 'ru' ? 'ОС' : 'SP'} {character.armor.body.spMax})
+                    </option>
+                  )}
+                  {PRESET_ARMOR_OPTIONS.filter((p) => !p.name.includes('щит') && !p.name.includes('Shield')).map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name} ({lang === 'ru' ? 'ОС' : 'SP'} {p.sp}{p.penalty < 0 ? (lang === 'ru' ? `, Штраф ${p.penalty}` : `, Penalty ${p.penalty}`) : ''})
+                    </option>
+                  ))}
+                </select>
+
+                {/* SP Bar */}
+                <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
+                  <div
+                    className="h-full bg-red-600 transition-all"
+                    style={{
+                      width: `${Math.round((character.armor.body.spCurrent / Math.max(1, character.armor.body.spMax)) * 100)}%`
+                    }}
+                  />
+                </div>
+
+                {/* Controls */}
+                <div className="flex items-center justify-between gap-1.5 pt-1 text-xs">
+                  <button
+                    onClick={() => handleAblateArmor('body', 1)}
+                    disabled={character.armor.body.spCurrent <= 0}
+                    className="flex-1 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-red-950 disabled:opacity-30 border border-zinc-800 text-red-300 rounded font-semibold transition flex items-center justify-center active:scale-95"
+                    title={lang === 'ru' ? 'Снизить ОС на 1 при пробитии уроном' : 'Ablate SP by 1'}
+                  >
+                    -1 {lang === 'ru' ? 'ОС' : 'SP'}
+                  </button>
+                  <button
+                    onClick={() => handleRepairArmor('body', 1)}
+                    disabled={character.armor.body.spCurrent >= character.armor.body.spMax}
+                    className="flex-1 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-zinc-800 text-emerald-300 rounded font-semibold transition flex items-center justify-center active:scale-95"
+                    title={lang === 'ru' ? 'Починить 1 пункт ОС' : 'Repair 1 SP point'}
+                  >
+                    +1 {lang === 'ru' ? 'ОС' : 'SP'}
+                  </button>
+                  <button
+                    onClick={() => handleRestoreArmor('body')}
+                    disabled={character.armor.body.spCurrent >= character.armor.body.spMax}
+                    className="px-2.5 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-zinc-800 text-zinc-300 rounded font-semibold transition flex items-center justify-center gap-1 active:scale-95"
+                    title={t.armorRestore}
+                  >
+                    <RotateCcw size={12} />
+                    <span className="hidden sm:inline">{lang === 'ru' ? 'Все' : 'All'}</span>
+                  </button>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="font-orbitron font-black text-2xl text-red-400">
-                  {character.armor.body.spCurrent}
-                  <span className="text-zinc-600 text-sm"> / {character.armor.body.spMax}</span>
-                </span>
+            );
+          })()}
+
+          {/* Shield Card (if equipped) */}
+          {character.armor.shield && (
+            <div className="bg-zinc-950 border border-yellow-800/80 rounded-lg p-3 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-orbitron font-bold text-xs text-yellow-400 uppercase block">
+                    {t.shieldArmor || 'Щит (ПЗ)'}
+                  </span>
+                  <span className="text-[11px] text-zinc-400">{character.armor.shield.name}</span>
+                </div>
+                <div className="text-right">
+                  <span className="font-orbitron font-black text-2xl text-yellow-400">
+                    {character.armor.shield.spCurrent}
+                    <span className="text-zinc-600 text-sm"> / {character.armor.shield.spMax}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Shield Bar */}
+              <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
+                <div
+                  className="h-full bg-yellow-500 transition-all"
+                  style={{
+                    width: `${Math.round((character.armor.shield.spCurrent / Math.max(1, character.armor.shield.spMax)) * 100)}%`
+                  }}
+                />
+              </div>
+
+              {/* Shield Controls */}
+              <div className="flex items-center justify-between gap-1.5 pt-1 text-xs">
+                <button
+                  onClick={() => handleAblateArmor('shield', 1)}
+                  disabled={character.armor.shield.spCurrent <= 0}
+                  className="flex-1 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-yellow-950 disabled:opacity-30 border border-zinc-800 text-yellow-300 rounded font-semibold transition flex items-center justify-center active:scale-95"
+                >
+                  -1 HP
+                </button>
+                <button
+                  onClick={() => handleRepairArmor('shield', 1)}
+                  disabled={character.armor.shield.spCurrent >= character.armor.shield.spMax}
+                  className="flex-1 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-zinc-800 text-emerald-300 rounded font-semibold transition flex items-center justify-center active:scale-95"
+                >
+                  +1 HP
+                </button>
+                <button
+                  onClick={() => handleRestoreArmor('shield')}
+                  disabled={character.armor.shield.spCurrent >= character.armor.shield.spMax}
+                  className="px-2.5 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-zinc-800 text-zinc-300 rounded font-semibold transition flex items-center justify-center gap-1 active:scale-95"
+                >
+                  <RotateCcw size={12} />
+                  <span className="hidden sm:inline">{lang === 'ru' ? 'Все' : 'All'}</span>
+                </button>
               </div>
             </div>
-
-            {/* Presets dropdown */}
-            <select
-              value={character.armor.body.name}
-              onChange={(e) => handleApplyArmorPreset('body', e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 text-xs rounded px-2 py-1 text-zinc-200"
-            >
-              {PRESET_ARMOR_OPTIONS.map((p) => (
-                <option key={p.name} value={p.name}>
-                  {p.name} ({lang === 'ru' ? 'ОС' : 'SP'} {p.sp}{p.penalty < 0 ? (lang === 'ru' ? `, Штраф ${p.penalty}` : `, Penalty ${p.penalty}`) : ''})
-                </option>
-              ))}
-            </select>
-
-            {/* SP Bar */}
-            <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
-              <div
-                className="h-full bg-red-600 transition-all"
-                style={{
-                  width: `${Math.round((character.armor.body.spCurrent / Math.max(1, character.armor.body.spMax)) * 100)}%`
-                }}
-              />
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center justify-between gap-2 pt-1 text-xs">
-              <button
-                onClick={() => handleAblateArmor('body', 1)}
-                className="flex-1 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-red-950 border border-zinc-800 text-red-300 rounded font-semibold transition flex items-center justify-center"
-              >
-                {t.armorAblate}
-              </button>
-              <button
-                onClick={() => handleRestoreArmor('body')}
-                className="px-3 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 rounded font-semibold transition flex items-center justify-center gap-1"
-                title={t.armorRestore}
-              >
-                <RotateCcw size={12} />
-                <span>{lang === 'ru' ? 'Восстановить' : 'Restore'}</span>
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 

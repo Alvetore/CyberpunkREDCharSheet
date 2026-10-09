@@ -33,10 +33,21 @@ export function loadStoredCharacters(): Character[] {
           const baseMax = char.humanityMaxManual || (char.stats?.EMP ? char.stats.EMP * 10 : 60);
           const totalHL = (char.cyberware || []).reduce((sum, c) => sum + (c.humanityCost || 0), 0);
           const maxAllowed = Math.max(0, baseMax - totalHL);
+          let updated = { ...char };
           if (typeof char.humanityCurrent === 'number' && char.humanityCurrent > maxAllowed) {
-            return { ...char, humanityCurrent: maxAllowed };
+            updated.humanityCurrent = maxAllowed;
           }
-          return char;
+          if (updated.armor) {
+            const headName = updated.armor.head?.name;
+            const bodyName = updated.armor.body?.name;
+            if (headName === 'Лёгкий арморджек (Шлем)' || headName === 'Light Armorjack Helmet') {
+              updated.armor = { ...updated.armor, head: { ...updated.armor.head, name: 'Лёгкий арморджек (Light Armorjack)' } };
+            }
+            if (bodyName === 'Лёгкий арморджек (Жилет)' || bodyName === 'Light Armorjack Vest') {
+              updated.armor = { ...updated.armor, body: { ...updated.armor.body, name: 'Лёгкий арморджек (Light Armorjack)' } };
+            }
+          }
+          return updated;
         });
       }
     }

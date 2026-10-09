@@ -728,7 +728,7 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
     armor: {
       head: {
         id: 'armor-head-1',
-        name: 'Лёгкий арморджек (Шлем)',
+        name: 'Лёгкий арморджек (Light Armorjack)',
         location: 'head',
         spMax: 11,
         spCurrent: 11,
@@ -736,7 +736,7 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
       },
       body: {
         id: 'armor-body-1',
-        name: 'Лёгкий арморджек (Жилет)',
+        name: 'Лёгкий арморджек (Light Armorjack)',
         location: 'body',
         spMax: 11,
         spCurrent: 11,
