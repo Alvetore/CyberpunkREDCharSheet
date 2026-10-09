@@ -55,9 +55,22 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
   const hpMax = character.hpMaxManual || (10 + 5 * Math.ceil((character.stats.BODY + character.stats.WILL) / 2));
   const seriouslyWoundedThreshold = Math.ceil(hpMax / 2);
 
-  // Humanity
-  const humanityMax = character.humanityMaxManual || (character.stats.EMP * 10);
-  const currentEmp = Math.max(0, Math.floor(character.humanityCurrent / 10));
+  // Humanity & Cyberware Loss calculations
+  const baseHumanityMax = character.humanityMaxManual || (character.stats.EMP * 10);
+  const totalCyberwareHL = (character.cyberware || []).reduce((acc, c) => acc + (c.humanityCost || 0), 0);
+  const maxHumanityWithCyberware = Math.max(0, baseHumanityMax - totalCyberwareHL);
+  const effectiveHumanity = Math.min(maxHumanityWithCyberware, character.humanityCurrent);
+  const currentEmp = Math.max(0, Math.floor(effectiveHumanity / 10));
+
+  // Auto-sync humanity if currently above maximum allowed with cyberware
+  React.useEffect(() => {
+    if (character.humanityCurrent > maxHumanityWithCyberware) {
+      onUpdateCharacter({
+        ...character,
+        humanityCurrent: maxHumanityWithCyberware
+      });
+    }
+  }, [character.humanityCurrent, maxHumanityWithCyberware]);
 
   // Armor penalty
   const armorPenalty = Math.min(
@@ -78,10 +91,19 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
     // Auto update luck max if luck changed
     const luckCurrent = key === 'LUCK' ? Math.min(character.luckCurrent, newVal) : character.luckCurrent;
 
+    let humanityCurrent = character.humanityCurrent;
+    if (key === 'EMP') {
+      const empDelta = newVal - current;
+      const newBaseMax = character.humanityMaxManual || (newVal * 10);
+      const newMaxWithCyberware = Math.max(0, newBaseMax - totalCyberwareHL);
+      humanityCurrent = Math.max(0, Math.min(newMaxWithCyberware, character.humanityCurrent + empDelta * 10));
+    }
+
     onUpdateCharacter({
       ...character,
       stats: updatedStats,
-      luckCurrent
+      luckCurrent,
+      humanityCurrent
     });
   };
 
@@ -96,7 +118,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
 
   const handleHumanityChange = (delta: number) => {
     sfx.playClick();
-    const newHumanity = Math.max(0, Math.min(humanityMax, character.humanityCurrent + delta));
+    const newHumanity = Math.max(0, Math.min(maxHumanityWithCyberware, character.humanityCurrent + delta));
     onUpdateCharacter({
       ...character,
       humanityCurrent: newHumanity
@@ -104,7 +126,8 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
   };
 
   const hpPercent = Math.max(0, Math.min(100, Math.round((character.hpCurrent / hpMax) * 100)));
-  const humanityPercent = Math.max(0, Math.min(100, Math.round((character.humanityCurrent / humanityMax) * 100)));
+  const humanityPercent = Math.max(0, Math.min(100, Math.round((effectiveHumanity / baseHumanityMax) * 100)));
+  const cyberwareLossPercent = Math.min(100, Math.round((totalCyberwareHL / baseHumanityMax) * 100));
 
   return (
     <div className="space-y-4">
@@ -313,46 +336,77 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
             </span>
           </div>
 
-          <div className="flex items-baseline justify-between mb-2">
+          <div className="flex items-baseline justify-between mb-1">
             <span className="font-orbitron font-black text-2xl text-white">
-              {character.humanityCurrent}
-              <span className="text-zinc-500 text-sm font-semibold"> / {humanityMax}</span>
+              {effectiveHumanity}
+              <span className="text-zinc-500 text-sm font-semibold"> / {baseHumanityMax}</span>
             </span>
             <span className="text-xs text-zinc-400 font-mono">
               {humanityPercent}%
             </span>
           </div>
 
-          {/* Humanity Bar */}
-          <div className="w-full bg-zinc-950 h-2.5 rounded-full overflow-hidden border border-zinc-800 mb-2">
+          {/* Cyberware Humanity Loss breakdown */}
+          {totalCyberwareHL > 0 ? (
+            <div className="flex items-center justify-between text-[11px] mb-2 font-mono">
+              <span className="text-red-400 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                {lang === 'ru' ? 'Импланты:' : 'Chrome:'} -{totalCyberwareHL} HL
+              </span>
+              <span className="text-zinc-400" title={lang === 'ru' ? 'Максимум с установленными имплантами' : 'Max cap with installed cyberware'}>
+                {lang === 'ru' ? 'Порог:' : 'Cap:'} {maxHumanityWithCyberware}
+              </span>
+            </div>
+          ) : (
+            <div className="text-[11px] text-zinc-500 mb-2 font-mono">
+              {lang === 'ru' ? 'Имплантов нет (0 HL)' : 'No chrome loss (0 HL)'}
+            </div>
+          )}
+
+          {/* Humanity Bar with Cyberware Loss segment */}
+          <div className="w-full bg-zinc-950 h-2.5 rounded-full overflow-hidden border border-zinc-800 mb-2 flex">
+            {/* Current Humanity (Cyan) */}
             <div
-              className="h-full bg-cyan-500 transition-all"
+              className="h-full bg-cyan-500 transition-all shrink-0"
               style={{ width: `${humanityPercent}%` }}
+              title={`${lang === 'ru' ? 'Текущая человечность' : 'Current Humanity'}: ${effectiveHumanity}`}
             />
+            {/* Gap for any additional trauma loss */}
+            <div className="flex-1 bg-transparent" />
+            {/* Cyberware Loss (Red) */}
+            {totalCyberwareHL > 0 && (
+              <div
+                className="h-full bg-red-600/80 transition-all shrink-0 border-l border-red-500/80"
+                style={{ width: `${cyberwareLossPercent}%` }}
+                title={`${lang === 'ru' ? 'Потеря от имплантов' : 'Cyberware Loss'}: -${totalCyberwareHL} HL`}
+              />
+            )}
           </div>
 
           <div className="flex items-center justify-between gap-1 text-xs">
             <button
               onClick={() => handleHumanityChange(-5)}
-              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center active:scale-95 transition"
             >
               -5
             </button>
             <button
               onClick={() => handleHumanityChange(-1)}
-              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center"
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center active:scale-95 transition"
             >
               -1
             </button>
             <button
               onClick={() => handleHumanityChange(1)}
-              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center"
+              disabled={effectiveHumanity >= maxHumanityWithCyberware}
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 disabled:opacity-30 disabled:hover:bg-zinc-800 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center active:scale-95 transition"
             >
               +1
             </button>
             <button
               onClick={() => handleHumanityChange(5)}
-              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center"
+              disabled={effectiveHumanity >= maxHumanityWithCyberware}
+              className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 disabled:opacity-30 disabled:hover:bg-zinc-800 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center active:scale-95 transition"
             >
               +5
             </button>

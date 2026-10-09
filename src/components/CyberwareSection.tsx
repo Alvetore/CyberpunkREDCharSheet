@@ -80,15 +80,17 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
     sfx.playClick();
     const itemToDelete = character.cyberware.find((c) => c.id === itemId);
     const updated = character.cyberware.filter((c) => c.id !== itemId);
+    const cost = itemToDelete?.humanityCost || 0;
 
-    // Refund humanity if appropriate
-    let newHumanity = character.humanityCurrent;
-    if (itemToDelete) {
-      newHumanity = Math.min(
-        character.stats.EMP * 10,
-        character.humanityCurrent + itemToDelete.humanityCost
-      );
-    }
+    const baseMax = character.humanityMaxManual || (character.stats.EMP * 10);
+    const newTotalLoss = updated.reduce((acc, c) => acc + (c.humanityCost || 0), 0);
+    const newMaxAllowed = Math.max(0, baseMax - newTotalLoss);
+
+    // Refund humanity up to the new cap allowed with remaining cyberware
+    const newHumanity = Math.min(
+      newMaxAllowed,
+      character.humanityCurrent + cost
+    );
 
     onUpdateCharacter({
       ...character,
@@ -99,21 +101,27 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
   const handleAddItem = () => {
     sfx.playClick();
+    const cost = newItem.humanityCost || 0;
     const item: CyberwareItem = {
       id: 'cyb-' + Date.now(),
       name: newItem.name || (lang === 'ru' ? 'Имплант' : 'Cyberware'),
       category: (newItem.category as CyberwareCategory) || 'Internal',
       installLocation: newItem.installLocation || (lang === 'ru' ? 'Тело' : 'Body'),
-      humanityCost: newItem.humanityCost || 0,
+      humanityCost: cost,
       description: newItem.description || ''
     };
 
+    const newCyberware = [...character.cyberware, item];
+    const baseMax = character.humanityMaxManual || (character.stats.EMP * 10);
+    const newTotalLoss = newCyberware.reduce((acc, c) => acc + (c.humanityCost || 0), 0);
+    const newMaxAllowed = Math.max(0, baseMax - newTotalLoss);
+
     // Deduct humanity
-    const newHumanity = Math.max(0, character.humanityCurrent - item.humanityCost);
+    const newHumanity = Math.min(newMaxAllowed, Math.max(0, character.humanityCurrent - cost));
 
     onUpdateCharacter({
       ...character,
-      cyberware: [...character.cyberware, item],
+      cyberware: newCyberware,
       humanityCurrent: newHumanity
     });
 
@@ -139,13 +147,26 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
           <span className="text-xs text-zinc-400 font-mono">({character.cyberware.length})</span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="bg-zinc-950 border border-zinc-800 px-3 py-1 rounded text-xs">
-            <span className="text-zinc-400 uppercase font-semibold text-[10px] mr-1.5">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="bg-zinc-950 border border-red-900/60 px-3 py-1 rounded text-xs flex items-center gap-1.5">
+            <span className="text-zinc-400 uppercase font-semibold text-[10px]">
               {t.totalHumanityLoss}
             </span>
             <span className="font-orbitron font-bold text-red-400">
-              {totalHumanityLoss} HL
+              -{totalHumanityLoss} HL
+            </span>
+          </div>
+
+          <div className="bg-zinc-950 border border-cyan-900/60 px-3 py-1 rounded text-xs flex items-center gap-1.5" title={lang === 'ru' ? 'Текущая человечность / Базовая' : 'Current Humanity / Base'}>
+            <Brain size={13} className="text-cyan-400" />
+            <span className="text-zinc-400 uppercase font-semibold text-[10px]">
+              {t.humanity}:
+            </span>
+            <span className="font-orbitron font-bold text-cyan-300">
+              {character.humanityCurrent} / {character.stats.EMP * 10}
+            </span>
+            <span className="text-[10px] text-zinc-400 font-mono">
+              (EMP {Math.floor(character.humanityCurrent / 10)})
             </span>
           </div>
 

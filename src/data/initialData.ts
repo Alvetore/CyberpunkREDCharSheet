@@ -702,7 +702,9 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
   };
 
   const hp = 10 + 5 * Math.ceil((baseStats.BODY + baseStats.WILL) / 2); // 40 HP
-  const humanity = baseStats.EMP * 10; // 60 Humanity
+  const baseHumanity = baseStats.EMP * 10; // 60 Humanity
+  const startingCyberwareLoss = 14; // Neural Link (7) + Interface Plugs (7)
+  const humanity = Math.max(0, baseHumanity - startingCyberwareLoss); // 46 Humanity
 
   return {
     id: 'char-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),

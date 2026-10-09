@@ -29,7 +29,15 @@ export function loadStoredCharacters(): Character[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        return parsed.map((char: Character) => {
+          const baseMax = char.humanityMaxManual || (char.stats?.EMP ? char.stats.EMP * 10 : 60);
+          const totalHL = (char.cyberware || []).reduce((sum, c) => sum + (c.humanityCost || 0), 0);
+          const maxAllowed = Math.max(0, baseMax - totalHL);
+          if (typeof char.humanityCurrent === 'number' && char.humanityCurrent > maxAllowed) {
+            return { ...char, humanityCurrent: maxAllowed };
+          }
+          return char;
+        });
       }
     }
   } catch (err) {
