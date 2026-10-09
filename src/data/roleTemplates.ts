@@ -34,10 +34,10 @@ export const CPR_ROLE_PACKAGES: Record<RoleType, RolePackage> = {
       { rollRange: '9-10', stats: { INT: 5, REF: 8, DEX: 7, TECH: 4, COOL: 7, WILL: 7, LUCK: 6, MOVE: 6, BODY: 8, EMP: 4 } },
     ],
     streetratSkills: {
-      athletics: 4, brawling: 4, concentration: 4, conversation: 2, education: 2,
+      athletics: 6, brawling: 4, concentration: 4, conversation: 2, education: 2,
       evasion: 6, first_aid: 4, human_perception: 2, language_streetslang: 4,
-      local_expert: 2, perception: 6, persuasion: 2, stealth: 4,
-      handgun: 6, shoulder_arms: 6, melee_weapon: 4, tactics: 4, autofire: 4, resist_torture: 4
+      local_expert: 2, perception: 6, persuasion: 2, stealth: 6,
+      handgun: 6, shoulder_arms: 6, melee_weapon: 6, tactics: 6, autofire: 4, resist_torture: 4
     },
     edgerunnerCareerSkills: {
       athletics: 2, brawling: 2, concentration: 2, conversation: 2, education: 2,
@@ -79,11 +79,11 @@ export const CPR_ROLE_PACKAGES: Record<RoleType, RolePackage> = {
       { rollRange: '9-10', stats: { INT: 8, REF: 7, DEX: 7, TECH: 6, COOL: 6, WILL: 6, LUCK: 6, MOVE: 5, BODY: 6, EMP: 5 } },
     ],
     streetratSkills: {
-      athletics: 2, brawling: 2, concentration: 5, conversation: 2, education: 4,
-      evasion: 4, first_aid: 2, human_perception: 2, language_streetslang: 4,
-      local_expert: 2, perception: 5, persuasion: 2, stealth: 4,
+      athletics: 2, brawling: 2, concentration: 6, conversation: 2, education: 6,
+      evasion: 6, first_aid: 2, human_perception: 2, language_streetslang: 4,
+      local_expert: 2, perception: 6, persuasion: 2, stealth: 6,
       cybertech: 6, electronics_security: 4, cryptography: 6, library_search: 6,
-      basic_tech: 4, handgun: 5
+      basic_tech: 6, handgun: 6
     },
     edgerunnerCareerSkills: {
       athletics: 2, brawling: 2, concentration: 3, conversation: 2, education: 2,
@@ -124,11 +124,11 @@ export const CPR_ROLE_PACKAGES: Record<RoleType, RolePackage> = {
       { rollRange: '9-10', stats: { INT: 6, REF: 6, DEX: 7, TECH: 8, COOL: 6, WILL: 6, LUCK: 6, MOVE: 6, BODY: 6, EMP: 5 } },
     ],
     streetratSkills: {
-      athletics: 3, brawling: 3, concentration: 4, conversation: 2, education: 4,
-      evasion: 4, first_aid: 3, human_perception: 2, language_streetslang: 4,
-      local_expert: 2, perception: 5, persuasion: 2, stealth: 3,
-      basic_tech: 6, cybertech: 6, weaponstech: 6, electronics_security: 4,
-      land_vehicle_tech: 5, shoulder_arms: 5
+      athletics: 5, brawling: 3, concentration: 4, conversation: 2, education: 4,
+      evasion: 4, first_aid: 4, human_perception: 2, language_streetslang: 4,
+      local_expert: 2, perception: 5, persuasion: 2, stealth: 5,
+      basic_tech: 6, cybertech: 6, weaponstech: 6, electronics_security: 5,
+      land_vehicle_tech: 6, shoulder_arms: 6
     },
     edgerunnerCareerSkills: {
       athletics: 2, brawling: 2, concentration: 2, conversation: 2, education: 2,
@@ -169,10 +169,10 @@ export const CPR_ROLE_PACKAGES: Record<RoleType, RolePackage> = {
       { rollRange: '9-10', stats: { INT: 8, REF: 5, DEX: 6, TECH: 7, COOL: 6, WILL: 6, LUCK: 6, MOVE: 6, BODY: 5, EMP: 7 } },
     ],
     streetratSkills: {
-      athletics: 3, brawling: 3, concentration: 4, conversation: 4, education: 5,
+      athletics: 4, brawling: 3, concentration: 4, conversation: 4, education: 5,
       evasion: 4, first_aid: 6, human_perception: 5, language_streetslang: 4,
-      local_expert: 2, perception: 5, persuasion: 3, stealth: 2,
-      paramedic: 6, cybertech: 5, science: 5, basic_tech: 4, handgun: 5
+      local_expert: 2, perception: 6, persuasion: 3, stealth: 2,
+      paramedic: 6, cybertech: 5, science: 6, basic_tech: 6, handgun: 5
     },
     edgerunnerCareerSkills: {
       athletics: 2, brawling: 2, concentration: 2, conversation: 3, education: 3,
@@ -213,10 +213,10 @@ export const CPR_ROLE_PACKAGES: Record<RoleType, RolePackage> = {
       { rollRange: '9-10', stats: { INT: 7, REF: 7, DEX: 7, TECH: 2, COOL: 8, WILL: 6, LUCK: 7, MOVE: 6, BODY: 5, EMP: 7 } },
     ],
     streetratSkills: {
-      athletics: 3, brawling: 4, concentration: 3, conversation: 5, education: 3,
+      athletics: 5, brawling: 4, concentration: 3, conversation: 5, education: 3,
       evasion: 5, first_aid: 2, human_perception: 6, language_streetslang: 4,
-      local_expert: 4, perception: 5, persuasion: 6, stealth: 3,
-      play_instrument: 6, composition: 6, wardrobe_style: 5, streetwise: 5, handgun: 5
+      local_expert: 4, perception: 5, persuasion: 6, stealth: 4,
+      play_instrument: 6, composition: 6, wardrobe_style: 6, streetwise: 6, handgun: 6
     },
     edgerunnerCareerSkills: {
       athletics: 2, brawling: 2, concentration: 2, conversation: 4, education: 2,
@@ -259,8 +259,8 @@ export const CPR_ROLE_PACKAGES: Record<RoleType, RolePackage> = {
     streetratSkills: {
       athletics: 2, brawling: 2, concentration: 4, conversation: 6, education: 5,
       evasion: 4, first_aid: 2, human_perception: 6, language_streetslang: 4,
-      local_expert: 5, perception: 6, persuasion: 6, stealth: 4,
-      criminology: 5, deduction: 5, photography_film: 5, library_search: 5, handgun: 5
+      local_expert: 5, perception: 6, persuasion: 6, stealth: 6,
+      criminology: 6, deduction: 6, photography_film: 5, library_search: 5, handgun: 6
     },
     edgerunnerCareerSkills: {
       athletics: 2, brawling: 2, concentration: 2, conversation: 5, education: 4,
@@ -302,7 +302,7 @@ export const CPR_ROLE_PACKAGES: Record<RoleType, RolePackage> = {
       athletics: 4, brawling: 5, concentration: 3, conversation: 4, education: 3,
       evasion: 5, first_aid: 3, human_perception: 5, language_streetslang: 4,
       local_expert: 4, perception: 5, persuasion: 4, stealth: 3,
-      handgun: 6, shoulder_arms: 5, criminology: 5, deduction: 4, interrogation: 5, drive_land: 5
+      handgun: 6, shoulder_arms: 6, criminology: 6, deduction: 6, interrogation: 5, drive_land: 5
     },
     edgerunnerCareerSkills: {
       athletics: 2, brawling: 3, concentration: 2, conversation: 3, education: 2,
@@ -343,10 +343,10 @@ export const CPR_ROLE_PACKAGES: Record<RoleType, RolePackage> = {
       { rollRange: '9-10', stats: { INT: 7, REF: 6, DEX: 6, TECH: 4, COOL: 8, WILL: 7, LUCK: 6, MOVE: 6, BODY: 5, EMP: 7 } },
     ],
     streetratSkills: {
-      athletics: 2, brawling: 3, concentration: 4, conversation: 6, education: 5,
+      athletics: 3, brawling: 3, concentration: 4, conversation: 6, education: 5,
       evasion: 4, first_aid: 2, human_perception: 6, language_streetslang: 4,
       local_expert: 3, perception: 5, persuasion: 6, stealth: 2,
-      business: 6, bureaucracy: 5, accounting: 4, personal_grooming: 5, wardrobe_style: 5, handgun: 5
+      business: 6, bureaucracy: 5, accounting: 6, personal_grooming: 5, wardrobe_style: 5, handgun: 6
     },
     edgerunnerCareerSkills: {
       athletics: 2, brawling: 2, concentration: 2, conversation: 5, education: 4,
@@ -388,8 +388,8 @@ export const CPR_ROLE_PACKAGES: Record<RoleType, RolePackage> = {
     streetratSkills: {
       athletics: 2, brawling: 3, concentration: 3, conversation: 6, education: 4,
       evasion: 4, first_aid: 2, human_perception: 6, language_streetslang: 5,
-      local_expert: 5, perception: 5, persuasion: 6, stealth: 3,
-      streetwise: 6, trading: 6, bribery: 5, forgery: 4, handgun: 5
+      local_expert: 5, perception: 5, persuasion: 6, stealth: 5,
+      streetwise: 6, trading: 6, bribery: 6, forgery: 6, handgun: 6
     },
     edgerunnerCareerSkills: {
       athletics: 2, brawling: 2, concentration: 2, conversation: 5, education: 3,
@@ -429,10 +429,10 @@ export const CPR_ROLE_PACKAGES: Record<RoleType, RolePackage> = {
       { rollRange: '9-10', stats: { INT: 5, REF: 7, DEX: 7, TECH: 6, COOL: 6, WILL: 7, LUCK: 6, MOVE: 6, BODY: 8, EMP: 4 } },
     ],
     streetratSkills: {
-      athletics: 4, brawling: 4, concentration: 3, conversation: 2, education: 2,
+      athletics: 6, brawling: 6, concentration: 3, conversation: 4, education: 2,
       evasion: 5, first_aid: 3, human_perception: 2, language_streetslang: 4,
-      local_expert: 2, perception: 5, persuasion: 2, stealth: 4,
-      drive_land: 6, land_vehicle_tech: 5, wilderness_survival: 5, shoulder_arms: 6, basic_tech: 4, handgun: 4
+      local_expert: 2, perception: 5, persuasion: 2, stealth: 6,
+      drive_land: 6, land_vehicle_tech: 6, wilderness_survival: 6, shoulder_arms: 6, basic_tech: 6, handgun: 6
     },
     edgerunnerCareerSkills: {
       athletics: 2, brawling: 2, concentration: 2, conversation: 2, education: 2,

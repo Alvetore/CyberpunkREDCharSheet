@@ -743,7 +743,12 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                         <div className="flex items-center gap-1">
                           <span className="font-semibold text-zinc-200 truncate">{s.nameRu}</span>
                           {s.multiplier === 2 && (
-                            <span className="text-[9px] bg-red-950 text-red-400 px-1 rounded font-bold">x2</span>
+                            <span 
+                              className="text-[9px] bg-red-950 text-red-400 border border-red-800 px-1 rounded font-bold cursor-help"
+                              title="Сложный навык: стоит 2 очка за каждый ранг при генерации"
+                            >
+                              x2 (2 очка)
+                            </span>
                           )}
                         </div>
                         <span className="text-[10px] text-zinc-500 font-mono">

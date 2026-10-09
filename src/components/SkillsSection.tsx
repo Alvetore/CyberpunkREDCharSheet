@@ -246,8 +246,11 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                     {lang === 'ru' ? skill.nameRu : skill.nameEn}
                   </span>
                   {skill.multiplier === 2 && (
-                    <span className="text-[9px] bg-red-950 text-red-400 border border-red-800 px-1 rounded font-bold">
-                      x2
+                    <span
+                      className="text-[9px] bg-red-950 text-red-400 border border-red-800 px-1 rounded font-bold cursor-help"
+                      title={lang === 'ru' ? 'Сложный навык: улучшение стоит x2 IP (40 IP за уровень)' : 'Difficult Skill: upgrade costs x2 IP (40 IP per level)'}
+                    >
+                      x2 IP
                     </span>
                   )}
                   {skill.isCustom && (
@@ -275,7 +278,16 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               {/* Skill Level adjuster & Total Base */}
               <div className="flex items-center gap-2 shrink-0">
                 {/* Level Controls */}
-                <div className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5">
+                <div
+                  className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5"
+                  title={
+                    skill.level < 10
+                      ? lang === 'ru'
+                        ? `След. уровень: ${(skill.level + 1) * 20 * skill.multiplier} IP`
+                        : `Next level: ${(skill.level + 1) * 20 * skill.multiplier} IP`
+                      : 'Макс. ранг'
+                  }
+                >
                   <button
                     onClick={() => handleLevelChange(skill.id, -1)}
                     className="text-zinc-500 hover:text-white font-bold text-xs w-4 text-center"
