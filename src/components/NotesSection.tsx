@@ -1,6 +1,9 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import React, { useState, useEffect } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import { TaskList } from '@tiptap/extension-task-list';
+import { TaskItem } from '@tiptap/extension-task-item';
+import { Markdown } from 'tiptap-markdown';
 import { Character } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
@@ -16,23 +19,20 @@ import {
   Coins, 
   Skull,
   Edit3,
-  Eye,
-  Columns2,
+  Code2,
   Bold,
   Italic,
-  Heading,
+  Heading1,
+  Heading2,
+  Heading3,
   List,
   ListTodo,
   Quote,
   Code,
-  Minus
+  Minus,
+  RotateCcw,
+  RotateCw
 } from 'lucide-react';
-
-// Configure marked with GitHub Flavored Markdown and breaks enabled
-marked.setOptions({
-  gfm: true,
-  breaks: true,
-});
 
 interface NotesSectionProps {
   character: Character;
@@ -47,18 +47,66 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
 }) => {
   const t = translations[lang];
   const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState<'split' | 'edit' | 'preview'>('split');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isRawSourceMode, setIsRawSourceMode] = useState(false);
 
-  const handleNotesChange = (newNotes: string) => {
-    onUpdateCharacter({ ...character, notes: newNotes });
-  };
+  // Initialize TipTap with Markdown and TaskList extensions
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3],
+        },
+      }),
+      TaskList,
+      TaskItem.configure({
+        nested: true,
+      }),
+      Markdown.configure({
+        html: true,
+        tightLists: true,
+        bulletListMarker: '-',
+        linkify: true,
+        breaks: true,
+      }),
+    ],
+    content: character.notes || '',
+    editorProps: {
+      attributes: {
+        class: 'tiptap p-3 sm:p-4 focus:outline-none min-h-[380px]',
+      },
+    },
+    onUpdate: ({ editor: ed }) => {
+      const storage = ed.storage as unknown as { markdown?: { getMarkdown: () => string } };
+      const md = storage.markdown ? storage.markdown.getMarkdown() : ed.getHTML();
+      onUpdateCharacter({ ...character, notes: md });
+    },
+  });
 
-  const handleInsertTemplate = (templateText: string) => {
+  // Sync content when switching characters from the header dropdown
+  useEffect(() => {
+    if (!editor) return;
+    const storage = editor.storage as unknown as { markdown?: { getMarkdown: () => string } };
+    const currentMd = storage.markdown ? storage.markdown.getMarkdown() : '';
+    const incomingMd = character.notes || '';
+    if (incomingMd !== currentMd) {
+      editor.commands.setContent(incomingMd);
+    }
+  }, [character.id, editor]);
+
+  // Insert template directly into the editor
+  const handleInsertTemplate = (templateMarkdown: string) => {
     sfx.playClick();
-    const current = character.notes || '';
-    const updated = current ? `${current.trim()}\n\n${templateText}` : templateText;
-    handleNotesChange(updated);
+    if (!editor) return;
+
+    const storage = editor.storage as unknown as { markdown?: { getMarkdown: () => string } };
+    const currentMd = storage.markdown ? storage.markdown.getMarkdown() : '';
+
+    if (!currentMd.trim()) {
+      editor.commands.setContent(templateMarkdown);
+    } else {
+      editor.commands.insertContent(`\n\n${templateMarkdown}\n`);
+    }
+    editor.commands.focus('end');
   };
 
   const handleCopyNotes = () => {
@@ -77,75 +125,17 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
     );
     if (confirmed) {
       sfx.playClick();
-      handleNotesChange('');
+      if (editor) {
+        editor.commands.clearContent();
+      }
+      onUpdateCharacter({ ...character, notes: '' });
     }
   };
 
-  // Helper to insert or wrap markdown formatting
-  const applyFormatting = (prefix: string, suffix = '', defaultText = '') => {
-    sfx.playClick();
-    const textarea = textareaRef.current;
-    if (!textarea) {
-      const current = character.notes || '';
-      handleNotesChange(current ? `${current}\n${prefix}${defaultText}${suffix}` : `${prefix}${defaultText}${suffix}`);
-      return;
-    }
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selected = text.substring(start, end);
-
-    const replacement = selected 
-      ? `${prefix}${selected}${suffix}`
-      : `${prefix}${defaultText}${suffix}`;
-
-    const newText = text.substring(0, start) + replacement + text.substring(end);
-    handleNotesChange(newText);
-
-    setTimeout(() => {
-      textarea.focus();
-      if (selected) {
-        textarea.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
-      } else {
-        textarea.setSelectionRange(start + prefix.length, start + prefix.length + defaultText.length);
-      }
-    }, 10);
-  };
-
-  // Safe markdown parse & sanitize
-  const renderedHtml = useMemo(() => {
-    const raw = character.notes || '';
-    if (!raw.trim()) return '';
-    try {
-      const html = marked.parse(raw) as string;
-      return DOMPurify.sanitize(html);
-    } catch (err) {
-      console.error('Markdown parse error:', err);
-      return DOMPurify.sanitize(raw);
-    }
-  }, [character.notes]);
-
-  // Make checkboxes inside preview interactive
-  const handlePreviewClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'checkbox') {
-      const container = e.currentTarget;
-      const allCheckboxes = Array.from(container.querySelectorAll('input[type="checkbox"]'));
-      const index = allCheckboxes.indexOf(target as HTMLInputElement);
-      if (index !== -1) {
-        sfx.playClick();
-        let currentIndex = 0;
-        const updated = (character.notes || '').replace(/- \[( |x|X)\]/g, (match) => {
-          if (currentIndex === index) {
-            currentIndex++;
-            return match.toLowerCase().includes('x') ? '- [ ]' : '- [x]';
-          }
-          currentIndex++;
-          return match;
-        });
-        handleNotesChange(updated);
-      }
+  const handleRawNotesChange = (newNotes: string) => {
+    onUpdateCharacter({ ...character, notes: newNotes });
+    if (editor) {
+      editor.commands.setContent(newNotes);
     }
   };
 
@@ -165,62 +155,46 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
               </h2>
               <span className="text-[11px] text-zinc-400 block">
                 {lang === 'ru' 
-                  ? 'Журнал приключений, контакты фиксеров, улики и добыча с поддержкой Markdown' 
-                  : 'Adventure log, contacts, clues, contracts, and loot with Markdown formatting'}
+                  ? 'Интерактивный журнал сессий с мгновенным форматированием Markdown' 
+                  : 'Interactive session log with live in-place Markdown formatting'}
               </span>
             </div>
           </div>
 
-          {/* View Modes & Action Buttons */}
+          {/* Action Buttons & Source Mode Toggle */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* View Mode Toggle */}
+            {/* Mode Switcher: Visual in-place vs Raw Markdown */}
             <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-lg p-0.5">
               <button
                 onClick={() => {
                   sfx.playClick();
-                  setViewMode('edit');
+                  setIsRawSourceMode(false);
                 }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition font-semibold ${
-                  viewMode === 'edit'
+                  !isRawSourceMode
                     ? 'bg-yellow-500 text-black shadow-xs font-bold'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
                 }`}
-                title={lang === 'ru' ? 'Только редактор' : 'Editor only'}
+                title={lang === 'ru' ? 'Визуальный редактор (разметка форматируется на лету)' : 'Visual in-place editor'}
               >
                 <Edit3 size={12} />
-                <span>{t.notesEditor || 'Редактор'}</span>
+                <span>{lang === 'ru' ? 'Визуальный' : 'Visual'}</span>
               </button>
 
               <button
                 onClick={() => {
                   sfx.playClick();
-                  setViewMode('preview');
+                  setIsRawSourceMode(true);
                 }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition font-semibold ${
-                  viewMode === 'preview'
+                  isRawSourceMode
                     ? 'bg-yellow-500 text-black shadow-xs font-bold'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
                 }`}
-                title={lang === 'ru' ? 'Форматированный просмотр' : 'Formatted preview'}
+                title={lang === 'ru' ? 'Исходный Markdown код (#, **, -)' : 'Raw Markdown source code'}
               >
-                <Eye size={12} />
-                <span>{t.notesPreview || 'Просмотр'}</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  sfx.playClick();
-                  setViewMode('split');
-                }}
-                className={`hidden sm:flex items-center gap-1 px-2.5 py-1 rounded text-xs transition font-semibold ${
-                  viewMode === 'split'
-                    ? 'bg-yellow-500 text-black shadow-xs font-bold'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                }`}
-                title={lang === 'ru' ? 'Разделенный экран (Редактор + Просмотр)' : 'Split view (Editor + Preview)'}
-              >
-                <Columns2 size={12} />
-                <span>{t.notesSplit || 'Сплит'}</span>
+                <Code2 size={12} />
+                <span>{lang === 'ru' ? 'Код MD' : 'Raw MD'}</span>
               </button>
             </div>
 
@@ -246,7 +220,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
           </div>
         </div>
 
-        {/* Quick Insert Templates */}
+        {/* Quick Insert Templates (instantly formats in-place) */}
         <div className="flex items-center gap-1.5 overflow-x-auto touch-pan-x scrollbar-none pt-2 border-t border-zinc-800/80 text-xs -mx-1 px-1">
           <span className="text-zinc-500 text-[11px] mr-1 flex items-center gap-1 shrink-0 font-medium">
             <Sparkles size={12} className="text-yellow-500" />
@@ -292,7 +266,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
           <button
             onClick={() => handleInsertTemplate(
               lang === 'ru'
-                ? `### 📋 Задачи:\n- [ ] Разведка объекта\n- [ ] Связаться с фиксером\n- [ ] Купить патроны`
+                ? `### 📋 Задачи:\n- [ ] Разведка объекта\n- [ ] Связаться с фиксером\n- [ ] Купить боеприпасы`
                 : `### 📋 Action Plan:\n- [ ] Recon the target\n- [ ] Contact fixer\n- [ ] Buy ammunition`
             )}
             className="flex items-center gap-1 px-2.5 py-1.5 min-h-[30px] bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px] shrink-0"
@@ -304,7 +278,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
           <button
             onClick={() => handleInsertTemplate(
               lang === 'ru'
-                ? `- **📦 Лут / Схрон:** \n  - Предметы: \n  - Локация / Пароль: `
+                ? `- **📦 Лут / Схрон:** \n  - Предметы: \n  - Локация / Код: `
                 : `- **📦 Loot / Stash:** \n  - Items: \n  - Location / Code: `
             )}
             className="flex items-center gap-1 px-2.5 py-1.5 min-h-[30px] bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-300 hover:text-white transition text-[11px] shrink-0"
@@ -326,186 +300,221 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
           </button>
         </div>
 
-        {/* Markdown Quick Formatting Toolbar (when editing) */}
-        {(viewMode === 'edit' || viewMode === 'split') && (
+        {/* Live Formatting Toolbar for Visual Editor */}
+        {!isRawSourceMode && editor && (
           <div className="flex items-center gap-1 overflow-x-auto touch-pan-x scrollbar-none pt-2 border-t border-zinc-800/80 text-xs -mx-1 px-1">
-            <span className="text-[10px] font-mono text-zinc-500 uppercase shrink-0 mr-1">
-              MD:
-            </span>
-
+            {/* Heading 1 */}
             <button
-              onClick={() => applyFormatting('### ', '', lang === 'ru' ? 'Заголовок' : 'Heading')}
-              className="p-1.5 px-2 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-yellow-400 rounded border border-zinc-800 transition flex items-center gap-1 shrink-0 font-bold"
-              title={`${t.notesFormattingHeading || 'Заголовок'} (### )`}
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().toggleHeading({ level: 1 }).run();
+              }}
+              className={`p-1.5 px-2 rounded border transition flex items-center gap-0.5 shrink-0 font-bold ${
+                editor.isActive('heading', { level: 1 })
+                  ? 'bg-yellow-500 text-black border-yellow-400 shadow-xs'
+                  : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+              }`}
+              title="Заголовок 1 (#)"
             >
-              <Heading size={13} />
-              <span className="text-[10px]">H3</span>
+              <Heading1 size={13} />
             </button>
 
+            {/* Heading 2 */}
             <button
-              onClick={() => applyFormatting('**', '**', lang === 'ru' ? 'жирный' : 'bold')}
-              className="p-1.5 px-2 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-yellow-400 rounded border border-zinc-800 transition flex items-center gap-1 shrink-0 font-bold"
-              title={`${t.notesFormattingBold || 'Жирный'} (**)`}
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().toggleHeading({ level: 2 }).run();
+              }}
+              className={`p-1.5 px-2 rounded border transition flex items-center gap-0.5 shrink-0 font-bold ${
+                editor.isActive('heading', { level: 2 })
+                  ? 'bg-yellow-500 text-black border-yellow-400 shadow-xs'
+                  : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+              }`}
+              title="Заголовок 2 (##)"
+            >
+              <Heading2 size={13} />
+            </button>
+
+            {/* Heading 3 */}
+            <button
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().toggleHeading({ level: 3 }).run();
+              }}
+              className={`p-1.5 px-2 rounded border transition flex items-center gap-0.5 shrink-0 font-bold ${
+                editor.isActive('heading', { level: 3 })
+                  ? 'bg-yellow-500 text-black border-yellow-400 shadow-xs'
+                  : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+              }`}
+              title="Заголовок 3 (###)"
+            >
+              <Heading3 size={13} />
+            </button>
+
+            <div className="w-[1px] h-4 bg-zinc-800 mx-0.5 shrink-0" />
+
+            {/* Bold */}
+            <button
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().toggleBold().run();
+              }}
+              className={`p-1.5 px-2 rounded border transition flex items-center shrink-0 font-bold ${
+                editor.isActive('bold')
+                  ? 'bg-yellow-500 text-black border-yellow-400 shadow-xs'
+                  : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+              }`}
+              title="Жирный (**)"
             >
               <Bold size={13} />
             </button>
 
+            {/* Italic */}
             <button
-              onClick={() => applyFormatting('*', '*', lang === 'ru' ? 'курсив' : 'italic')}
-              className="p-1.5 px-2 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-yellow-400 rounded border border-zinc-800 transition flex items-center gap-1 shrink-0 italic"
-              title={`${t.notesFormattingItalic || 'Курсив'} (*)`}
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().toggleItalic().run();
+              }}
+              className={`p-1.5 px-2 rounded border transition flex items-center shrink-0 italic ${
+                editor.isActive('italic')
+                  ? 'bg-yellow-500 text-black border-yellow-400 shadow-xs'
+                  : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+              }`}
+              title="Курсив (*)"
             >
               <Italic size={13} />
             </button>
 
+            <div className="w-[1px] h-4 bg-zinc-800 mx-0.5 shrink-0" />
+
+            {/* Bullet List */}
             <button
-              onClick={() => applyFormatting('- ', '', lang === 'ru' ? 'пункт' : 'item')}
-              className="p-1.5 px-2 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-yellow-400 rounded border border-zinc-800 transition flex items-center gap-1 shrink-0"
-              title={`${t.notesFormattingList || 'Список'} (- )`}
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().toggleBulletList().run();
+              }}
+              className={`p-1.5 px-2 rounded border transition flex items-center shrink-0 ${
+                editor.isActive('bulletList')
+                  ? 'bg-yellow-500 text-black border-yellow-400 shadow-xs'
+                  : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+              }`}
+              title="Список (-)"
             >
               <List size={13} />
             </button>
 
+            {/* Task List (Interactive Checkboxes) */}
             <button
-              onClick={() => applyFormatting('- [ ] ', '', lang === 'ru' ? 'задача' : 'task')}
-              className="p-1.5 px-2 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-yellow-400 rounded border border-zinc-800 transition flex items-center gap-1 shrink-0"
-              title={`${t.notesFormattingChecklist || 'Чеклист'} (- [ ] )`}
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().toggleTaskList().run();
+              }}
+              className={`p-1.5 px-2 rounded border transition flex items-center shrink-0 ${
+                editor.isActive('taskList')
+                  ? 'bg-yellow-500 text-black border-yellow-400 shadow-xs'
+                  : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+              }`}
+              title="Интерактивный чеклист (- [ ])"
             >
               <ListTodo size={13} />
             </button>
 
+            {/* Blockquote */}
             <button
-              onClick={() => applyFormatting('> ', '', lang === 'ru' ? 'цитата' : 'quote')}
-              className="p-1.5 px-2 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-yellow-400 rounded border border-zinc-800 transition flex items-center gap-1 shrink-0"
-              title={`${t.notesFormattingQuote || 'Цитата'} (> )`}
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().toggleBlockquote().run();
+              }}
+              className={`p-1.5 px-2 rounded border transition flex items-center shrink-0 ${
+                editor.isActive('blockquote')
+                  ? 'bg-yellow-500 text-black border-yellow-400 shadow-xs'
+                  : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+              }`}
+              title="Цитата (>)"
             >
               <Quote size={13} />
             </button>
 
+            {/* Code */}
             <button
-              onClick={() => applyFormatting('`', '`', 'code')}
-              className="p-1.5 px-2 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-yellow-400 rounded border border-zinc-800 transition flex items-center gap-1 shrink-0 font-mono"
-              title={`${t.notesFormattingCode || 'Код'} (\`\`)`}
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().toggleCode().run();
+              }}
+              className={`p-1.5 px-2 rounded border transition flex items-center shrink-0 ${
+                editor.isActive('code')
+                  ? 'bg-yellow-500 text-black border-yellow-400 shadow-xs'
+                  : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+              }`}
+              title="Код (`)"
             >
               <Code size={13} />
             </button>
 
+            {/* Divider */}
             <button
-              onClick={() => applyFormatting('\n---\n\n', '', '')}
-              className="p-1.5 px-2 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-yellow-400 rounded border border-zinc-800 transition flex items-center gap-1 shrink-0"
-              title={`${t.notesFormattingDivider || 'Разделитель'} (---)`}
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().setHorizontalRule().run();
+              }}
+              className="p-1.5 px-2 rounded border transition flex items-center gap-0.5 shrink-0 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
+              title="Разделитель (---)"
             >
               <Minus size={13} />
               <span className="text-[10px]">HR</span>
+            </button>
+
+            <div className="w-[1px] h-4 bg-zinc-800 mx-0.5 shrink-0" />
+
+            {/* Undo */}
+            <button
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().undo().run();
+              }}
+              disabled={!editor.can().undo()}
+              className="p-1.5 px-2 rounded border transition flex items-center shrink-0 bg-zinc-950 hover:bg-zinc-800 text-zinc-400 disabled:opacity-20 border-zinc-800"
+              title="Отменить (Ctrl+Z)"
+            >
+              <RotateCcw size={13} />
+            </button>
+
+            {/* Redo */}
+            <button
+              onClick={() => {
+                sfx.playClick();
+                editor.chain().focus().redo().run();
+              }}
+              disabled={!editor.can().redo()}
+              className="p-1.5 px-2 rounded border transition flex items-center shrink-0 bg-zinc-950 hover:bg-zinc-800 text-zinc-400 disabled:opacity-20 border-zinc-800"
+              title="Повторить (Ctrl+Y)"
+            >
+              <RotateCw size={13} />
             </button>
           </div>
         )}
       </div>
 
-      {/* Main Content Area based on View Mode */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 shadow-md space-y-3">
-        {/* Split View Mode */}
-        {viewMode === 'split' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-            {/* Left: Textarea Editor */}
-            <div className="flex flex-col space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 px-1">
-                <span className="flex items-center gap-1.5 text-yellow-500 font-bold uppercase tracking-wider">
-                  <Edit3 size={12} />
-                  {t.notesEditor || 'Редактор (Markdown)'}
-                </span>
-                <span className="text-zinc-500">{charCount} {lang === 'ru' ? 'симв.' : 'chars'}</span>
-              </div>
-              <textarea
-                ref={textareaRef}
-                value={character.notes || ''}
-                onChange={(e) => handleNotesChange(e.target.value)}
-                placeholder={t.notesPlaceholder || 'Введите любые заметки...'}
-                rows={16}
-                className="w-full flex-1 min-h-[380px] bg-zinc-950 border border-zinc-800 focus:border-yellow-500 rounded-lg p-3 sm:p-3.5 text-xs sm:text-sm font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none resize-y leading-relaxed"
-              />
-            </div>
-
-            {/* Right: Live Rendered Preview */}
-            <div className="flex flex-col space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 px-1">
-                <span className="flex items-center gap-1.5 text-yellow-500 font-bold uppercase tracking-wider">
-                  <Eye size={12} />
-                  {t.notesPreview || 'Просмотр (Рендер)'}
-                </span>
-                <span className="text-[10px] text-zinc-500 font-mono">
-                  {lang === 'ru' ? 'Кликабельные чекбоксы' : 'Interactive checkboxes'}
-                </span>
-              </div>
-              <div 
-                onClick={handlePreviewClick}
-                className="w-full flex-1 min-h-[380px] max-h-[600px] overflow-y-auto bg-zinc-950/80 border border-zinc-800 rounded-lg p-3.5 sm:p-4 text-xs sm:text-sm leading-relaxed"
-              >
-                {renderedHtml ? (
-                  <div 
-                    className="cyber-markdown" 
-                    dangerouslySetInnerHTML={{ __html: renderedHtml }} 
-                  />
-                ) : (
-                  <div className="h-full min-h-[200px] flex flex-col items-center justify-center text-center p-6 text-zinc-600 space-y-2 select-none">
-                    <FileText size={32} className="text-zinc-700" />
-                    <p className="text-xs max-w-xs">{t.notesEmptyPrompt}</p>
-                  </div>
-                )}
-              </div>
-            </div>
+      {/* Main Single Note Editor Field */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 shadow-md space-y-2">
+        {!isRawSourceMode ? (
+          /* Single Unified Visual WYSIWYG Editor */
+          <div className="bg-zinc-950 border border-zinc-800 focus-within:border-yellow-500 rounded-lg overflow-hidden transition">
+            <EditorContent editor={editor} />
           </div>
-        )}
-
-        {/* Editor Only Mode */}
-        {viewMode === 'edit' && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 px-1">
-              <span className="flex items-center gap-1.5 text-yellow-500 font-bold uppercase tracking-wider">
-                <Edit3 size={12} />
-                {t.notesEditor || 'Редактор'}
-              </span>
-              <span className="text-zinc-500">{charCount} {lang === 'ru' ? 'симв.' : 'chars'}</span>
-            </div>
+        ) : (
+          /* Raw Markdown Textarea fallback */
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block px-1">
+              {lang === 'ru' ? 'Исходный Markdown текст:' : 'Raw Markdown Source:'}
+            </span>
             <textarea
-              ref={textareaRef}
               value={character.notes || ''}
-              onChange={(e) => handleNotesChange(e.target.value)}
-              placeholder={t.notesPlaceholder || 'Введите любые заметки...'}
+              onChange={(e) => handleRawNotesChange(e.target.value)}
+              placeholder={t.notesPlaceholder || '...'}
               rows={16}
-              className="w-full min-h-[380px] bg-zinc-950 border border-zinc-800 focus:border-yellow-500 rounded-lg p-3 sm:p-3.5 text-xs sm:text-sm font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none resize-y leading-relaxed"
+              className="w-full bg-zinc-950 border border-zinc-800 focus:border-yellow-500 rounded-lg p-3 sm:p-4 text-xs sm:text-sm font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none resize-y leading-relaxed min-h-[380px]"
             />
-          </div>
-        )}
-
-        {/* Preview Only Mode */}
-        {viewMode === 'preview' && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 px-1">
-              <span className="flex items-center gap-1.5 text-yellow-500 font-bold uppercase tracking-wider">
-                <Eye size={12} />
-                {t.notesPreview || 'Просмотр'}
-              </span>
-              <span className="text-[10px] text-zinc-500 font-mono">
-                {lang === 'ru' ? 'Кликабельные чекбоксы' : 'Interactive checkboxes'}
-              </span>
-            </div>
-            <div 
-              onClick={handlePreviewClick}
-              className="w-full min-h-[380px] max-h-[700px] overflow-y-auto bg-zinc-950/80 border border-zinc-800 rounded-lg p-4 sm:p-5 text-xs sm:text-sm leading-relaxed"
-            >
-              {renderedHtml ? (
-                <div 
-                  className="cyber-markdown" 
-                  dangerouslySetInnerHTML={{ __html: renderedHtml }} 
-                />
-              ) : (
-                <div className="h-full min-h-[250px] flex flex-col items-center justify-center text-center p-8 text-zinc-600 space-y-2 select-none">
-                  <FileText size={36} className="text-zinc-700" />
-                  <p className="text-xs max-w-sm">{t.notesEmptyPrompt}</p>
-                </div>
-              )}
-            </div>
           </div>
         )}
 
@@ -524,9 +533,11 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
             </span>
           </div>
 
-          <span className="text-zinc-500 font-mono text-[10px] flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
-            {lang === 'ru' ? 'Markdown форматирование включено' : 'Markdown formatting active'}
+          <span className="text-zinc-500 font-mono text-[10px] flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse"></span>
+            {lang === 'ru' 
+              ? 'Разметка форматируется сразу в поле (Напечатайте #, -, [ ] или выберите шаблон)' 
+              : 'Markdown converts in-place (Type #, -, [ ] or click template)'}
           </span>
         </div>
       </div>
