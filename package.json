@@ -19,8 +19,11 @@
     "vite": "^8.3.0"
   },
   "dependencies": {
+    "@types/dompurify": "^3.0.5",
     "canvas-confetti": "^1.9.4",
+    "dompurify": "^3.4.16",
     "lucide-react": "^1.54.0",
+    "marked": "^18.1.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   }

@@ -290,6 +290,21 @@ export const translations = {
     rollHistory: 'История бросков',
     clearHistory: 'Очистить историю',
     close: 'Закрыть',
+
+    // Notes
+    notesEditor: 'Редактор',
+    notesPreview: 'Просмотр',
+    notesSplit: 'Сплит',
+    notesPlaceholder: 'Введите любые заметки по ходу игры (поддерживается Markdown: заголовки #, списки -, чекбоксы - [ ], жирный **шрифт**)...',
+    notesEmptyPrompt: 'Заметки пусты. Переключитесь в режим «Редактор» или вставьте шаблон выше, чтобы начать вести журнал.',
+    notesFormattingBold: 'Жирный',
+    notesFormattingItalic: 'Курсив',
+    notesFormattingHeading: 'Заголовок',
+    notesFormattingList: 'Список',
+    notesFormattingChecklist: 'Чеклист',
+    notesFormattingQuote: 'Цитата',
+    notesFormattingCode: 'Код',
+    notesFormattingDivider: 'Разделитель',
   },
 
   en: {
@@ -581,5 +596,20 @@ export const translations = {
     rollHistory: 'Roll History',
     clearHistory: 'Clear History',
     close: 'Close',
+
+    // Notes
+    notesEditor: 'Editor',
+    notesPreview: 'Preview',
+    notesSplit: 'Split',
+    notesPlaceholder: 'Enter session notes (Markdown supported: # headers, - lists, - [ ] checkboxes, **bold**)...',
+    notesEmptyPrompt: 'Notes are empty. Switch to "Editor" or click a template above to start your journal.',
+    notesFormattingBold: 'Bold',
+    notesFormattingItalic: 'Italic',
+    notesFormattingHeading: 'Heading',
+    notesFormattingList: 'List',
+    notesFormattingChecklist: 'Checklist',
+    notesFormattingQuote: 'Quote',
+    notesFormattingCode: 'Code',
+    notesFormattingDivider: 'Divider',
   }
 };
