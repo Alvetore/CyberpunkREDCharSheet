@@ -13,7 +13,9 @@ import {
   ShieldAlert,
   Layers,
   ShoppingCart,
-  Sparkles
+  Sparkles,
+  RotateCcw,
+  X
 } from 'lucide-react';
 
 interface CyberwareSectionProps {
@@ -82,24 +84,32 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
   const stats = calculateHumanityStats(character);
 
-  const handleDeleteItem = (itemId: string) => {
-    sfx.playClick();
-    const itemToDelete = character.cyberware.find((c) => c.id === itemId);
-    const updated = character.cyberware.filter((c) => c.id !== itemId);
-    const permRefund = itemToDelete ? (itemToDelete.category === 'Borgware' ? 4 : 2) : 0;
+  const [itemToDelete, setItemToDelete] = useState<CyberwareItem | null>(null);
 
+  const confirmDeleteItem = (mode: 'full' | 'cpr') => {
+    if (!itemToDelete) return;
+    sfx.playClick();
+    const updated = character.cyberware.filter((c) => c.id !== itemToDelete.id);
+    const cost = itemToDelete.humanityCost || 0;
+    const permRefund = itemToDelete.category === 'Borgware' ? 4 : 2;
     const nextStats = calculateHumanityStats({ ...character, cyberware: updated });
-    // Recover humanity by the permanent penalty lifted, capped at new max recoverable
-    const newHumanity = Math.min(
-      nextStats.maxRecoverableHumanity,
-      character.humanityCurrent + permRefund
-    );
+
+    let newHumanity: number;
+    if (mode === 'full') {
+      // Full refund (undo adding / mistake): refund full humanityCost
+      newHumanity = Math.min(nextStats.maxRecoverableHumanity, character.humanityCurrent + cost);
+    } else {
+      // CPR in-game removal rules: only refund permanent cap penalty (+2 standard, +4 borgware)
+      newHumanity = Math.min(nextStats.maxRecoverableHumanity, character.humanityCurrent + (cost > 0 ? permRefund : 0));
+    }
 
     onUpdateCharacter({
       ...character,
       cyberware: updated,
       humanityCurrent: newHumanity
     });
+
+    setItemToDelete(null);
   };
 
   const handleAddItem = () => {
@@ -239,7 +249,10 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                     -{item.humanityCost} HL
                   </span>
                   <button
-                    onClick={() => handleDeleteItem(item.id)}
+                    onClick={() => {
+                      sfx.playClick();
+                      setItemToDelete(item);
+                    }}
                     className="text-zinc-500 hover:text-red-400 p-0.5 transition"
                     title={lang === 'ru' ? "Удалить имплант" : "Delete cyberware"}
                   >
@@ -388,6 +401,105 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
         onAddRollResult={onAddRollResult}
         lang={lang}
       />
+
+      {/* Delete / Uninstall Cyberware Confirmation Modal */}
+      {itemToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150 no-print">
+          <div className="bg-zinc-900 border border-zinc-700/80 rounded-xl w-full max-w-md shadow-2xl p-4 sm:p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
+              <div className="flex items-center gap-2 text-red-400">
+                <Trash2 size={18} />
+                <h3 className="font-orbitron font-bold text-sm uppercase tracking-wider text-zinc-100">
+                  {lang === 'ru' ? 'Удаление импланта' : 'Uninstall Cyberware'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setItemToDelete(null)}
+                className="text-zinc-400 hover:text-white p-1 rounded transition"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="bg-zinc-950 border border-zinc-800 rounded p-3 space-y-1">
+              <div className="flex items-center justify-between font-bold text-xs text-white">
+                <span>{itemToDelete.name}</span>
+                <span className="text-red-400 font-mono">-{itemToDelete.humanityCost} HL</span>
+              </div>
+              <div className="text-[11px] text-zinc-400">
+                {itemToDelete.category} • {itemToDelete.installLocation}
+              </div>
+            </div>
+
+            <div className="text-xs text-zinc-300">
+              {lang === 'ru'
+                ? 'Как вы хотите восстановить человечность персонажа при удалении?'
+                : 'How would you like to restore the character\'s Humanity?'}
+            </div>
+
+            <div className="space-y-2">
+              {/* Option 1: Full Refund */}
+              <button
+                onClick={() => confirmDeleteItem('full')}
+                className="w-full text-left p-3 rounded-lg bg-zinc-950 hover:bg-emerald-950/40 border border-zinc-800 hover:border-emerald-600 transition group flex items-start gap-3"
+              >
+                <div className="p-2 rounded bg-emerald-950/60 border border-emerald-800 text-emerald-400 group-hover:scale-105 transition shrink-0 mt-0.5">
+                  <RotateCcw size={16} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-orbitron font-bold text-xs text-zinc-100 group-hover:text-emerald-300">
+                      {lang === 'ru' ? 'Полный возврат' : 'Full Refund'}
+                    </span>
+                    <span className="font-mono font-bold text-xs text-emerald-400">
+                      +{itemToDelete.humanityCost || 0} HL
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 mt-0.5 leading-tight">
+                    {lang === 'ru'
+                      ? 'Отмена добавления (исправление ошибки). Полностью возвращает списанную человечность.'
+                      : 'Undo addition / fix mistake. Fully returns all deducted Humanity.'}
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 2: CPR Rules */}
+              <button
+                onClick={() => confirmDeleteItem('cpr')}
+                className="w-full text-left p-3 rounded-lg bg-zinc-950 hover:bg-cyan-950/40 border border-zinc-800 hover:border-cyan-600 transition group flex items-start gap-3"
+              >
+                <div className="p-2 rounded bg-cyan-950/60 border border-cyan-800 text-cyan-400 group-hover:scale-105 transition shrink-0 mt-0.5">
+                  <Brain size={16} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-orbitron font-bold text-xs text-zinc-100 group-hover:text-cyan-300">
+                      {lang === 'ru' ? 'По правилам Cyberpunk RED' : 'Official CPR Rules'}
+                    </span>
+                    <span className="font-mono font-bold text-xs text-cyan-400">
+                      +{itemToDelete.category === 'Borgware' ? 4 : 2} к порогу
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 mt-0.5 leading-tight">
+                    {lang === 'ru'
+                      ? `Игровое извлечение у хирурга. Снимает штраф к порогу (+${itemToDelete.category === 'Borgware' ? 4 : 2} HL), остальную человечность нужно добирать через терапию.`
+                      : `In-game surgical removal. Lifts cap penalty (+${itemToDelete.category === 'Borgware' ? 4 : 2} HL), rest must be recovered via Therapy.`}
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <button
+                onClick={() => setItemToDelete(null)}
+                className="px-4 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded font-semibold transition"
+              >
+                {lang === 'ru' ? 'Отмена (не удалять)' : 'Cancel (Keep)'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
