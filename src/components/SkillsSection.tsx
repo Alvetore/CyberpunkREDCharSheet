@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Character, Skill, SkillCategory, StatKey } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { CPR_SKILLS } from '../data/initialData';
+import { CPR_ROLE_PACKAGES } from '../data/roleTemplates';
 import { sfx } from '../utils/audio';
 import { getRoleSkillBonus } from '../utils/roleUtils';
 import { 
@@ -14,6 +15,7 @@ import {
   ShieldAlert,
   HeartPulse,
   X,
+  Wand2,
   type LucideIcon,
   // Awareness
   Eye,
@@ -288,6 +290,28 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   const handleDeleteCustomSkill = (skillId: string) => {
     sfx.playClick();
     const updated = character.skills.filter((s) => s.id !== skillId);
+    onUpdateCharacter({ ...character, skills: updated });
+  };
+
+  const handleApplyRolePackage = () => {
+    sfx.playClick();
+    const pkg = CPR_ROLE_PACKAGES[character.role];
+    const roleName = lang === 'ru' ? (pkg ? pkg.nameRu : character.role) : character.role;
+    const confirmed = window.confirm(
+      lang === 'ru'
+        ? `Пересчитать распределение навыков под текущую роль «${roleName}» (официальный пакет правил Cyberpunk RED, 86 очков)?\n\nЭто действие установит уровни навыков согласно базовому набору Streetrat для роли ${roleName}. Пользовательские навыки сохранятся.`
+        : `Recalculate skills for current role "${roleName}" (official Cyberpunk RED Streetrat package, 86 pts)?\n\nThis will reset skill levels to the default template for ${roleName}. Custom skills will be preserved.`
+    );
+    if (!confirmed || !pkg) return;
+
+    const customSkills = character.skills.filter((s) => s.isCustom);
+    const updated = [
+      ...CPR_SKILLS.map((s) => ({
+        ...s,
+        level: pkg.streetratSkills[s.id] || 0
+      })),
+      ...customSkills
+    ];
     onUpdateCharacter({ ...character, skills: updated });
   };
 
@@ -576,6 +600,21 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 </button>
               )}
             </div>
+
+            <button
+              onClick={handleApplyRolePackage}
+              title={
+                lang === 'ru'
+                  ? `Пересчитать и применить официальный набор навыков Cyberpunk RED для роли «${character.role}» (Streetrat, 86 очков)`
+                  : `Recalculate and apply official Cyberpunk RED skill package for "${character.role}" (Streetrat, 86 pts)`
+              }
+              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-cyan-950 border border-zinc-700 hover:border-cyan-700 text-zinc-200 hover:text-cyan-300 rounded text-xs font-semibold flex items-center gap-1.5 transition whitespace-nowrap shadow-xs"
+            >
+              <Wand2 size={13} className="text-cyan-400" />
+              <span className="hidden sm:inline">
+                {lang === 'ru' ? `Пакет ${character.role}` : `${character.role} Pkg`}
+              </span>
+            </button>
 
             <button
               onClick={() => {

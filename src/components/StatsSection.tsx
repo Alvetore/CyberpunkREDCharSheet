@@ -4,6 +4,8 @@ import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { calculateHumanityStats } from '../utils/roleUtils';
 import { TherapyModal } from './TherapyModal';
+import { CPR_ROLE_PACKAGES } from '../data/roleTemplates';
+import { CPR_SKILLS } from '../data/initialData';
 import { 
   Heart, 
   Brain, 
@@ -135,6 +137,38 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
     });
   };
 
+  const handleRoleChange = (newRole: RoleType) => {
+    sfx.playClick();
+    if (newRole === character.role) return;
+
+    const pkg = CPR_ROLE_PACKAGES[newRole];
+    const roleName = lang === 'ru' ? (pkg ? pkg.nameRu : newRole) : newRole;
+
+    const shouldRecalculateSkills = window.confirm(
+      lang === 'ru'
+        ? `Вы переключили роль персонажа на «${roleName}».\n\nПересчитать распределение навыков под эту роль (официальный пакет правил Cyberpunk RED для ${roleName}, 86 очков)?\n\n• Нажмите «ОК», чтобы обновить навыки для роли ${roleName}.\n• Нажмите «Отмена», чтобы сохранить текущие уровни навыков без изменений.`
+        : `Role changed to "${roleName}".\n\nRecalculate character skills for "${roleName}" using official Cyberpunk RED rules (Streetrat package, 86 pts)?\n\n• Click "OK" to apply ${roleName} starter skills.\n• Click "Cancel" to keep existing skill levels.`
+    );
+
+    let updatedSkills = character.skills;
+    if (shouldRecalculateSkills && pkg) {
+      const customSkills = character.skills.filter((s) => s.isCustom);
+      updatedSkills = [
+        ...CPR_SKILLS.map((s) => ({
+          ...s,
+          level: pkg.streetratSkills[s.id] || 0
+        })),
+        ...customSkills
+      ];
+    }
+
+    onUpdateCharacter({
+      ...character,
+      role: newRole,
+      skills: updatedSkills
+    });
+  };
+
   const hpPercent = Math.max(0, Math.min(100, Math.round((character.hpCurrent / hpMax) * 100)));
   const humanityPercent = Math.max(0, Math.min(100, Math.round((effectiveHumanity / baseHumanityMax) * 100)));
   const cyberwarePermLossPercent = Math.min(100, Math.round((cyberwarePermanentLoss / baseHumanityMax) * 100));
@@ -177,7 +211,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
             </label>
             <select
               value={character.role}
-              onChange={(e) => onUpdateCharacter({ ...character, role: e.target.value as RoleType })}
+              onChange={(e) => handleRoleChange(e.target.value as RoleType)}
               className="w-full bg-zinc-950 border border-zinc-800 focus:border-red-500 rounded px-3 py-1.5 text-zinc-100 font-bold text-sm focus:outline-none"
             >
               {ROLES.map((r) => (

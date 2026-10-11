@@ -48,7 +48,8 @@ export function getRoleSkillBonus(character: Character, skillId: string): RoleSk
 
   // 2. SOLO: Combat Awareness -> Threat Detection (Обнаружение угроз)
   // CPR Core Rulebook p.146: Solo adds Threat Detection points to Perception checks
-  const threatDetection = character.roleAbilities?.solo?.threatDetection || 0;
+  const isSolo = character.role === 'Solo';
+  const threatDetection = isSolo ? (character.roleAbilities?.solo?.threatDetection || 0) : 0;
   if (threatDetection > 0 && skillId === 'perception') {
     totalBonus += threatDetection;
     badgesRu.push(`Чутьё +${threatDetection}`);
@@ -59,7 +60,8 @@ export function getRoleSkillBonus(character: Character, skillId: string): RoleSk
 
   // 3. TECH: Maker -> Field Expertise (Полевой опыт / Полевая работа)
   // CPR Core Rulebook p.147: Tech adds Field Expertise to Basic Tech, Cybertech, Electronics/Security, Weaponstech, Vehicle Techs
-  const fieldExpertise = character.roleAbilities?.tech?.fieldExpertise || 0;
+  const isTech = character.role === 'Tech';
+  const fieldExpertise = isTech ? (character.roleAbilities?.tech?.fieldExpertise || 0) : 0;
   if (fieldExpertise > 0) {
     const techSkills = [
       'basic_tech',
