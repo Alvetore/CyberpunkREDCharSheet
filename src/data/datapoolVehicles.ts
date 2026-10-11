@@ -1146,10 +1146,10 @@ export const DATAPOOL_VEHICLE_UPGRADES: CatalogVehicleUpgrade[] = [
   },
   {
     "id": "upg-living-quarters",
-    "nameRu": "Жилой модуль / Каюта (Living Quarters)",
+    "nameRu": "Жилой отсек (Living Quarters)",
     "nameEn": "Living Quarters",
-    "nomadRank": 2,
-    "costEb": 2000,
+    "nomadRank": 1,
+    "costEb": 1000,
     "descriptionRu": "Оборудует салон спальным местом, кухонным модулем и хранилищем. Заменяет аренду жилья!",
     "descriptionEn": "Equips interior with sleeping bunk, mini-galley, and storage. Counts as housing lifestyle!",
     "applicableCategory": "Фургоны, катера, автобусы, тягачи"
