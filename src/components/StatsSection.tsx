@@ -142,16 +142,8 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
     if (newRole === character.role) return;
 
     const pkg = CPR_ROLE_PACKAGES[newRole];
-    const roleName = lang === 'ru' ? (pkg ? pkg.nameRu : newRole) : newRole;
-
-    const shouldRecalculateSkills = window.confirm(
-      lang === 'ru'
-        ? `Вы переключили роль персонажа на «${roleName}».\n\nПересчитать распределение навыков под эту роль (официальный пакет правил Cyberpunk RED для ${roleName}, 86 очков)?\n\n• Нажмите «ОК», чтобы обновить навыки для роли ${roleName}.\n• Нажмите «Отмена», чтобы сохранить текущие уровни навыков без изменений.`
-        : `Role changed to "${roleName}".\n\nRecalculate character skills for "${roleName}" using official Cyberpunk RED rules (Streetrat package, 86 pts)?\n\n• Click "OK" to apply ${roleName} starter skills.\n• Click "Cancel" to keep existing skill levels.`
-    );
-
     let updatedSkills = character.skills;
-    if (shouldRecalculateSkills && pkg) {
+    if (pkg) {
       const customSkills = character.skills.filter((s) => s.isCustom);
       updatedSkills = [
         ...CPR_SKILLS.map((s) => ({
