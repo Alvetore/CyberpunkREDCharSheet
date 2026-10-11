@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Character, CyberwareItem, CyberwareCategory } from '../types/character';
+import { Character, CyberwareItem, CyberwareCategory, RollResult } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
+import { calculateHumanityStats } from '../utils/roleUtils';
+import { TherapyModal } from './TherapyModal';
 import { 
   Cpu, 
   Plus, 
@@ -10,13 +12,15 @@ import {
   Zap, 
   ShieldAlert,
   Layers,
-  ShoppingCart
+  ShoppingCart,
+  Sparkles
 } from 'lucide-react';
 
 interface CyberwareSectionProps {
   character: Character;
   onUpdateCharacter: (char: Character) => void;
   onOpenShop?: (category?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' | 'vehicles') => void;
+  onAddRollResult?: (roll: RollResult) => void;
   lang: Language;
 }
 
@@ -61,10 +65,12 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
   character,
   onUpdateCharacter,
   onOpenShop,
+  onAddRollResult,
   lang
 }) => {
   const t = translations[lang];
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showTherapyModal, setShowTherapyModal] = useState(false);
 
   const [newItem, setNewItem] = useState<Partial<CyberwareItem>>({
     name: 'Neural Link',
@@ -74,22 +80,19 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
     description: lang === 'ru' ? 'Основа для нервных имплантов' : 'Baseline neural interface foundation'
   });
 
-  const totalHumanityLoss = character.cyberware.reduce((acc, c) => acc + (c.humanityCost || 0), 0);
+  const stats = calculateHumanityStats(character);
 
   const handleDeleteItem = (itemId: string) => {
     sfx.playClick();
     const itemToDelete = character.cyberware.find((c) => c.id === itemId);
     const updated = character.cyberware.filter((c) => c.id !== itemId);
-    const cost = itemToDelete?.humanityCost || 0;
+    const permRefund = itemToDelete ? (itemToDelete.category === 'Borgware' ? 4 : 2) : 0;
 
-    const baseMax = character.humanityMaxManual || (character.stats.EMP * 10);
-    const newTotalLoss = updated.reduce((acc, c) => acc + (c.humanityCost || 0), 0);
-    const newMaxAllowed = Math.max(0, baseMax - newTotalLoss);
-
-    // Refund humanity up to the new cap allowed with remaining cyberware
+    const nextStats = calculateHumanityStats({ ...character, cyberware: updated });
+    // Recover humanity by the permanent penalty lifted, capped at new max recoverable
     const newHumanity = Math.min(
-      newMaxAllowed,
-      character.humanityCurrent + cost
+      nextStats.maxRecoverableHumanity,
+      character.humanityCurrent + permRefund
     );
 
     onUpdateCharacter({
@@ -112,12 +115,13 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
     };
 
     const newCyberware = [...character.cyberware, item];
-    const baseMax = character.humanityMaxManual || (character.stats.EMP * 10);
-    const newTotalLoss = newCyberware.reduce((acc, c) => acc + (c.humanityCost || 0), 0);
-    const newMaxAllowed = Math.max(0, baseMax - newTotalLoss);
+    const nextStats = calculateHumanityStats({ ...character, cyberware: newCyberware });
 
-    // Deduct humanity
-    const newHumanity = Math.min(newMaxAllowed, Math.max(0, character.humanityCurrent - cost));
+    // Deduct immediate installation HL trauma, capped at new maximum recoverable
+    const newHumanity = Math.min(
+      nextStats.maxRecoverableHumanity,
+      Math.max(0, character.humanityCurrent - cost)
+    );
 
     onUpdateCharacter({
       ...character,
@@ -148,27 +152,42 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <div className="bg-zinc-950 border border-red-900/60 px-3 py-1 rounded text-xs flex items-center gap-1.5">
+          <div className="bg-zinc-950 border border-red-900/60 px-3 py-1 rounded text-xs flex items-center gap-1.5" title={lang === 'ru' ? `Установка: -${stats.totalInstallationHL} HL. Постоянный штраф: -${stats.cyberwarePermanentLoss} HL` : `Total Install: -${stats.totalInstallationHL} HL. Permanent Cap Loss: -${stats.cyberwarePermanentLoss} HL`}>
             <span className="text-zinc-400 uppercase font-semibold text-[10px]">
-              {t.totalHumanityLoss}
+              {lang === 'ru' ? 'Штраф порога:' : 'Cap Loss:'}
             </span>
             <span className="font-orbitron font-bold text-red-400">
-              -{totalHumanityLoss} HL
+              -{stats.cyberwarePermanentLoss} HL
+            </span>
+            <span className="text-[10px] text-zinc-500 font-mono">
+              ({lang === 'ru' ? 'уст.' : 'inst.'} -{stats.totalInstallationHL})
             </span>
           </div>
 
-          <div className="bg-zinc-950 border border-cyan-900/60 px-3 py-1 rounded text-xs flex items-center gap-1.5" title={lang === 'ru' ? 'Текущая человечность / Базовая' : 'Current Humanity / Base'}>
+          <div className="bg-zinc-950 border border-cyan-900/60 px-3 py-1 rounded text-xs flex items-center gap-1.5" title={lang === 'ru' ? `Текущая: ${stats.currentHumanity} / Порог с имплантами: ${stats.maxRecoverableHumanity} (База: ${stats.baseHumanityMax})` : `Current: ${stats.currentHumanity} / Cap: ${stats.maxRecoverableHumanity} (Base: ${stats.baseHumanityMax})`}>
             <Brain size={13} className="text-cyan-400" />
             <span className="text-zinc-400 uppercase font-semibold text-[10px]">
               {t.humanity}:
             </span>
             <span className="font-orbitron font-bold text-cyan-300">
-              {character.humanityCurrent} / {character.stats.EMP * 10}
+              {stats.currentHumanity} / {stats.maxRecoverableHumanity}
             </span>
             <span className="text-[10px] text-zinc-400 font-mono">
-              (EMP {Math.floor(character.humanityCurrent / 10)})
+              (EMP {stats.currentEmp})
             </span>
           </div>
+
+          <button
+            onClick={() => {
+              sfx.playClick();
+              setShowTherapyModal(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-950/70 hover:bg-cyan-800 border border-cyan-700/80 text-cyan-300 hover:text-white font-bold text-xs uppercase tracking-wider rounded transition font-orbitron"
+            title={lang === 'ru' ? "Медицинская терапия человечности" : "Humanity psychological therapy"}
+          >
+            <Brain size={14} className="text-cyan-400" />
+            <span>{lang === 'ru' ? 'Терапия' : 'Therapy'}</span>
+          </button>
 
           {onOpenShop && (
             <button
@@ -359,6 +378,16 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
           </div>
         </div>
       )}
+
+      {/* Therapy Modal */}
+      <TherapyModal
+        isOpen={showTherapyModal}
+        onClose={() => setShowTherapyModal(false)}
+        character={character}
+        onUpdateCharacter={onUpdateCharacter}
+        onAddRollResult={onAddRollResult}
+        lang={lang}
+      />
     </div>
   );
 };

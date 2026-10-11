@@ -1,7 +1,9 @@
-import React from 'react';
-import { Character, StatKey, RoleType } from '../types/character';
+import React, { useState } from 'react';
+import { Character, StatKey, RoleType, RollResult } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
+import { calculateHumanityStats } from '../utils/roleUtils';
+import { TherapyModal } from './TherapyModal';
 import { 
   Heart, 
   Brain, 
@@ -10,9 +12,9 @@ import {
   RotateCcw, 
   Dices, 
   Flame, 
-  Skull,
-  Zap,
-  HeartCrack
+  Skull, 
+  Zap, 
+  HeartCrack 
 } from 'lucide-react';
 
 interface StatsSectionProps {
@@ -22,6 +24,7 @@ interface StatsSectionProps {
   onRollInitiative: () => void;
   onRollDeathSave: () => void;
   onOpenDamageCalc: () => void;
+  onAddRollResult?: (roll: RollResult) => void;
   lang: Language;
 }
 
@@ -47,30 +50,37 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
   onRollInitiative,
   onRollDeathSave,
   onOpenDamageCalc,
+  onAddRollResult,
   lang
 }) => {
   const t = translations[lang];
+  const [isTherapyOpen, setIsTherapyOpen] = useState(false);
 
   // Derived formulas
   const hpMax = character.hpMaxManual || (10 + 5 * Math.ceil((character.stats.BODY + character.stats.WILL) / 2));
   const seriouslyWoundedThreshold = Math.ceil(hpMax / 2);
 
-  // Humanity & Cyberware Loss calculations
-  const baseHumanityMax = character.humanityMaxManual || (character.stats.EMP * 10);
-  const totalCyberwareHL = (character.cyberware || []).reduce((acc, c) => acc + (c.humanityCost || 0), 0);
-  const maxHumanityWithCyberware = Math.max(0, baseHumanityMax - totalCyberwareHL);
-  const effectiveHumanity = Math.min(maxHumanityWithCyberware, character.humanityCurrent);
-  const currentEmp = Math.max(0, Math.floor(effectiveHumanity / 10));
+  // Humanity & Cyberware Loss calculations (Cyberpunk RED Corebook p. 229)
+  const humanityStats = calculateHumanityStats(character);
+  const {
+    baseHumanityMax,
+    totalInstallationHL,
+    cyberwarePermanentLoss,
+    maxRecoverableHumanity,
+    currentHumanity: effectiveHumanity,
+    currentEmp,
+    canRestore
+  } = humanityStats;
 
-  // Auto-sync humanity if currently above maximum allowed with cyberware
+  // Auto-sync humanity if currently above max recoverable threshold allowed with cyberware
   React.useEffect(() => {
-    if (character.humanityCurrent > maxHumanityWithCyberware) {
+    if (character.humanityCurrent > maxRecoverableHumanity) {
       onUpdateCharacter({
         ...character,
-        humanityCurrent: maxHumanityWithCyberware
+        humanityCurrent: maxRecoverableHumanity
       });
     }
-  }, [character.humanityCurrent, maxHumanityWithCyberware]);
+  }, [character.humanityCurrent, maxRecoverableHumanity]);
 
   // Armor penalty
   const armorPenalty = Math.min(
@@ -95,8 +105,8 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
     if (key === 'EMP') {
       const empDelta = newVal - current;
       const newBaseMax = character.humanityMaxManual || (newVal * 10);
-      const newMaxWithCyberware = Math.max(0, newBaseMax - totalCyberwareHL);
-      humanityCurrent = Math.max(0, Math.min(newMaxWithCyberware, character.humanityCurrent + empDelta * 10));
+      const newMaxRecoverable = Math.max(0, newBaseMax - cyberwarePermanentLoss);
+      humanityCurrent = Math.max(0, Math.min(newMaxRecoverable, character.humanityCurrent + empDelta * 10));
     }
 
     onUpdateCharacter({
@@ -118,7 +128,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
 
   const handleHumanityChange = (delta: number) => {
     sfx.playClick();
-    const newHumanity = Math.max(0, Math.min(maxHumanityWithCyberware, character.humanityCurrent + delta));
+    const newHumanity = Math.max(0, Math.min(maxRecoverableHumanity, character.humanityCurrent + delta));
     onUpdateCharacter({
       ...character,
       humanityCurrent: newHumanity
@@ -127,7 +137,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
 
   const hpPercent = Math.max(0, Math.min(100, Math.round((character.hpCurrent / hpMax) * 100)));
   const humanityPercent = Math.max(0, Math.min(100, Math.round((effectiveHumanity / baseHumanityMax) * 100)));
-  const cyberwareLossPercent = Math.min(100, Math.round((totalCyberwareHL / baseHumanityMax) * 100));
+  const cyberwarePermLossPercent = Math.min(100, Math.round((cyberwarePermanentLoss / baseHumanityMax) * 100));
 
   return (
     <div className="space-y-4">
@@ -347,14 +357,14 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
           </div>
 
           {/* Cyberware Humanity Loss breakdown */}
-          {totalCyberwareHL > 0 ? (
+          {cyberwarePermanentLoss > 0 || totalInstallationHL > 0 ? (
             <div className="flex items-center justify-between text-[11px] mb-2 font-mono">
-              <span className="text-red-400 font-semibold flex items-center gap-1">
+              <span className="text-red-400 font-semibold flex items-center gap-1" title={lang === 'ru' ? `Установка: -${totalInstallationHL} HL. Необратимое снижение порога: -${cyberwarePermanentLoss} HL (-2 за обычный имплант, -4 за боргирование)` : `Total Install: -${totalInstallationHL} HL. Permanent Cap Loss: -${cyberwarePermanentLoss} HL (-2 standard, -4 borgware)`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                {lang === 'ru' ? 'Импланты:' : 'Chrome:'} -{totalCyberwareHL} HL
+                {lang === 'ru' ? 'Штраф к порогу:' : 'Cap Loss:'} -{cyberwarePermanentLoss} HL
               </span>
-              <span className="text-zinc-400" title={lang === 'ru' ? 'Максимум с установленными имплантами' : 'Max cap with installed cyberware'}>
-                {lang === 'ru' ? 'Порог:' : 'Cap:'} {maxHumanityWithCyberware}
+              <span className="text-emerald-400 font-semibold" title={lang === 'ru' ? `Максимальный предел восстановления человечности: ${maxRecoverableHumanity}` : `Max Recoverable Humanity: ${maxRecoverableHumanity}`}>
+                {lang === 'ru' ? 'Порог:' : 'Cap:'} {maxRecoverableHumanity}
               </span>
             </div>
           ) : (
@@ -363,7 +373,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
             </div>
           )}
 
-          {/* Humanity Bar with Cyberware Loss segment */}
+          {/* Humanity Bar with Permanent Cyberware Loss segment */}
           <div className="w-full bg-zinc-950 h-2.5 rounded-full overflow-hidden border border-zinc-800 mb-2 flex">
             {/* Current Humanity (Cyan) */}
             <div
@@ -371,14 +381,14 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               style={{ width: `${humanityPercent}%` }}
               title={`${lang === 'ru' ? 'Текущая человечность' : 'Current Humanity'}: ${effectiveHumanity}`}
             />
-            {/* Gap for any additional trauma loss */}
+            {/* Gap for recoverable psychological trauma */}
             <div className="flex-1 bg-transparent" />
-            {/* Cyberware Loss (Red) */}
-            {totalCyberwareHL > 0 && (
+            {/* Permanent Cyberware Loss (Red) */}
+            {cyberwarePermanentLoss > 0 && (
               <div
                 className="h-full bg-red-600/80 transition-all shrink-0 border-l border-red-500/80"
-                style={{ width: `${cyberwareLossPercent}%` }}
-                title={`${lang === 'ru' ? 'Потеря от имплантов' : 'Cyberware Loss'}: -${totalCyberwareHL} HL`}
+                style={{ width: `${cyberwarePermLossPercent}%` }}
+                title={`${lang === 'ru' ? 'Необратимое снижение от имплантов' : 'Permanent Cyberware Loss'}: -${cyberwarePermanentLoss} HL`}
               />
             )}
           </div>
@@ -398,17 +408,33 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
             </button>
             <button
               onClick={() => handleHumanityChange(1)}
-              disabled={effectiveHumanity >= maxHumanityWithCyberware}
+              disabled={effectiveHumanity >= maxRecoverableHumanity}
               className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 disabled:opacity-30 disabled:hover:bg-zinc-800 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center active:scale-95 transition"
+              title={effectiveHumanity >= maxRecoverableHumanity ? (lang === 'ru' ? 'Достигнут максимум с учетом установленных имплантов' : 'Maximum capacity reached with cyberware') : ''}
             >
               +1
             </button>
             <button
               onClick={() => handleHumanityChange(5)}
-              disabled={effectiveHumanity >= maxHumanityWithCyberware}
+              disabled={effectiveHumanity >= maxRecoverableHumanity}
               className="flex-1 py-1.5 sm:py-0.5 min-h-[32px] sm:min-h-[26px] bg-zinc-800 hover:bg-cyan-900 disabled:opacity-30 disabled:hover:bg-zinc-800 border border-zinc-700 text-cyan-300 rounded font-mono font-bold text-center active:scale-95 transition"
+              title={effectiveHumanity >= maxRecoverableHumanity ? (lang === 'ru' ? 'Достигнут максимум с учетом установленных имплантов' : 'Maximum capacity reached with cyberware') : ''}
             >
               +5
+            </button>
+          </div>
+
+          {/* Humanity Therapy Trigger */}
+          <div className="pt-2 mt-2 border-t border-zinc-800">
+            <button
+              onClick={() => {
+                sfx.playClick();
+                setIsTherapyOpen(true);
+              }}
+              className="w-full py-1.5 sm:py-1 min-h-[34px] bg-cyan-950/60 hover:bg-cyan-800 border border-cyan-700/80 text-cyan-300 hover:text-white rounded text-[11px] font-bold font-orbitron uppercase tracking-wider flex items-center justify-center gap-1.5 transition shadow-xs"
+            >
+              <Brain size={13} className="text-cyan-400" />
+              <span>{lang === 'ru' ? 'Терапия человечности' : 'Humanity Therapy'}</span>
             </button>
           </div>
         </div>
@@ -605,6 +631,16 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
           })}
         </div>
       </div>
+
+      {/* Humanity Therapy Modal */}
+      <TherapyModal
+        isOpen={isTherapyOpen}
+        onClose={() => setIsTherapyOpen(false)}
+        character={character}
+        onUpdateCharacter={onUpdateCharacter}
+        onAddRollResult={onAddRollResult}
+        lang={lang}
+      />
     </div>
   );
 };

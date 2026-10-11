@@ -362,6 +362,7 @@ export const App: React.FC = () => {
           onRollInitiative={handleRollInitiative}
           onRollDeathSave={handleRollDeathSave}
           onOpenDamageCalc={() => setIsDamageCalcOpen(true)}
+          onAddRollResult={addRollResult}
           lang={lang}
         />
 
@@ -429,6 +430,7 @@ export const App: React.FC = () => {
               character={activeChar}
               onUpdateCharacter={handleUpdateActiveCharacter}
               onOpenShop={handleOpenShop}
+              onAddRollResult={addRollResult}
               lang={lang}
             />
           )}

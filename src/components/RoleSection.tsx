@@ -12,7 +12,11 @@ import {
   BadgeAlert, 
   Briefcase, 
   Car, 
-  Coins 
+  Coins,
+  Plane,
+  Ship,
+  Sparkles,
+  Info
 } from 'lucide-react';
 
 interface RoleSectionProps {
@@ -336,8 +340,154 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
         </div>
       )}
 
+      {/* NOMAD: Moto */}
+      {role === 'Nomad' && (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 bg-zinc-950 border border-amber-900/60 rounded p-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Car size={16} className="text-amber-400" />
+                <span className="font-orbitron font-bold text-xs text-amber-300 uppercase tracking-wider">
+                  {lang === 'ru' ? 'Способность роли: Мото (Moto)' : 'Role Ability: Moto'}
+                </span>
+                <span className="px-2 py-0.5 bg-amber-950/80 border border-amber-700/80 rounded text-[11px] font-mono font-bold text-amber-300">
+                  +{rank} {lang === 'ru' ? 'к навыкам' : 'to skills'}
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed max-w-2xl">
+                {lang === 'ru'
+                  ? 'Ранг способности «Мото» автоматически добавляется ко всем проверкам управления и ремонта транспорта, а также определяет класс доступного семейного транспорта и модификаций (Cyberpunk RED стр. 161–166).'
+                  : 'Your Moto rank is automatically added to all vehicle driving and tech checks, and determines access to your Nomad Family vehicle fleet and upgrades (Corebook p. 161–166).'}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 self-center">
+              <span className="text-xs text-zinc-400 font-semibold">{lang === 'ru' ? 'Ранг Мото:' : 'Moto Rank:'}</span>
+              <button
+                onClick={() => {
+                  sfx.playClick();
+                  onUpdateCharacter({ ...character, roleRank: Math.max(1, rank - 1) });
+                }}
+                disabled={rank <= 1}
+                className="w-6 h-6 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 rounded text-xs text-zinc-200 font-bold flex items-center justify-center transition"
+              >
+                -
+              </button>
+              <span className="font-orbitron font-bold text-sm text-white w-6 text-center">
+                {rank}
+              </span>
+              <button
+                onClick={() => {
+                  sfx.playClick();
+                  onUpdateCharacter({ ...character, roleRank: Math.min(10, rank + 1) });
+                }}
+                disabled={rank >= 10}
+                className="w-6 h-6 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 rounded text-xs text-zinc-200 font-bold flex items-center justify-center transition"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Affected Skills Grid */}
+          <div>
+            <div className="text-xs text-zinc-400 font-semibold mb-2 flex items-center gap-1.5">
+              <Sparkles size={13} className="text-amber-400" />
+              <span>{lang === 'ru' ? 'Бонусы «Мото» к навыкам персонажа:' : 'Moto Bonuses Applied to Skills:'}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+              {[
+                { id: 'drive_land', nameRu: 'Управление наз. транспортом', nameEn: 'Drive Land', stat: 'REF', icon: Car },
+                { id: 'pilot_air', nameRu: 'Пилотирование возд. транспорта', nameEn: 'Pilot Air', stat: 'REF', icon: Plane },
+                { id: 'pilot_sea', nameRu: 'Управление водным транспортом', nameEn: 'Pilot Sea', stat: 'REF', icon: Ship },
+                { id: 'land_vehicle_tech', nameRu: 'Техобслуживание наз. трансп.', nameEn: 'Land Vehicle Tech', stat: 'TECH', icon: Wrench },
+                { id: 'air_vehicle_tech', nameRu: 'Техобслуживание возд. трансп.', nameEn: 'Air Vehicle Tech', stat: 'TECH', icon: Wrench },
+                { id: 'sea_vehicle_tech', nameRu: 'Техобслуживание водн. трансп.', nameEn: 'Sea Vehicle Tech', stat: 'TECH', icon: Wrench },
+              ].map((item) => {
+                const sk = character.skills.find((s) => s.id === item.id);
+                const lvl = sk ? sk.level : 0;
+                const statVal = character.stats[item.stat as keyof typeof character.stats] || 0;
+                const totalBase = statVal + lvl + rank;
+                const ItemIcon = item.icon;
+                return (
+                  <div key={item.id} className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
+                    <div className="min-w-0 pr-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-200 truncate">
+                        <ItemIcon size={13} className="text-amber-400 shrink-0" />
+                        <span className="truncate">{lang === 'ru' ? item.nameRu : item.nameEn}</span>
+                      </div>
+                      <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                        {item.stat} {statVal} + {lang === 'ru' ? 'Ур' : 'Lvl'} {lvl} + <strong className="text-amber-400">Мото +{rank}</strong>
+                      </div>
+                    </div>
+                    <div className="bg-zinc-900 border border-amber-900/60 rounded px-2 py-1 text-center shrink-0">
+                      <div className="text-[9px] text-zinc-500 uppercase font-mono font-bold leading-none">{lang === 'ru' ? 'ОСН' : 'BASE'}</div>
+                      <div className="font-orbitron font-bold text-xs text-amber-300">{totalBase}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Family Fleet Pool Summary */}
+          <div className="bg-zinc-950/70 border border-zinc-800/80 rounded p-3 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-zinc-300 font-orbitron uppercase tracking-wide">
+                {lang === 'ru' ? 'Автопарк Семьи Кочевников (доступ по рангу):' : 'Nomad Family Fleet Access:'}
+              </span>
+              <span className="text-[10px] text-zinc-500 font-mono">
+                {lang === 'ru' ? 'Cyberpunk RED стр. 161' : 'Cyberpunk RED p. 161'}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+              <div className={`p-2 rounded border ${rank >= 1 ? 'bg-amber-950/30 border-amber-800/60 text-zinc-200' : 'bg-zinc-900/40 border-zinc-800 text-zinc-500'}`}>
+                <div className="font-bold text-amber-400 font-orbitron">Ранг 1</div>
+                <div>{lang === 'ru' ? 'Мотоцикл, Гидроцикл или 1 модификация' : 'Roadbike, Jet Ski, or 1 Upgrade'}</div>
+              </div>
+              <div className={`p-2 rounded border ${rank >= 2 ? 'bg-amber-950/30 border-amber-800/60 text-zinc-200' : 'bg-zinc-900/40 border-zinc-800 text-zinc-500'}`}>
+                <div className="font-bold text-amber-400 font-orbitron">Ранги 2–3</div>
+                <div>{lang === 'ru' ? 'Компактный авто, Автожир' : 'Compact Car, Gyrocopter'}</div>
+              </div>
+              <div className={`p-2 rounded border ${rank >= 4 ? 'bg-amber-950/30 border-amber-800/60 text-zinc-200' : 'bg-zinc-900/40 border-zinc-800 text-zinc-500'}`}>
+                <div className="font-bold text-amber-400 font-orbitron">Ранги 4–6</div>
+                <div>{lang === 'ru' ? 'Седан, Супербайк, Катер' : 'Sedan, Superbike, Cabin Cruiser'}</div>
+              </div>
+              <div className={`p-2 rounded border ${rank >= 7 ? 'bg-amber-950/30 border-amber-800/60 text-zinc-200' : 'bg-zinc-900/40 border-zinc-800 text-zinc-500'}`}>
+                <div className="font-bold text-amber-400 font-orbitron">Ранги 7–10</div>
+                <div>{lang === 'ru' ? 'Суперкар, Аэродин (AV-4), Броневик' : 'Supercar, AV-4 Aerodyne, Armored Vehicle'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Family / Pack Notes */}
+          <div className="space-y-1">
+            <label className="text-xs text-zinc-400 block font-semibold">
+              {lang === 'ru' ? 'Клан / Семья Кочевника и заметки о стае:' : 'Nomad Clan / Pack Details:'}
+            </label>
+            <input
+              type="text"
+              placeholder={lang === 'ru' ? 'например: Клан Альдекальдо, Стая Бейкера / Внедорожник с турелью' : 'e.g. Aldecaldos Clan, Baker Pack / Upgraded Nomad Cruiser'}
+              value={character.roleAbilities.generic.details}
+              onChange={(e) =>
+                onUpdateCharacter({
+                  ...character,
+                  roleAbilities: {
+                    ...character.roleAbilities,
+                    generic: {
+                      ...character.roleAbilities.generic,
+                      details: e.target.value
+                    }
+                  }
+                })
+              }
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-1.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-amber-600"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Generic Role Description & Notes */}
-      {role !== 'Solo' && role !== 'Tech' && role !== 'Medtech' && role !== 'Netrunner' && (
+      {role !== 'Solo' && role !== 'Tech' && role !== 'Medtech' && role !== 'Netrunner' && role !== 'Nomad' && (
         <div className="space-y-2">
           <label className="text-xs text-zinc-400 block">
             {lang === 'ru' ? `Детали способности роли (${role}):` : `Role Ability Details (${role}):`}

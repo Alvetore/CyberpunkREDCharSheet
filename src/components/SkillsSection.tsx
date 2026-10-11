@@ -3,6 +3,7 @@ import { Character, Skill, SkillCategory, StatKey } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { CPR_SKILLS } from '../data/initialData';
 import { sfx } from '../utils/audio';
+import { getRoleSkillBonus } from '../utils/roleUtils';
 import { 
   BookOpen, 
   Search, 
@@ -300,7 +301,8 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
     const statVal = character.stats[skill.stat] || 0;
     const isPenalizedByArmor = (skill.stat === 'REF' || skill.stat === 'DEX') && armorPenalty < 0;
     const effectiveStat = statVal + (isPenalizedByArmor ? armorPenalty : 0);
-    const effectiveBase = effectiveStat + skill.level + woundPenalty;
+    const roleBonusInfo = getRoleSkillBonus(character, skill.id);
+    const effectiveBase = effectiveStat + skill.level + roleBonusInfo.bonus + woundPenalty;
 
     return {
       nameRu,
@@ -310,6 +312,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
       isPenalizedByArmor,
       effectiveStat,
       effectiveBase,
+      roleBonusInfo,
     };
   };
 
@@ -393,7 +396,8 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 statVal,
                 isPenalizedByArmor,
                 effectiveStat,
-                effectiveBase
+                effectiveBase,
+                roleBonusInfo
               } = getSkillDetails(skill);
 
               const SkillIcon = SKILL_ICON_MAP[skill.id] || CATEGORY_ICON_MAP[skill.category] || BookOpen;
@@ -422,6 +426,15 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                             title={t.x2Notice}
                           >
                             (х2)
+                          </span>
+                        )}
+
+                        {roleBonusInfo.bonus > 0 && (
+                          <span
+                            className="text-[9px] font-bold text-cyan-300 bg-cyan-950/90 border border-cyan-700/80 px-1.5 py-0.2 rounded shrink-0 cursor-help shadow-xs"
+                            title={lang === 'ru' ? roleBonusInfo.descriptionRu : roleBonusInfo.descriptionEn}
+                          >
+                            +{roleBonusInfo.bonus} {lang === 'ru' ? roleBonusInfo.badgeRu : roleBonusInfo.badgeEn}
                           </span>
                         )}
 
@@ -499,7 +512,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                     <div className="w-11 sm:w-12 flex items-center justify-center">
                       <button
                         onClick={() => onRollSkill(skill, effectiveBase)}
-                        title={`${lang === 'ru' ? 'Бросить' : 'Roll'} ${lang === 'ru' ? nameRu : nameEn}: 1d10 + ${effectiveBase}`}
+                        title={`${lang === 'ru' ? 'Бросить' : 'Roll'} ${lang === 'ru' ? nameRu : nameEn}: 1d10 + ${effectiveBase} (${lang === 'ru' ? STAT_DISPLAY_RU[skill.stat] : skill.stat} ${effectiveStat} + ${lang === 'ru' ? 'Ур' : 'Lvl'} ${skill.level}${roleBonusInfo.bonus > 0 ? ` + ${lang === 'ru' ? roleBonusInfo.badgeRu : roleBonusInfo.badgeEn}` : ''}${woundPenalty !== 0 ? ` ${woundPenalty}` : ''})`}
                         className={`w-full py-1 min-h-[26px] flex items-center justify-center gap-0.5 rounded font-mono font-bold text-xs border transition active:scale-95 select-none ${
                           effectiveBase >= 14
                             ? 'bg-red-950/70 hover:bg-red-600 hover:text-white border-red-700 text-red-200 shadow-xs'
