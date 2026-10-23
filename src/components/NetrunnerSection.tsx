@@ -3,6 +3,7 @@ import { Character, ProgramItem, ProgramCategory } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { PRESET_PROGRAMS } from '../data/initialData';
 import { sfx } from '../utils/audio';
+import { deckCapacity, programSlots, usedDeckSlots } from '../utils/rules';
 import { 
   Cpu, 
   Terminal, 
@@ -35,7 +36,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
   lang
 }) => {
   const t = translations[lang];
-  const interfaceRank = character.roleAbilities.netrunner.interfaceRank || 4;
+  const interfaceRank = character.roleAbilities.netrunner.interfaceRank;
 
   // Calculate CPR Net Actions per turn based on Interface Rank
   const netActionsPerTurn = interfaceRank >= 10 ? 5 : interfaceRank >= 7 ? 4 : interfaceRank >= 4 ? 3 : 2;
@@ -44,21 +45,27 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
   const [newProg, setNewProg] = useState<Partial<ProgramItem>>({
     name: 'Sword',
     category: 'Attacker',
-    atkBonus: 2,
+    atkBonus: 1,
     defBonus: 0,
-    rezMax: 7,
-    rezCurrent: 7,
-    effect: lang === 'ru' ? 'Наносит 3d6 урона вражеской программе или Black ICE' : 'Deals 3d6 damage to enemy Program or Black ICE',
+    rezMax: 0,
+    rezCurrent: 0,
+    effect: '3d6 vs Black ICE; 2d6 vs other programs. Derezzes after use.',
     isInstalled: true
   });
 
   const installedPrograms = character.programs.filter((p) => p.isInstalled);
+  const slotsUsed = usedDeckSlots(character);
+  const slotsMax = deckCapacity(character);
+  const [netError, setNetError] = useState('');
 
   const handleToggleInstall = (progId: string) => {
     sfx.playClick();
+    const program = character.programs.find(item => item.id === progId);
+    if (program && !program.isInstalled && slotsUsed + programSlots(program) > slotsMax) { setNetError(lang === 'ru' ? 'Недостаточно слотов кибердеки.' : 'Not enough cyberdeck slots.'); return; }
+    setNetError('');
     const updated = character.programs.map((p) => {
       if (p.id === progId) {
-        return { ...p, isInstalled: !p.isInstalled };
+        return { ...p, isInstalled: !p.isInstalled, isActive: false };
       }
       return p;
     });
@@ -69,7 +76,8 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
     sfx.playClick();
     const updated = character.programs.map((p) => {
       if (p.id === progId) {
-        return { ...p, rezCurrent: Math.max(0, Math.min(p.rezMax, p.rezCurrent + delta)) };
+        const rezCurrent = Math.max(0, Math.min(p.rezMax, p.rezCurrent + delta));
+        return { ...p, rezCurrent, isActive: p.rezMax > 0 && rezCurrent === 0 ? false : p.isActive };
       }
       return p;
     });
@@ -90,11 +98,15 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
       category: (newProg.category as ProgramCategory) || 'Booster',
       atkBonus: newProg.atkBonus || 0,
       defBonus: newProg.defBonus || 0,
-      rezMax: newProg.rezMax || 7,
-      rezCurrent: newProg.rezMax || 7,
+      rezMax: newProg.rezMax ?? 0,
+      rezCurrent: newProg.rezMax ?? 0,
       effect: newProg.effect || '',
-      isInstalled: true
+      isInstalled: true,
+      isActive: false
     };
+    if (prog.category === 'Black ICE') { prog.perception = newProg.perception ?? 0; prog.speed = newProg.speed ?? 0; }
+    if (slotsUsed + programSlots(prog) > slotsMax) { setNetError(lang === 'ru' ? 'Недостаточно слотов кибердеки.' : 'Not enough cyberdeck slots.'); return; }
+    setNetError('');
     onUpdateCharacter({
       ...character,
       programs: [...character.programs, prog]
@@ -104,6 +116,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
 
   return (
     <div className="space-y-4">
+      {netError && <p role="alert" className="text-red-400">{netError}</p>}
       {/* Cyberdeck Status Banner */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-3 mb-3">
@@ -158,17 +171,17 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
 
           <div>
             <label className="text-zinc-400 block mb-1 uppercase font-semibold text-[10px]">
-              {t.programSlots} ({lang === 'ru' ? 'Установлено' : 'Installed'}: {installedPrograms.length} / {character.cyberdeck.programSlotsMax})
+              {t.programSlots} ({lang === 'ru' ? 'Установлено' : 'Installed'}: {slotsUsed} / {slotsMax})
             </label>
             <input
               type="number"
-              value={character.cyberdeck.programSlotsMax}
+              value={slotsMax}
               onChange={(e) =>
                 onUpdateCharacter({
                   ...character,
                   cyberdeck: {
                     ...character.cyberdeck,
-                    programSlotsMax: parseInt(e.target.value, 10) || 5
+                    slotsMax: Math.max(slotsUsed, parseInt(e.target.value, 10) || 1)
                   }
                 })
               }
@@ -178,17 +191,17 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
 
           <div>
             <label className="text-zinc-400 block mb-1 uppercase font-semibold text-[10px]">
-              {t.hardwareSlots} ({lang === 'ru' ? 'Слоты железа' : 'Hardware Slots'})
+              {lang === 'ru' ? 'Занято железом (общий пул)' : 'Hardware used (shared pool)'}
             </label>
             <input
               type="number"
-              value={character.cyberdeck.hardwareSlotsMax}
+              value={character.cyberdeck.hardwareSlotsUsed}
               onChange={(e) =>
                 onUpdateCharacter({
                   ...character,
                   cyberdeck: {
                     ...character.cyberdeck,
-                    hardwareSlotsMax: parseInt(e.target.value, 10) || 3
+                    hardwareSlotsUsed: Math.max(0, Math.min(slotsMax - installedPrograms.reduce((sum, item) => sum + programSlots(item), 0), parseInt(e.target.value, 10) || 0))
                   }
                 })
               }
@@ -336,7 +349,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
           <div className="flex items-center gap-2">
             <ShieldCheck size={18} className="text-cyan-400" />
             <h3 className="font-orbitron font-bold text-xs text-cyan-400 uppercase tracking-wider">
-              {t.programs} ({installedPrograms.length} / {character.cyberdeck.programSlotsMax})
+              {t.programs} ({slotsUsed} / {slotsMax})
             </h3>
           </div>
 
@@ -354,7 +367,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {character.programs.map((prog) => {
-            const isDerezzed = prog.rezCurrent <= 0;
+            const isDerezzed = prog.rezMax > 0 && prog.rezCurrent <= 0;
 
             return (
               <div
@@ -400,6 +413,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                     </button>
                   </div>
 
+                  {prog.category !== 'Attacker' && <button type="button" disabled={!prog.isInstalled} onClick={() => onUpdateCharacter({ ...character, programs: character.programs.map(item => item.id === prog.id ? { ...item, isActive: !item.isActive, rezCurrent: !item.isActive ? item.rezMax : item.rezCurrent } : item) })} className="text-cyan-300 text-xs underline disabled:opacity-40">{prog.isActive ? 'Derez' : 'Rez'} · 1 NET Action</button>}
                   {/* REZ Bar & Status */}
                   <div className="my-2 bg-zinc-900 p-2 rounded border border-zinc-850">
                     <div className="flex items-center justify-between text-[11px] mb-1">
@@ -422,7 +436,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                             isDerezzed ? 'bg-red-600' : 'bg-cyan-500'
                           }`}
                           style={{
-                            width: `${Math.round((prog.rezCurrent / prog.rezMax) * 100)}%`
+                            width: `${prog.rezMax > 0 ? Math.round((prog.rezCurrent / prog.rezMax) * 100) : 0}%`
                           }}
                         />
                       </div>
@@ -437,6 +451,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                 </div>
 
                 {/* Controls */}
+                {prog.category === 'Black ICE' && <div className="flex gap-3 text-xs text-cyan-300">{(['perception','speed'] as const).map(field => <label key={field}>{field === 'perception' ? 'PER' : 'SPD'} <input aria-label={`${prog.name} ${field}`} type="number" min="0" value={prog[field] ?? 0} onChange={event => onUpdateCharacter({ ...character, programs: character.programs.map(item => item.id === prog.id ? { ...item, [field]: Math.max(0, Number(event.target.value) || 0) } : item) })} className="w-12 bg-zinc-900" /></label>)}<span>DEF {prog.defBonus}</span></div>}
                 <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-900 text-xs">
                   <button
                     onClick={() => handleToggleInstall(prog.id)}
@@ -451,21 +466,14 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
 
                   {prog.category === 'Attacker' || prog.category === 'Black ICE' ? (
                     <button
+                      disabled={!prog.isInstalled || (prog.category !== 'Attacker' && !prog.isActive)}
                       onClick={() => onRollProgramAttack(prog)}
                       className="px-3 py-1.5 min-h-[34px] sm:min-h-[28px] bg-red-900/60 hover:bg-red-800 border border-red-700 text-white rounded text-[11px] font-bold flex items-center justify-center gap-1 shadow-sm"
                     >
                       <Flame size={12} />
-                      {lang === 'ru' ? 'Атака' : 'Attack'} (ATK +{prog.atkBonus})
+                      {lang === 'ru' ? 'Атака' : 'Attack'} (ATK +{prog.atkBonus}){prog.category === 'Attacker' ? ' · 1 NET Action' : ''}
                     </button>
-                  ) : (
-                    <button
-                      onClick={() => onRollInterfaceAction(lang === 'ru' ? `Активация ${prog.name}` : `Activate ${prog.name}`, undefined, prog.atkBonus)}
-                      className="px-3 py-1.5 min-h-[34px] sm:min-h-[28px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[11px] font-bold flex items-center justify-center gap-1"
-                    >
-                      <Dices size={12} />
-                      {lang === 'ru' ? 'Запустить' : 'Run'}
-                    </button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             );

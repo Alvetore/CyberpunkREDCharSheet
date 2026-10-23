@@ -43,7 +43,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
     const current = character.roleAbilities.solo[field];
     const totalSpent =
       Object.values(character.roleAbilities.solo).reduce((a, b) => a + b, 0) - current;
-    const newVal = Math.max(0, Math.min(rank - totalSpent, current + delta));
+    const newVal = delta < 0 ? Math.max(0, current + delta) : Math.max(current, Math.min(rank - totalSpent, current + delta));
 
     onUpdateCharacter({
       ...character,
@@ -64,7 +64,10 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
   ) => {
     sfx.playClick();
     const current = character.roleAbilities.tech[field];
-    const newVal = Math.max(0, current + delta);
+    const tech = character.roleAbilities.tech;
+    const makerRank = Math.min(rank, tech.makerRank);
+    const spent = tech.fieldExpertise + tech.upgrade + tech.fabrication + tech.invention - current;
+    const newVal = delta < 0 ? Math.max(0, current + delta) : Math.max(current, Math.min(makerRank, 2 * makerRank - spent, current + delta));
 
     onUpdateCharacter({
       ...character,
@@ -85,7 +88,10 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
   ) => {
     sfx.playClick();
     const current = character.roleAbilities.medtech[field];
-    const newVal = Math.max(0, current + delta);
+    const medicine = character.roleAbilities.medtech;
+    const specialties = ['surgery','medicalTech','pharmaceuticals'];
+    const spent = medicine.surgery + medicine.medicalTech + medicine.pharmaceuticals - current;
+    const newVal = specialties.includes(field) ? (delta < 0 ? Math.max(0, current + delta) : Math.max(current, Math.min(rank - spent, current + delta))) : Math.max(0, current + delta);
 
     onUpdateCharacter({
       ...character,
@@ -100,9 +106,13 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
   };
 
   const soloPointsAllocated = Object.values(character.roleAbilities.solo).reduce((a, b) => a + b, 0);
+  const techPoints = ['fieldExpertise','upgrade','fabrication','invention'].map(key => character.roleAbilities.tech[key as 'fieldExpertise']);
+  const medtechPoints = character.roleAbilities.medtech.surgery + character.roleAbilities.medtech.medicalTech + character.roleAbilities.medtech.pharmaceuticals;
+  const invalidAllocation = role === 'Solo' ? soloPointsAllocated > rank : role === 'Tech' ? techPoints.some(value => value > rank) || techPoints.reduce((sum, value) => sum + value, 0) > 2 * rank : role === 'Medtech' ? medtechPoints > rank : false;
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 shadow-md space-y-3">
+      {invalidAllocation && <p role="alert" className="text-amber-300 text-xs">{lang === 'ru' ? 'Распределение превышает текущий ранг. Уменьшите специализации; сохранённые очки не удаляются автоматически.' : 'Allocation exceeds the current rank. Reduce specialties; saved points are preserved for correction.'}</p>}
       <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
         <div className="flex items-center gap-2">
           <Award size={18} className="text-red-500" />
@@ -112,6 +122,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
         </div>
       </div>
 
+      {role === 'Solo' && <button type="button" onClick={() => onUpdateCharacter({ ...character, soloSpotWeaknessUsed: false, soloDamageDeflectionUsed: false })} className="text-xs text-amber-300 underline">{lang === 'ru' ? 'Новый ход: восстановить Spot Weakness / Damage Deflection' : 'New turn: reset Spot Weakness / Damage Deflection'}</button>}
       {/* SOLO: Combat Awareness */}
       {role === 'Solo' && (
         <div className="space-y-3">
@@ -300,7 +311,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
           <div className="text-xs text-yellow-400 font-semibold">{t.medtechMedicine}</div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
-              <span className="text-xs text-zinc-200 font-bold">{t.surgery}</span>
+              <span className="text-xs text-zinc-200 font-bold">{t.surgery} ({lang === 'ru' ? 'очков; ранг навыка ×2' : 'points; skill rank ×2'})</span>
               <div className="flex items-center gap-1.5">
                 <button onClick={() => handleMedtechPointChange('surgery', -1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">-</button>
                 <span className="font-orbitron font-bold text-xs text-white min-w-[16px] text-center">{character.roleAbilities.medtech.surgery}</span>
@@ -308,7 +319,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
               </div>
             </div>
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
-              <span className="text-xs text-zinc-200 font-bold">{t.medicalTech}</span>
+              <span className="text-xs text-zinc-200 font-bold">{lang === 'ru' ? 'Криотехника (очки)' : 'Cryotech Operation (points)'}</span>
               <div className="flex items-center gap-1.5">
                 <button onClick={() => handleMedtechPointChange('medicalTech', -1)} className="w-7 h-7 sm:w-6 sm:h-6 bg-zinc-800 hover:bg-zinc-700 rounded text-sm sm:text-xs text-zinc-300 font-bold flex items-center justify-center transition">-</button>
                 <span className="font-orbitron font-bold text-xs text-white min-w-[16px] text-center">{character.roleAbilities.medtech.medicalTech}</span>

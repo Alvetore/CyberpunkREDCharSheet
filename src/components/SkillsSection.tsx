@@ -5,6 +5,7 @@ import { CPR_SKILLS } from '../data/initialData';
 import { CPR_ROLE_PACKAGES } from '../data/roleTemplates';
 import { sfx } from '../utils/audio';
 import { getRoleSkillBonus } from '../utils/roleUtils';
+import { effectiveStat as getEffectiveStat, maxHP, martialArtsLevel, skillBase, woundPenalty as getWoundPenalty } from '../utils/rules';
 import { 
   BookOpen, 
   Search, 
@@ -247,15 +248,19 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   const [customMultiplier, setCustomMultiplier] = useState<1 | 2>(1);
 
   // Wound penalties
-  const hpMax = character.hpMaxManual || (10 + 5 * Math.ceil((character.stats.BODY + character.stats.WILL) / 2));
+  const hpMax = maxHP(character);
   const seriouslyWoundedThreshold = Math.ceil(hpMax / 2);
-  const woundPenalty = character.hpCurrent <= 0 ? -4 : character.hpCurrent <= seriouslyWoundedThreshold ? -2 : 0;
+  const woundPenalty = getWoundPenalty(character);
 
   // Armor penalty (applies to REF and DEX)
   const armorPenalty = Math.min(character.armor.head.penalty || 0, character.armor.body.penalty || 0);
 
   const handleLevelChange = (skillId: string, delta: number) => {
     sfx.playClick();
+    if (skillId === 'martial_arts') {
+      const style = character.martialArtsStyle || 'Karate';
+      onUpdateCharacter({ ...character, legacyMartialArtsStyle: character.legacyMartialArtsStyle || style, martialArtsLevels: { ...character.martialArtsLevels, [style]: Math.max(0, Math.min(10, martialArtsLevel(character) + delta)) } }); return;
+    }
     const updated = character.skills.map((s) => {
       if (s.id === skillId) {
         return { ...s, level: Math.max(0, Math.min(10, s.level + delta)) };
@@ -324,9 +329,9 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
 
     const statVal = character.stats[skill.stat] || 0;
     const isPenalizedByArmor = (skill.stat === 'REF' || skill.stat === 'DEX') && armorPenalty < 0;
-    const effectiveStat = statVal + (isPenalizedByArmor ? armorPenalty : 0);
+    const effectiveStat = getEffectiveStat(character, skill.stat);
     const roleBonusInfo = getRoleSkillBonus(character, skill.id);
-    const effectiveBase = effectiveStat + skill.level + roleBonusInfo.bonus + woundPenalty;
+    const effectiveBase = skillBase(character, skill.id);
 
     return {
       nameRu,
@@ -360,7 +365,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
     const CategoryIcon = CATEGORY_ICON_MAP[catConfig.key] || BookOpen;
     
     // Filter and sort skills belonging to this category
-    const skillsInCat = character.skills.filter((s) => s.category === catConfig.key);
+    const skillsInCat = character.skills.filter((s) => s.category === catConfig.key).map(skill => skill.id === 'martial_arts' ? { ...skill, level: martialArtsLevel(character) } : skill);
     
     // Sort to match official sheet order (canonical order from CPR_SKILLS)
     const sortedSkills = [...skillsInCat].sort((a, b) => {

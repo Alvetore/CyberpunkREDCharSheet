@@ -77,7 +77,7 @@ export const translations = {
     // Derived
     hp: 'Пункты здоровья (ПЗ)',
     seriouslyWounded: 'Тяжело ранен',
-    seriouslyWoundedEffect: '-2 ко всем действиям (ПЗ ≤ 50%)',
+    seriouslyWoundedEffect: '-2 ко всем действиям (ПЗ < половины максимума, округлённой вверх)',
     mortallyWounded: 'Смертельно ранен',
     mortallyWoundedEffect: '-4 ко всем действиям + Спасбросок от смерти каждый ход (0 ПЗ)',
     healthy: 'В норме / Легко ранен',
@@ -383,7 +383,7 @@ export const translations = {
     // Derived
     hp: 'Hit Points (HP)',
     seriouslyWounded: 'Seriously Wounded',
-    seriouslyWoundedEffect: '-2 to all rolls (HP ≤ 50%)',
+    seriouslyWoundedEffect: '-2 to Actions (HP < half maximum, rounded up)',
     mortallyWounded: 'Mortally Wounded',
     mortallyWoundedEffect: '-4 to all rolls + Death Save each turn (0 HP)',
     healthy: 'Healthy / Lightly Wounded',

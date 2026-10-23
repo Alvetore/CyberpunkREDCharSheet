@@ -111,7 +111,7 @@ export interface HumanityStats {
  * - Current EMP = Math.floor(Current Humanity / 10)
  */
 export function calculateHumanityStats(character: Character): HumanityStats {
-  const baseHumanityMax = character.humanityMaxManual || (character.stats.EMP * 10);
+  const baseHumanityMax = character.humanityMaxManual ?? (character.stats.EMP * 10);
   const cyberwareList = character.cyberware || [];
 
   const totalInstallationHL = cyberwareList.reduce((acc, c) => acc + (c.humanityCost || 0), 0);
@@ -127,7 +127,7 @@ export function calculateHumanityStats(character: Character): HumanityStats {
   }, 0);
 
   const maxRecoverableHumanity = Math.max(0, baseHumanityMax - cyberwarePermanentLoss);
-  const currentHumanity = Math.max(0, Math.min(character.humanityCurrent, maxRecoverableHumanity));
+  const currentHumanity = Math.min(character.humanityCurrent, maxRecoverableHumanity);
   const currentEmp = Math.max(0, Math.floor(currentHumanity / 10));
   const unrecoveredLoss = Math.max(0, maxRecoverableHumanity - currentHumanity);
   const canRestore = currentHumanity < maxRecoverableHumanity;

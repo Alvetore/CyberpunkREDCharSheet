@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Character, CriticalInjury } from '../types/character';
 import { Language, translations } from '../locales/i18n';
-import { rollD6, rollD10 } from '../utils/dice';
+import { parseDamageFormula, rollD6 } from '../utils/dice';
+import { applyDamage, resolveDamage } from '../utils/damage';
+import { effectiveSP } from '../utils/rules';
 import { sfx } from '../utils/audio';
 import { 
   ShieldAlert, 
@@ -25,7 +27,7 @@ interface DamageCalculatorModalProps {
 }
 
 export type HitLocation = 'body' | 'head';
-export type AttackType = 'ranged' | 'melee' | 'ap'; // ranged: normal; melee: half SP; ap: ablate 2 SP
+export type AttackType = 'ranged' | 'melee' | 'ap' | 'brawling' | 'direct'; // ranged: normal; melee: half SP; ap: ablate 2 SP
 
 export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
   isOpen,
@@ -40,7 +42,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
   const [hitLocation, setHitLocation] = useState<HitLocation>('body');
   const [attackType, setAttackType] = useState<AttackType>('ranged');
   const [hasShield, setHasShield] = useState<boolean>(false);
-  const [shieldHp, setShieldHp] = useState<number>(10);
+  const [shieldHp, setShieldHp] = useState<number>(character.armor.shield?.spCurrent ?? 10);
 
   // Damage input
   const [damageInputMode, setDamageInputMode] = useState<'dice' | 'manual'>('dice');
@@ -50,29 +52,13 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
 
   // Calculation Results
   const [isCalculated, setIsCalculated] = useState<boolean>(false);
-  const [calcResult, setCalcResult] = useState<{
-    rawDamage: number;
-    isCritInjury: boolean;
-    critBonusDamage: number;
-    totalDamageBeforeArmor: number;
-    shieldDamageTaken: number;
-    shieldDestroyed: boolean;
-    remainingShieldHp: number;
-    effectiveSp: number;
-    isPenetrated: boolean;
-    penetratingDamage: number;
-    headshotMultiplier: number;
-    finalHpDamage: number;
-    ablationAmount: number;
-    newSp: number;
-    newHp: number;
-    rolledInjury?: CriticalInjury;
-  } | null>(null);
+  const [calcResult, setCalcResult] = useState<ReturnType<typeof resolveDamage> | null>(null);
+  const [calculationError, setCalculationError] = useState('');
 
   if (!isOpen) return null;
 
   const currentArmor = hitLocation === 'head' ? character.armor.head : character.armor.body;
-  const currentSp = currentArmor.spCurrent;
+  const currentSp = effectiveSP(character, hitLocation);
 
   const handleRollAndCalculate = () => {
     sfx.playDiceRoll();
@@ -82,10 +68,9 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
     let diceList: number[] = [];
 
     if (damageInputMode === 'dice') {
-      const match = diceFormula.match(/^(\d+)d6(?:\+(\d+))?$/i);
-      const numDice = match ? parseInt(match[1], 10) : 3;
-      const flatBonus = match && match[2] ? parseInt(match[2], 10) : 0;
-
+      let parsed;
+      try { parsed = parseDamageFormula(diceFormula); } catch (error) { setCalculationError(error instanceof Error ? error.message : String(error)); setIsCalculated(false); return; }
+      const { numDice, flatBonus } = parsed;
       let sixCount = 0;
       let sum = 0;
       for (let i = 0; i < numDice; i++) {
@@ -103,87 +88,8 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
       setRolledDice([]);
     }
 
-    // CPR rule: Crit injury deals +5 bonus damage directly
-    const critBonusDamage = isCritInjury ? 5 : 0;
-    const totalDamageBeforeArmor = rawDamage;
-
-    // Shield calculation (Bulletproof shield absorbs damage first)
-    let dmgAfterShield = totalDamageBeforeArmor;
-    let shieldDamageTaken = 0;
-    let shieldDestroyed = false;
-    let remainingShieldHp = shieldHp;
-
-    if (hasShield && shieldHp > 0) {
-      shieldDamageTaken = Math.min(shieldHp, dmgAfterShield);
-      remainingShieldHp = shieldHp - shieldDamageTaken;
-      shieldDestroyed = remainingShieldHp <= 0;
-      dmgAfterShield = Math.max(0, dmgAfterShield - shieldDamageTaken);
-    }
-
-    // Effective SP: Melee weapon / Martial Arts ignores half armor (SP / 2, round up in CPR)
-    const effectiveSp = attackType === 'melee' 
-      ? Math.ceil(currentSp / 2) 
-      : currentSp;
-
-    // Penetration check: damage must EXCEED SP
-    const isPenetrated = dmgAfterShield > effectiveSp;
-
-    let penetratingDamage = 0;
-    let headshotMultiplier = 1;
-    let finalHpDamage = 0;
-    let ablationAmount = 0;
-
-    if (isPenetrated) {
-      penetratingDamage = dmgAfterShield - effectiveSp;
-
-      // Headshot rule: penetrating damage is DOUBLED!
-      if (hitLocation === 'head') {
-        headshotMultiplier = 2;
-      }
-      
-      finalHpDamage = penetratingDamage * headshotMultiplier + critBonusDamage;
-
-      // Armor Ablation: standard -1 SP, AP ammo -2 SP
-      ablationAmount = attackType === 'ap' ? 2 : 1;
-    } else {
-      // Not penetrated: 0 damage to HP, 0 ablation! (Except crit injury bonus? In CPR crit only triggers if penetrating or double sixes on damage)
-      if (isCritInjury) {
-        finalHpDamage = critBonusDamage; // bonus damage from crit trauma
-      }
-    }
-
-    const newSp = Math.max(0, currentSp - ablationAmount);
-    const newHp = Math.max(0, character.hpCurrent - finalHpDamage);
-
-    // Roll random injury if 2+ sixes
-    let rolledInjury: CriticalInjury | undefined = undefined;
-    if (isCritInjury) {
-      const d1 = rollD6();
-      const d2 = rollD6();
-      const rollNumber = d1 + d2;
-      rolledInjury = character.criticalInjuries.find(
-        (inj) => inj.location === hitLocation && inj.rollNumber === rollNumber
-      );
-    }
-
-    setCalcResult({
-      rawDamage,
-      isCritInjury,
-      critBonusDamage,
-      totalDamageBeforeArmor,
-      shieldDamageTaken,
-      shieldDestroyed,
-      remainingShieldHp,
-      effectiveSp,
-      isPenetrated,
-      penetratingDamage,
-      headshotMultiplier,
-      finalHpDamage,
-      ablationAmount,
-      newSp,
-      newHp,
-      rolledInjury
-    });
+    setCalculationError('');
+    setCalcResult(resolveDamage(character, { location: hitLocation, attackType, rawDamage, critical: isCritInjury, hasShield, shieldHp }, rollD6));
 
     setIsCalculated(true);
 
@@ -194,40 +100,11 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
 
   const handleApplyDamageToCharacter = () => {
     if (!calcResult) return;
-    sfx.playClick();
-
-    // 1. Update Armor SP
-    const updatedArmor = { ...character.armor };
-    if (hitLocation === 'head') {
-      updatedArmor.head = {
-        ...updatedArmor.head,
-        spCurrent: calcResult.newSp
-      };
-    } else {
-      updatedArmor.body = {
-        ...updatedArmor.body,
-        spCurrent: calcResult.newSp
-      };
-    }
-
-    // 2. Update Critical Injuries if rolled
-    let updatedInjuries = character.criticalInjuries;
-    if (calcResult.rolledInjury) {
-      updatedInjuries = character.criticalInjuries.map((inj) => {
-        if (inj.id === calcResult.rolledInjury?.id) {
-          return { ...inj, isActive: true };
-        }
-        return inj;
-      });
-    }
-
-    onUpdateCharacter({
-      ...character,
-      hpCurrent: calcResult.newHp,
-      armor: updatedArmor,
-      criticalInjuries: updatedInjuries
-    });
-
+    const updated = applyDamage(character, calcResult);
+    if (!updated) { setIsCalculated(false); setCalculationError(lang === 'ru' ? 'Лист изменился. Рассчитайте урон заново.' : 'The sheet changed. Recalculate damage.'); return; }
+    onUpdateCharacter(updated);
+    setIsCalculated(false);
+    setCalcResult(null);
     onClose();
   };
 
@@ -277,7 +154,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                   }`}
                 >
                   <ShieldCheck size={14} />
-                  <span>{lang === 'ru' ? 'Тело' : 'Body'} (SP {character.armor.body.spCurrent})</span>
+                  <span>{lang === 'ru' ? 'Тело' : 'Body'} (SP {effectiveSP(character, 'body')})</span>
                 </button>
 
                 <button
@@ -294,7 +171,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                   }`}
                 >
                   <Crosshair size={14} />
-                  <span>{lang === 'ru' ? 'Голова x2' : 'Head x2'} (SP {character.armor.head.spCurrent})</span>
+                  <span>{lang === 'ru' ? 'Голова x2' : 'Head x2'} (SP {effectiveSP(character, 'head')})</span>
                 </button>
               </div>
             </div>
@@ -318,6 +195,8 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                 <option value="melee">
                   {lang === 'ru' ? 'Холодное оружие / Боевые искусства (Игнорирует 50% SP!)' : 'Melee / Martial Arts (Ignores 50% SP!)'}
                 </option>
+                <option value="brawling">{lang === 'ru' ? 'Драка (полная броня)' : 'Brawling (full SP)'}</option>
+                <option value="direct">{lang === 'ru' ? 'Прямой урон (без брони и абляции)' : 'Direct HP (no armor or ablation)'}</option>
                 <option value="ap">
                   {lang === 'ru' ? 'Бронебойные патроны (AP) (Абляция -2 SP!)' : 'Armor-Piercing (AP) (Ablation -2 SP!)'}
                 </option>
@@ -350,7 +229,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                   min="0"
                   max="50"
                   value={shieldHp}
-                  onChange={(e) => setShieldHp(parseInt(e.target.value, 10) || 0)}
+                  onChange={(e) => { setShieldHp(parseInt(e.target.value, 10) || 0); setIsCalculated(false); }}
                   className="w-14 bg-zinc-900 border border-zinc-700 rounded px-1.5 py-0.5 text-center font-bold text-yellow-400"
                 />
               </div>
@@ -366,7 +245,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
               <div className="flex gap-2 text-xs">
                 <button
                   type="button"
-                  onClick={() => setDamageInputMode('dice')}
+                  onClick={() => { setDamageInputMode('dice'); setIsCalculated(false); }}
                   className={`px-2 py-0.5 rounded font-semibold ${
                     damageInputMode === 'dice' ? 'bg-red-950 text-red-400 border border-red-800' : 'text-zinc-500'
                   }`}
@@ -375,7 +254,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDamageInputMode('manual')}
+                  onClick={() => { setDamageInputMode('manual'); setIsCalculated(false); }}
                   className={`px-2 py-0.5 rounded font-semibold ${
                     damageInputMode === 'manual' ? 'bg-red-950 text-red-400 border border-red-800' : 'text-zinc-500'
                   }`}
@@ -447,6 +326,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
             )}
           </div>
 
+          {calculationError && <p role="alert" className="text-red-400 text-sm">{calculationError}</p>}
           {/* Calculate button */}
           <button
             type="button"
@@ -471,7 +351,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
                       : 'bg-emerald-900 text-emerald-300'
                   }`}
                 >
-                  {calcResult.isPenetrated ? (lang === 'ru' ? 'БРОНЯ ПРОБИТА!' : 'ARMOR PENETRATED!') : (lang === 'ru' ? 'БРОНЯ ВЫДЕРЖАЛА!' : 'ARMOR DEFENDED!')}
+                  {calcResult.shieldDamageTaken > 0 ? (lang === 'ru' ? 'ЩИТ ПРИНЯЛ ПОПАДАНИЕ' : 'SHIELD BLOCKED THE HIT') : calcResult.isPenetrated ? (lang === 'ru' ? 'БРОНЯ ПРОБИТА!' : 'ARMOR PENETRATED!') : (lang === 'ru' ? 'БРОНЯ ВЫДЕРЖАЛА!' : 'ARMOR DEFENDED!')}
                 </span>
               </div>
 
@@ -484,7 +364,7 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
 
                 {hasShield && (
                   <div className="flex justify-between text-yellow-400">
-                    <span>{lang === 'ru' ? 'Поглощено щитом:' : 'Absorbed by Shield:'}</span>
+                    <span>{lang === 'ru' ? 'Потеря HP щита:' : 'Shield HP lost:'}</span>
                     <span>-{calcResult.shieldDamageTaken} HP ({calcResult.shieldDestroyed ? (lang === 'ru' ? 'Щит РАЗРУШЕН!' : 'Shield DESTROYED!') : (lang === 'ru' ? `Осталось ${calcResult.remainingShieldHp} HP` : `${calcResult.remainingShieldHp} HP remaining`)})</span>
                   </div>
                 )}
@@ -521,12 +401,12 @@ export const DamageCalculatorModal: React.FC<DamageCalculatorModalProps> = ({
 
                     <div className="flex justify-between text-red-300">
                       <span>{lang === 'ru' ? 'Абляция брони' : 'Armor Ablation'} ({attackType === 'ap' ? (lang === 'ru' ? 'AP патроны' : 'AP ammo') : (lang === 'ru' ? 'стандарт' : 'standard')}):</span>
-                      <span className="font-bold">-{calcResult.ablationAmount} SP ({currentSp} ➔ {calcResult.newSp})</span>
+                      <span className="font-bold">-{calcResult.ablationAmount} SP ({currentSp} ➔ {Math.max(0, currentSp - calcResult.ablationAmount)})</span>
                     </div>
                   </>
                 ) : (
                   <div className="text-emerald-400 text-[11px] pt-1">
-                    {lang === 'ru' ? 'Броня полностью поглотила урон. Броня не повреждена (абляция 0 SP).' : 'Armor absorbed all damage. Armor takes no damage (0 SP ablation).'}
+                    {calcResult.shieldDamageTaken > 0 ? (lang === 'ru' ? 'Щит поглотил всё попадание. Персонаж и броня не повреждены.' : 'Shield absorbed the entire hit. Character and armor are unharmed.') : (lang === 'ru' ? 'Броня полностью поглотила урон. Броня не повреждена (абляция 0 SP).' : 'Armor absorbed all damage. Armor takes no damage (0 SP ablation).')}
                   </div>
                 )}
               </div>

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Character, Weapon, ArmorItem, CyberwareItem, GearItem, Vehicle } from '../types/character';
 import { Language } from '../locales/i18n';
 import { sfx } from '../utils/audio';
+import { initializeCyberware } from '../utils/rules';
 import { 
   DATAPOOL_WEAPONS, 
   DATAPOOL_ARMORS, 
@@ -230,6 +231,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
 
     if (item.type === 'weapon' && item.weaponData) {
       const newWeap: Weapon = {
+        ...item.weaponData,
         id: 'weap-dp-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         name: item.weaponData.name,
         category: item.weaponData.category,
@@ -271,11 +273,11 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         humanityLoss: item.cyberwareData.humanityCost,
         description: item.cyberwareData.description
       };
-      updatedChar.cyberware = [...updatedChar.cyberware, newCyber];
+      updatedChar.cyberware = [...updatedChar.cyberware, initializeCyberware(newCyber)];
 
       // Deduct Humanity Loss if any
       if (newCyber.humanityCost > 0) {
-        updatedChar.humanityCurrent = Math.max(0, updatedChar.humanityCurrent - newCyber.humanityCost);
+        updatedChar.humanityCurrent = updatedChar.humanityCurrent - newCyber.humanityCost;
       }
     } else if (item.type === 'gear' && item.gearData) {
       // Check if gear with same name exists

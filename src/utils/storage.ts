@@ -1,9 +1,22 @@
 import { Character } from '../types/character';
 import { createEmptyCharacter } from '../data/initialData';
+import { calculateHumanityStats } from './roleUtils';
+import { isCharacter, isCharacterCollection } from './characterValidation';
 
 const CHARACTERS_STORAGE_KEY = 'cpr_characters_v1';
 const ACTIVE_CHAR_ID_KEY = 'cpr_active_char_id_v1';
 const THEME_STORAGE_KEY = 'cpr_theme_v1';
+const RECOVERY_STORAGE_KEY = 'cpr_characters_recovery_v1';
+const PREVIOUS_STORAGE_KEY = 'cpr_characters_previous_v1';
+let recoveredStorage = false;
+export const hasStorageRecovery = () => {
+  try { return recoveredStorage || localStorage.getItem(RECOVERY_STORAGE_KEY) !== null; }
+  catch { return recoveredStorage; }
+};
+export function exportStorageRecovery(): void {
+  const raw = localStorage.getItem(RECOVERY_STORAGE_KEY) || localStorage.getItem(PREVIOUS_STORAGE_KEY);
+  if (raw) downloadTextFile('CPR_Storage_Recovery.json', raw);
+}
 
 export type AppTheme = 'dark' | 'light';
 
@@ -28,12 +41,10 @@ export function loadStoredCharacters(): Character[] {
     const raw = localStorage.getItem(CHARACTERS_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (isCharacterCollection(parsed)) {
         return parsed.map((char: Character) => {
-          const baseMax = char.humanityMaxManual || (char.stats?.EMP ? char.stats.EMP * 10 : 60);
-          const totalHL = (char.cyberware || []).reduce((sum, c) => sum + (c.humanityCost || 0), 0);
-          const maxAllowed = Math.max(0, baseMax - totalHL);
-          let updated = { ...char };
+          const maxAllowed = calculateHumanityStats(char).maxRecoverableHumanity;
+          let updated = { ...char, legacyMartialArtsStyle: char.legacyMartialArtsStyle || char.martialArtsStyle || 'Karate' as const };
           if (typeof char.humanityCurrent === 'number' && char.humanityCurrent > maxAllowed) {
             updated.humanityCurrent = maxAllowed;
           }
@@ -50,9 +61,11 @@ export function loadStoredCharacters(): Character[] {
           return updated;
         });
       }
+      throw new Error('Invalid character collection');
     }
   } catch (err) {
     console.error('Failed to load characters from localStorage', err);
+    recoveredStorage = true;
   }
 
   // Fallback: create default starting characters
@@ -64,15 +77,29 @@ export function loadStoredCharacters(): Character[] {
   netrunnerChar.stats.INT = 8;
   netrunnerChar.stats.TECH = 7;
   const chars = [defaultChar, netrunnerChar];
-  saveCharactersToStorage(chars);
   return chars;
 }
 
-export function saveCharactersToStorage(characters: Character[]): void {
+export function saveCharactersToStorage(characters: Character[]): boolean {
   try {
-    localStorage.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify(characters));
+    if (!isCharacterCollection(characters)) throw new Error('Refusing to save an invalid collection');
+    const json = JSON.stringify(characters);
+    const previous = localStorage.getItem(CHARACTERS_STORAGE_KEY);
+    if (previous && previous !== json) {
+      let valid = false;
+      try { valid = isCharacterCollection(JSON.parse(previous)); } catch {}
+      const backupKey = valid ? PREVIOUS_STORAGE_KEY : RECOVERY_STORAGE_KEY;
+      // Keep the first damaged original intact across subsequent saves.
+      if (valid || !localStorage.getItem(backupKey)) {
+        localStorage.setItem(backupKey, previous);
+        if (localStorage.getItem(backupKey) !== previous) throw new Error('Backup verification failed');
+      }
+    }
+    localStorage.setItem(CHARACTERS_STORAGE_KEY, json);
+    return true;
   } catch (err) {
     console.error('Failed to save characters to localStorage', err);
+    return false;
   }
 }
 
@@ -93,8 +120,11 @@ export function setActiveCharacterId(id: string): void {
 }
 
 export function downloadJsonFile(filename: string, data: unknown): void {
-  const jsonStr = JSON.stringify(data, null, 2);
-  const blob = new Blob([jsonStr], { type: 'application/json' });
+  downloadTextFile(filename, JSON.stringify(data, null, 2));
+}
+
+function downloadTextFile(filename: string, text: string): void {
+  const blob = new Blob([text], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -116,8 +146,9 @@ export function exportAllCharacters(characters: Character[]): void {
 
 export function parseImportedJson(jsonText: string): Character | Character[] | null {
   try {
+    if (jsonText.length > 5_000_000) return null;
     const data = JSON.parse(jsonText);
-    return data;
+    return isCharacter(data) || isCharacterCollection(data) ? data : null;
   } catch (err) {
     console.error('Invalid JSON file', err);
     return null;

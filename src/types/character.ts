@@ -105,6 +105,14 @@ export interface Weapon {
   notes: string;
   quality?: 'Poor' | 'Standard' | 'Excellent';
   skillId?: string; // e.g. 'handgun', 'shoulder_arms', etc.
+  damageProfiles?: { name: string; damage: string; category?: WeaponCategory; skillId?: string; standardRof?: number; magCapacity?: number; ammoType?: string; quality?: Weapon['quality']; armorPenetration?: 'none' | 'half' | 'ignore'; canCrit?: boolean; bodyRequirement?: number; autofireLimit?: number }[];
+  selectedProfile?: number;
+  profileAmmo?: Record<string, number>; // Additional magazines, keyed by ammo type and capacity.
+  sourceUrl?: string;
+  autofireLimit?: number;
+  armorPenetration?: 'none' | 'half' | 'ignore';
+  canCrit?: boolean;
+  bodyRequirement?: number;
 }
 
 export interface ArmorItem {
@@ -135,6 +143,7 @@ export interface CyberwareItem {
   humanityCost: number;
   humanityLoss?: number;
   description: string;
+  armorSpCurrent?: { head: number; body: number };
 }
 
 export type ProgramCategory = 'Booster' | 'Defender' | 'Attacker' | 'Black ICE';
@@ -149,9 +158,13 @@ export interface ProgramItem {
   rezCurrent: number;
   effect: string;
   isInstalled: boolean;
+  isActive?: boolean;
+  perception?: number;
+  speed?: number;
 }
 
 export interface Cyberdeck {
+  slotsMax?: number;
   name: string;
   hardwareSlotsMax: number;
   hardwareSlotsUsed: number;
@@ -309,6 +322,11 @@ export interface Character {
 
   // Combat & Martial Arts
   martialArtsStyle?: MartialArtsStyle;
+  legacyMartialArtsStyle?: MartialArtsStyle;
+  martialArtsLevels?: Partial<Record<MartialArtsStyle, number>>;
+  automaticCyberwareEffects?: boolean;
+  soloSpotWeaknessUsed?: boolean;
+  soloDamageDeflectionUsed?: boolean;
 
   // Economy & Lifestyle
   cashEb: number;
@@ -343,4 +361,5 @@ export interface RollResult {
   isCritInjury?: boolean; // 2 or more sixes on damage dice
   bonusDamage?: number; // +5 for critical injury
   summary: string;
+  rawDamage?: number;
 }

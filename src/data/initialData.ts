@@ -490,7 +490,7 @@ export const CPR_RANGE_DV_TABLE: RangeDvEntry[] = [
     category: 'Autofire (SMG)',
     nameRu: 'Автоогонь: ПП (Autofire SMG)',
     nameEn: 'Autofire (SMG)',
-    dvs: [20, 17, 20, 25, null, null, null, null]
+    dvs: [20, 17, 20, 25, 30, null, null, null]
   },
   {
     category: 'Autofire (Rifle)',
@@ -503,12 +503,12 @@ export const CPR_RANGE_DV_TABLE: RangeDvEntry[] = [
 export const PRESET_PROGRAMS: ProgramItem[] = [
   { id: 'prog-eraser', name: 'Eraser', category: 'Booster', atkBonus: 0, defBonus: 0, rezMax: 7, rezCurrent: 7, effect: '+2 к проверкам Cloak для маскировки следов', isInstalled: true },
   { id: 'prog-seeya', name: 'SeeYa', category: 'Booster', atkBonus: 0, defBonus: 0, rezMax: 7, rezCurrent: 7, effect: '+2 к Pathfinder для обнаружения скрытых объектов', isInstalled: true },
-  { id: 'prog-speedy', name: 'Speedy Gonzalvez', category: 'Booster', atkBonus: 0, defBonus: 0, rezMax: 7, rezCurrent: 7, effect: '+2 к скорости перемещения по узлам сети', isInstalled: false },
+  { id: 'prog-speedy', name: 'Speedy Gonzalvez', category: 'Booster', atkBonus: 0, defBonus: 0, rezMax: 7, rezCurrent: 7, effect: '+2 к проверкам Speed при столкновении с Black ICE', isInstalled: false },
   { id: 'prog-armor', name: 'Armor', category: 'Defender', atkBonus: 0, defBonus: 0, rezMax: 7, rezCurrent: 7, effect: 'Снижает урон мозгу персонажа от Black ICE на 4', isInstalled: true },
   { id: 'prog-shield', name: 'Shield', category: 'Defender', atkBonus: 0, defBonus: 0, rezMax: 7, rezCurrent: 7, effect: 'Останавливает первую успешную атаку против вас', isInstalled: false },
-  { id: 'prog-sword', name: 'Sword', category: 'Attacker', atkBonus: 2, defBonus: 0, rezMax: 7, rezCurrent: 7, effect: 'Наносит 3d6 урона программе-цели (или Black ICE)', isInstalled: true },
-  { id: 'prog-deckkrash', name: 'DeckKRASH', category: 'Attacker', atkBonus: 0, defBonus: 0, rezMax: 7, rezCurrent: 7, effect: 'Принудительно разрывает джек-ин нетраннера цели', isInstalled: false },
-  { id: 'prog-hellhound', name: 'Hellhound', category: 'Black ICE', atkBonus: 6, defBonus: 6, rezMax: 15, rezCurrent: 15, effect: 'Антиперсональный волк: наносит 2d6 прямо в мозг и поджигает память', isInstalled: false }
+  { id: 'prog-sword', name: 'Sword', category: 'Attacker', atkBonus: 1, defBonus: 0, rezMax: 0, rezCurrent: 0, effect: '3d6 REZ против Black ICE, 2d6 REZ против обычной программы. После атаки деактивируется.', isInstalled: true },
+  { id: 'prog-deckkrash', name: 'DeckKRASH', category: 'Attacker', atkBonus: 0, defBonus: 0, rezMax: 0, rezCurrent: 0, effect: 'Принудительно разрывает джек-ин нетраннера цели', isInstalled: false },
+  { id: 'prog-hellhound', name: 'Hellhound', category: 'Black ICE', perception: 6, speed: 6, atkBonus: 6, defBonus: 2, rezMax: 20, rezCurrent: 20, effect: '2d6 direct brain damage; sets the Netrunner on fire (2 HP at end of each turn until extinguished with an action).', isInstalled: false }
 ];
 
 export const PRESET_ARMOR_OPTIONS = [
@@ -667,6 +667,7 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
 
   // Default CPR starting core skill minimums for basic survivability
   const coreSkillDefaults: Record<string, number> = {
+    concentration: 2,
     perception: 2,
     athletics: 2,
     brawling: 2,
@@ -707,6 +708,7 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
   const humanity = Math.max(0, baseHumanity - startingCyberwareLoss); // 46 Humanity
 
   return {
+    automaticCyberwareEffects: true,
     id: 'char-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
     name,
     handle: 'Street-Sam',
@@ -803,6 +805,7 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
     })),
 
     cyberdeck: {
+      slotsMax: 7,
       name: 'Kirama Cyberdeck',
       hardwareSlotsMax: 3,
       hardwareSlotsUsed: 1,
@@ -855,9 +858,9 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
       tech: {
         makerRank: 4,
         fieldExpertise: 2,
-        upgrade: 1,
-        fabrication: 1,
-        invention: 0
+        upgrade: 2,
+        fabrication: 2,
+        invention: 2
       },
       medtech: {
         medicineRank: 4,

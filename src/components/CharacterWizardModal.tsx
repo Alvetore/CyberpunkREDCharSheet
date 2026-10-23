@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Character, StatKey, RoleType, Skill, Weapon, CyberwareItem } from '../types/character';
+import { Character, StatKey, RoleType, Skill, Weapon, CyberwareItem, ArmorItem } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { CPR_SKILLS, CPR_CRITICAL_INJURIES, CPR_LIFEPATH_TABLES, PRESET_PROGRAMS } from '../data/initialData';
 import { CPR_ROLE_PACKAGES, RolePackage } from '../data/roleTemplates';
+import { DATAPOOL_CYBERWARE } from '../data/datapoolCatalog';
 import { rollD10 } from '../utils/dice';
 import { sfx } from '../utils/audio';
+import { initializeCyberware } from '../utils/rules';
+import { BASIC_SKILL_IDS, creationErrors } from '../utils/creation';
 import { 
   Wand2, 
   X, 
@@ -61,29 +64,30 @@ const SHOP_WEAPONS: { name: string; category: Weapon['category']; damage: string
   { name: 'Very Heavy Pistol (Malorian)', category: 'Very Heavy Pistol', damage: '4d6', rof: 1, cost: 100, skillId: 'handgun', mag: 8, ammo: 'Very Heavy Pistol' },
   { name: 'SMG (Federated Tech-9)', category: 'SMG', damage: '2d6', rof: 1, cost: 100, skillId: 'handgun', mag: 30, ammo: 'Medium Pistol' },
   { name: 'Shotgun (Rostovic DB-2)', category: 'Shotgun', damage: '5d6', rof: 1, cost: 500, skillId: 'shoulder_arms', mag: 4, ammo: 'Shotgun Shells' },
-  { name: 'Assault Rifle (Militech Ronin)', category: 'Assault Rifle', damage: '5d6', rof: 1, cost: 500, skillId: 'shoulder_arms', mag: 30, ammo: 'Rifle Ammo' },
+  { name: 'Assault Rifle (Militech Ronin)', category: 'Assault Rifle', damage: '5d6', rof: 1, cost: 500, skillId: 'shoulder_arms', mag: 25, ammo: 'Rifle Ammo' },
   { name: 'Light Melee (Combat Knife)', category: 'Light Melee', damage: '1d6', rof: 2, cost: 50, skillId: 'melee_weapon', mag: 0, ammo: 'None' },
   { name: 'Medium Melee (Baseball Bat)', category: 'Medium Melee', damage: '2d6', rof: 2, cost: 50, skillId: 'melee_weapon', mag: 0, ammo: 'None' },
   { name: 'Heavy Melee (Machete / Crowbar)', category: 'Heavy Melee', damage: '3d6', rof: 2, cost: 100, skillId: 'melee_weapon', mag: 0, ammo: 'None' },
-  { name: 'Very Heavy Melee (Katana)', category: 'Very Heavy Melee', damage: '4d6', rof: 1, cost: 100, skillId: 'melee_weapon', mag: 0, ammo: 'None' }
+  { name: 'Very Heavy Melee (Katana)', category: 'Very Heavy Melee', damage: '4d6', rof: 1, cost: 500, skillId: 'melee_weapon', mag: 0, ammo: 'None' }
 ];
 
 const SHOP_ARMOR = [
   { nameRu: 'Light Armorjack Helmet (Голова)', nameEn: 'Light Armorjack Helmet (Head)', loc: 'head' as const, sp: 11, penalty: 0, cost: 100 },
   { nameRu: 'Light Armorjack Vest (Тело)', nameEn: 'Light Armorjack Vest (Body)', loc: 'body' as const, sp: 11, penalty: 0, cost: 100 },
-  { nameRu: 'Medium Armorjack Vest (Тело)', nameEn: 'Medium Armorjack Vest (Body)', loc: 'body' as const, sp: 12, penalty: 0, cost: 100 },
-  { nameRu: 'Heavy Armorjack Vest (Тело)', nameEn: 'Heavy Armorjack Vest (Body)', loc: 'body' as const, sp: 13, penalty: -2, cost: 100 },
+  { nameRu: 'Medium Armorjack Vest (Тело)', nameEn: 'Medium Armorjack Vest (Body)', loc: 'body' as const, sp: 12, penalty: -2, cost: 100 },
+  { nameRu: 'Heavy Armorjack Vest (Тело)', nameEn: 'Heavy Armorjack Vest (Body)', loc: 'body' as const, sp: 13, penalty: -2, cost: 500 },
   { nameRu: 'Bulletproof Shield (Щит)', nameEn: 'Bulletproof Shield (Shield)', loc: 'shield' as const, sp: 10, penalty: 0, cost: 100 }
 ];
 
-const SHOP_CYBERWARE = [
+const SHOP_CYBERWARE: { nameRu: string; nameEn: string; cat: CyberwareItem['category']; loc: string; cost: number; hl: number; descRu: string; descEn: string }[] = [
   { nameRu: 'Neural Link (Нейролинк)', nameEn: 'Neural Link', cat: 'Neuralware' as const, loc: 'Spine', cost: 500, hl: 7, descRu: 'Базовый нейроинтерфейс', descEn: 'Base neural interface' },
-  { nameRu: 'Interface Plugs (Разъемы)', nameEn: 'Interface Plugs', cat: 'Neuralware' as const, loc: 'Wrists', cost: 500, hl: 7, descRu: 'Подключение к смартганам и деке (+2 к проверкам)', descEn: 'Smartgun & cyberdeck connection (+2 checks)' },
+  { nameRu: 'Interface Plugs (Разъемы)', nameEn: 'Interface Plugs', cat: 'Neuralware' as const, loc: 'Wrists', cost: 500, hl: 7, descRu: 'Подключение к смартганам и деке', descEn: 'Smartgun & cyberdeck connection' },
   { nameRu: 'Sandevistan (Сандевистан)', nameEn: 'Sandevistan', cat: 'Neuralware' as const, loc: 'Spine', cost: 500, hl: 7, descRu: '+3 к инициативе на 1 минуту', descEn: '+3 Initiative for 1 minute' },
   { nameRu: 'Cybereye (Киберглаз)', nameEn: 'Cybereye', cat: 'Cyberoptics' as const, loc: 'Eye', cost: 100, hl: 7, descRu: 'Искусственный глаз с 3 слотами', descEn: 'Artificial eye with 3 option slots' },
   { nameRu: 'Targeting Scope (Прицел)', nameEn: 'Targeting Scope', cat: 'Cyberoptics' as const, loc: 'Eye', cost: 500, hl: 3, descRu: '+1 к прицельным выстрелам', descEn: '+1 to Aimed Shots' },
   { nameRu: 'Subdermal Armor (Подкожная броня)', nameEn: 'Subdermal Armor', cat: 'Internal' as const, loc: 'Torso', cost: 1000, hl: 14, descRu: 'SP 11 на все тело без штрафа', descEn: 'SP 11 to body with no armor penalty' },
-  { nameRu: 'Cyberarm (Киберрука)', nameEn: 'Cyberarm', cat: 'Cyberlimb' as const, loc: 'Arm', cost: 500, hl: 7, descRu: 'Кибернетическая рука с 4 слотами', descEn: 'Cybernetic arm with 4 option slots' }
+  { nameRu: 'Cyberarm (Киберрука)', nameEn: 'Cyberarm', cat: 'Cyberlimb' as const, loc: 'Arm', cost: 500, hl: 7, descRu: 'Кибернетическая рука с 4 слотами', descEn: 'Cybernetic arm with 4 option slots' },
+  ...DATAPOOL_CYBERWARE.filter(item => item.category === 'Fashionware').map(item => ({ nameRu: item.name, nameEn: item.name, cat: item.category, loc: item.installLocation, cost: item.costEb, hl: item.humanityCost, descRu: item.description, descEn: item.description }))
 ];
 
 export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
@@ -94,6 +98,10 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
 }) => {
   const t = translations[lang];
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [creationError, setCreationError] = useState('');
+  const [culturalLanguage, setCulturalLanguage] = useState('English');
+  const [clothingName, setClothingName] = useState('');
+  const [clothingCost, setClothingCost] = useState(0);
 
   // Method & Role
   const [method, setMethod] = useState<CreationMethod>('streetrat');
@@ -166,7 +174,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
       setStats({ INT: 6, REF: 7, DEX: 6, TECH: 5, COOL: 6, WILL: 6, LUCK: 6, MOVE: 6, BODY: 7, EMP: 7 });
       const mandatory: Record<string, number> = {
         athletics: 2, brawling: 2, concentration: 2, conversation: 2, education: 2,
-        evasion: 2, first_aid: 2, human_perception: 2, language_streetslang: 4,
+        evasion: 2, first_aid: 2, human_perception: 2, language_streetslang: 2,
         local_expert: 2, perception: 2, persuasion: 2, stealth: 2
       };
       setSkills(CPR_SKILLS.map((s) => ({ ...s, level: mandatory[s.id] || 0 })));
@@ -178,10 +186,10 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
     sfx.playDiceRoll();
     const die = rollD10();
     setRolledD10Value(die);
-    // Determine row (1-2 => 0, 3-4 => 1, 5-6 => 2, 7-8 => 3, 9-10 => 4)
-    const index = Math.min(4, Math.floor((die - 1) / 2));
+    // Streetrat uses one row; Edgerunner rolls each STAT independently.
+    const index = die - 1;
     setRolledStatIndex(index);
-    setStats({ ...rolePackage.statTable[index].stats });
+    setStats(method === 'edgerunner' ? Object.fromEntries(STAT_KEYS.map(key => [key, rolePackage.statTable[rollD10() - 1].stats[key]])) as Record<StatKey, number> : { ...rolePackage.statTable[index].stats });
   };
 
   // Calculations for Point-Buy
@@ -194,7 +202,8 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
   const weaponsCost = selectedWeapons.reduce((acc, w) => acc + w.cost, 0);
   const armorCost = selectedArmor.reduce((acc, a) => acc + a.cost, 0);
   const cyberwareCost = selectedCyberware.reduce((acc, c) => acc + c.cost, 0);
-  const totalCost = weaponsCost + armorCost + cyberwareCost;
+  const fashionwareCost = selectedCyberware.filter(item => item.cat === 'Fashionware').reduce((sum, item) => sum + item.cost, 0);
+  const totalCost = weaponsCost + armorCost + cyberwareCost - Math.min(fashionwareCost, Math.max(0, 800 - clothingCost));
   const budgetRemaining = STARTING_BUDGET - totalCost;
 
   // Total HL & Humanity
@@ -206,7 +215,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
   }
 
   const baseHumanity = stats.EMP * 10;
-  const currentHumanity = Math.max(0, baseHumanity - totalHL);
+  const currentHumanity = baseHumanity - totalHL;
   const currentEmp = Math.floor(currentHumanity / 10);
   const hpMax = 10 + 5 * Math.ceil((stats.BODY + stats.WILL) / 2);
 
@@ -222,7 +231,8 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
     setSkills((prev) =>
       prev.map((s) => {
         if (s.id === skillId) {
-          const newVal = Math.max(0, Math.min(6, s.level + delta));
+          const min = BASIC_SKILL_IDS.includes(s.id) || method === 'edgerunner' ? 2 : 0;
+          const newVal = Math.max(min, Math.min(6, s.level + delta));
           return { ...s, level: newVal };
         }
         return s;
@@ -247,13 +257,23 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
     });
   };
 
+  const validationErrors = creationErrors(method, stats, skills, rolePackage.edgerunnerCareerSkills, method === 'pointbuy' ? budgetRemaining : 0);
+  if (method === 'pointbuy' && (!Number.isInteger(clothingCost) || clothingCost < 0 || clothingCost > 800 || (clothingCost > 0 && !clothingName.trim()))) validationErrors.push('Clothing: name and cost 0–800 eb');
+
   const handleCompleteCreation = () => {
+    if (validationErrors.length) { setCreationError(validationErrors.join(' · ')); return; }
+    if (method === 'pointbuy') {
+      const hasLink = selectedCyberware.some(item => item.nameEn === 'Neural Link');
+      const hasEye = selectedCyberware.some(item => item.nameEn === 'Cybereye');
+      if ((!hasLink && selectedCyberware.some(item => ['Interface Plugs','Sandevistan'].includes(item.nameEn))) || (!hasEye && selectedCyberware.some(item => item.nameEn === 'Targeting Scope'))) { setCreationError(lang === 'ru' ? 'Установите базовый Neural Link / Cybereye перед опциями.' : 'Install the foundational Neural Link / Cybereye before its options.'); return; }
+    }
+    if (!culturalLanguage.trim()) { setCreationError(lang === 'ru' ? 'Укажите культурный язык.' : 'Choose a cultural language.'); return; }
     sfx.playCritSuccess();
 
     let finalWeapons: Weapon[] = [];
-    let finalArmor = {
-      head: { id: 'armor-h-' + Date.now(), name: 'Light Armorjack Helmet', location: 'head' as const, spMax: 11, spCurrent: 11, penalty: 0 },
-      body: { id: 'armor-b-' + Date.now(), name: 'Light Armorjack Vest', location: 'body' as const, spMax: 11, spCurrent: 11, penalty: 0 }
+    let finalArmor: Character['armor'] = {
+      head: { id: 'armor-h-' + Date.now(), name: 'No Armor', location: 'head' as const, spMax: 0, spCurrent: 0, penalty: 0 },
+      body: { id: 'armor-b-' + Date.now(), name: 'No Armor', location: 'body' as const, spMax: 0, spCurrent: 0, penalty: 0 }
     };
     let finalCyberware: CyberwareItem[] = [];
     let startingCash = 0;
@@ -268,13 +288,15 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
         magCapacity: w.mag,
         currentAmmo: w.mag,
         ammoType: w.ammo,
-        concealable: w.category.includes('Pistol'),
+        concealable: ['Medium Pistol','Heavy Pistol','SMG','Light Melee'].includes(w.category),
         notes: lang === 'ru' ? 'Стартовое оружие' : 'Starting weapon',
         skillId: w.skillId
       }));
 
       const hArmor = selectedArmor.find((a) => a.loc === 'head');
       const bArmor = selectedArmor.find((a) => a.loc === 'body');
+      const shield = selectedArmor.find(item => item.loc === 'shield');
+      if (shield) finalArmor.shield = { id: 'shield-wiz', name: shield.nameEn, location: 'shield', spMax: shield.sp, spCurrent: shield.sp, penalty: 0 };
       if (hArmor) finalArmor.head = { id: 'h-1', name: lang === 'ru' ? hArmor.nameRu : hArmor.nameEn, location: 'head', spMax: hArmor.sp, spCurrent: hArmor.sp, penalty: hArmor.penalty };
       if (bArmor) finalArmor.body = { id: 'b-1', name: lang === 'ru' ? bArmor.nameRu : bArmor.nameEn, location: 'body', spMax: bArmor.sp, spCurrent: bArmor.sp, penalty: bArmor.penalty };
 
@@ -299,7 +321,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
         magCapacity: w.mag,
         currentAmmo: w.mag,
         ammoType: w.ammo,
-        concealable: w.category.includes('Pistol'),
+        concealable: ['Medium Pistol','Heavy Pistol','SMG','Light Melee'].includes(w.category),
         notes: (lang === 'ru' ? 'Классовый набор ' : 'Class package ') + role,
         skillId: w.skillId
       }));
@@ -318,6 +340,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
         description: c.desc
       }));
 
+      if (rolePackage.equipment.gear.some(item => item.category === 'Shield')) finalArmor.shield = { id: 'shield-pkg', name: 'Bulletproof Shield', location: 'shield', spMax: 10, spCurrent: 10, penalty: 0 };
       startingCash = rolePackage.equipment.pocketCashEb;
     }
 
@@ -341,29 +364,32 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
       luckCurrent: stats.LUCK,
       deathSavePenalties: 0,
       armor: finalArmor,
-      skills: [...skills],
+      skills: [...skills, { id: 'language_cultural', nameRu: `Язык: ${culturalLanguage.trim()}`, nameEn: `Language (${culturalLanguage.trim()})`, stat: 'INT', category: 'Education', multiplier: 1, isCustom: true, level: 4 }],
+      legacyMartialArtsStyle: 'Karate',
+      automaticCyberwareEffects: true,
       weapons: finalWeapons,
-      cyberware: finalCyberware,
+      cyberware: finalCyberware.map(initializeCyberware),
       criticalInjuries: CPR_CRITICAL_INJURIES.map((inj) => ({
         ...inj,
         id: 'inj-' + inj.location + '-' + inj.rollNumber,
         isActive: false
       })),
       cyberdeck: {
+        slotsMax: 7,
         name: role === 'Netrunner' ? 'Novatech Cyberdeck' : 'Pocket Agent',
         hardwareSlotsMax: 3,
-        hardwareSlotsUsed: 1,
-        programSlotsMax: 5,
-        installedHardware: ['Standard Interface']
+        hardwareSlotsUsed: 0,
+        programSlotsMax: 7,
+        installedHardware: []
       },
-      programs: role === 'Netrunner' ? [...PRESET_PROGRAMS] : [],
-      gear: [
-        { id: 'g-1', name: lang === 'ru' ? 'Agent (Смартфон)' : 'Agent (Smartphone)', category: 'Electronics', quantity: 1, costEb: 100, notes: lang === 'ru' ? 'Связь и сеть' : 'Comms & Net' },
-        { id: 'g-2', name: lang === 'ru' ? 'Патроны' : 'Ammo', category: 'Ammo', quantity: 50, costEb: 50, notes: lang === 'ru' ? '50 шт.' : '50 rds' }
-      ],
+      programs: method !== 'pointbuy' && role === 'Netrunner' ? rolePackage.equipment.gear.filter(item => item.category === 'Program').flatMap((item, index) => Array.from({ length: item.quantity }, (_, copy) => {
+        const preset = PRESET_PROGRAMS.find(program => program.name === item.name);
+        return preset ? { ...preset, id: `program-wiz-${index}-${copy}`, isInstalled: true, isActive: false } : { id: `program-wiz-${index}-${copy}`, name: item.name, category: 'Booster' as const, atkBonus: 0, defBonus: 0, rezMax: 7, rezCurrent: 7, isInstalled: true, isActive: false, effect: 'Worm: +2 Backdoor while rezzed.' };
+      })) : [],
+      gear: method === 'pointbuy' ? (clothingCost > 0 ? [{ id: 'clothing-wiz', name: clothingName.trim(), category: 'Clothing', quantity: 1, costEb: clothingCost, notes: 'Creation clothing allowance (800 eb). Unspent allowance forfeited.' }] : []) : rolePackage.equipment.gear.filter(item => !['Program','Shield'].includes(item.category)).map((item, index) => ({ ...item, quantity: item.category === 'Ammo' ? Math.max(0, item.quantity - finalWeapons.filter(weapon => weapon.ammoType + ' Ammo' === item.name || weapon.ammoType === item.name).reduce((sum, weapon) => sum + weapon.currentAmmo, 0)) : item.quantity, id: `gear-wiz-${index}`, costEb: 0 })),
       lifepath: {
         ...lifepathData,
-        languages: 'Streetslang, English',
+        languages: `Streetslang, ${culturalLanguage.trim()}`,
         hairstyle: lang === 'ru' ? 'Неоновый ирокез' : 'Neon Mohawk',
         affectation: lang === 'ru' ? 'Зеркальные очки даже ночью' : 'Mirrored shades even at night',
         feelingsAboutPeople: lang === 'ru' ? 'Верю только напарникам по банде' : 'Only trust crew members',
@@ -380,7 +406,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
       roleAbilities: {
         solo: { threatDetection: 1, initiativeReaction: 1, precisionAttack: 1, spotWeakness: 1, damageAbsorb: 0 },
         netrunner: { interfaceRank: 4 },
-        tech: { makerRank: 4, fieldExpertise: 2, upgrade: 1, fabrication: 1, invention: 0 },
+        tech: { makerRank: 4, fieldExpertise: 2, upgrade: 2, fabrication: 2, invention: 2 },
         medtech: { medicineRank: 4, surgery: 2, medicalTech: 1, pharmaceuticals: 1, speedhealDoses: 2, cryopumpDoses: 1 },
         generic: { rank: 4, details: lang === 'ru' ? `Способность роли ${role} ранга 4.` : `Role ability for ${role} at rank 4.` }
       },
@@ -451,6 +477,8 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
         {/* Wizard Content Body */}
         <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
           {/* STEP 1: Method & Role Selection */}
+          {creationError && <p role="alert" className="text-red-400 p-2">{creationError}</p>}
+          <label className="block text-xs text-zinc-300 mb-3">{lang === 'ru' ? 'Культурный язык (бесплатный ранг 4)' : 'Cultural language (free rank 4)'}<input aria-label="Cultural language" value={culturalLanguage} onChange={event => setCulturalLanguage(event.target.value)} className="ml-2 bg-zinc-950 border border-zinc-700 rounded p-1" /></label>
           {currentStep === 1 && (
             <div className="space-y-4 animate-fade-in">
               {/* Method Cards */}
@@ -617,7 +645,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                         {lang === 'ru' ? `Официальная таблица характеристик роли ${role} (CPR Core Book)` : `Official stat table for ${role} (CPR Core Book)`}
                       </span>
                       <span className="text-[11px] text-zinc-500">
-                        {lang === 'ru' ? 'Бросьте 1d10 или выберите строку вручную.' : 'Roll 1d10 or click a row manually.'}
+                        {lang === 'ru' ? (method === 'edgerunner' ? 'Отдельный бросок 1d10 на каждую характеристику.' : 'Бросьте 1d10 или выберите строку вручную.') : (method === 'edgerunner' ? 'Roll 1d10 separately for every STAT.' : 'Roll 1d10 or click a row manually.')}
                       </span>
                     </div>
 
@@ -636,9 +664,10 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                       <div
                         key={idx}
                         onClick={() => {
+                          if (method !== 'streetrat') return;
                           sfx.playClick();
                           setRolledStatIndex(idx);
-                          setStats({ ...opt.stats });
+                          if (method === 'streetrat') setStats({ ...opt.stats });
                         }}
                         className={`p-2.5 rounded-lg border cursor-pointer text-xs transition flex flex-wrap items-center justify-between gap-2 ${
                           rolledStatIndex === idx
@@ -787,7 +816,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
 
               {/* Skills Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-[380px] overflow-y-auto pr-1">
-                {skills.map((s) => {
+                {skills.filter(skill => method === 'pointbuy' || skill.id in rolePackage.edgerunnerCareerSkills).map((s) => {
                   const statVal = stats[s.stat];
                   const totalBase = statVal + s.level;
 
@@ -823,7 +852,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                         <div className="flex items-center gap-1.5 bg-zinc-900 px-1.5 py-1 rounded border border-zinc-800">
                           <button
                             onClick={() => handleSkillLevelAdjust(s.id, -1)}
-                            disabled={s.level <= 0}
+                            disabled={s.level <= (BASIC_SKILL_IDS.includes(s.id) || method === 'edgerunner' ? 2 : 0)}
                             className="w-7 h-7 sm:w-6 sm:h-6 text-center font-bold text-sm text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 disabled:opacity-20 rounded flex items-center justify-center transition"
                           >
                             -
@@ -938,6 +967,12 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                     </div>
                   </div>
 
+                  <div className="bg-zinc-950 p-3 rounded border border-zinc-800 space-y-2 text-xs">
+                    <p>{lang === 'ru' ? 'Дополнительно 800 eb только на одежду / Fashionware. Введите комплект одежды и его стоимость. Неиспользованный остаток сгорает. Fashionware можно выбрать ниже; его стоимость сначала списывается из этого лимита.' : 'Extra 800 eb for clothing / Fashionware only. Enter a clothing set and its cost. Unspent allowance is lost. Fashionware below uses this allowance first.'}</p>
+                    <label>{lang === 'ru' ? 'Комплект одежды' : 'Clothing set'} <input aria-label="Clothing set" value={clothingName} onChange={event => setClothingName(event.target.value)} className="bg-zinc-900 border border-zinc-700" /></label>
+                    <label className="ml-2">eb <input aria-label="Clothing cost" type="number" min="0" max="800" value={clothingCost} onChange={event => setClothingCost(Number(event.target.value))} className="w-20 bg-zinc-900 border border-zinc-700" /></label>
+                  </div>
+
                   {/* Weapons */}
                   <div>
                     <span className="text-xs font-orbitron font-bold text-red-400 uppercase block mb-1">
@@ -981,7 +1016,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                             key={a.nameRu}
                             onClick={() => {
                               sfx.playClick();
-                              setSelectedArmor(isSelected ? selectedArmor.filter((sa) => sa.nameRu !== a.nameRu) : [...selectedArmor, a]);
+                              setSelectedArmor(isSelected ? selectedArmor.filter((sa) => sa.nameRu !== a.nameRu) : [...selectedArmor.filter(sa => sa.loc !== a.loc), a]);
                             }}
                             className={`p-2.5 rounded border cursor-pointer text-xs transition flex justify-between items-center ${
                               isSelected ? 'bg-yellow-950/40 border-yellow-500 text-white' : 'bg-zinc-950 border-zinc-800 text-zinc-300'
@@ -1156,8 +1191,8 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
 
                 <div className="text-xs text-zinc-400 italic">
                   {lang === 'ru'
-                    ? 'Персонаж полностью проверен и соответствует официальным правилам книги правил Cyberpunk RED.'
-                    : 'Character is fully verified and complies with official Cyberpunk RED core rules.'}
+                    ? 'Перед созданием проверяются очки характеристик, навыков, обязательные минимумы и бюджет. Условия установки и особые правила предметов сверяйте с книгой.'
+                    : 'Creation checks STAT points, skill points, required minima and budget. Check installation requirements and item exceptions against the rulebook.'}
                 </div>
               </div>
             </div>
@@ -1195,6 +1230,8 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
             <button
               type="button"
               onClick={handleCompleteCreation}
+              disabled={validationErrors.length > 0}
+              title={validationErrors.join(" · ")}
               className="px-5 py-2 min-h-[40px] bg-emerald-600 hover:bg-emerald-500 text-white font-orbitron font-black text-xs uppercase tracking-wider rounded flex items-center gap-1.5 transition shadow-lg shadow-emerald-950"
             >
               <Check size={16} />

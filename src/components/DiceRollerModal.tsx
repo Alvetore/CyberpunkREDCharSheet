@@ -3,6 +3,7 @@ import { Character, RollResult } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { executeCyberpunkCheck, executeDamageRoll, executeDeathSave } from '../utils/dice';
 import { sfx } from '../utils/audio';
+import { effectiveStat, injuryDeathPenalty, injuryActionPenalty, woundPenalty } from '../utils/rules';
 import { X, Dices, ShieldAlert, Sparkles, Flame, History, Trash2 } from 'lucide-react';
 
 interface DiceRollerModalProps {
@@ -48,13 +49,10 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
     const dvNumber = targetDv.trim() === '' ? undefined : parseInt(targetDv, 10);
     const modifiers = situationalMod !== 0 ? [{ name: lang === 'ru' ? 'Модификатор' : 'Modifier', val: situationalMod }] : [];
 
-    // Seriously / Mortally Wounded automatic penalty check
-    const hpMax = 10 + 5 * Math.ceil((character.stats.BODY + character.stats.WILL) / 2);
-    const seriouslyWoundedThreshold = Math.ceil(hpMax / 2);
-    if (character.hpCurrent <= 0) {
-      modifiers.push({ name: lang === 'ru' ? 'Смертельно ранен' : 'Mortally Wounded', val: -4 });
-    } else if (character.hpCurrent <= seriouslyWoundedThreshold) {
-      modifiers.push({ name: lang === 'ru' ? 'Тяжело ранен' : 'Seriously Wounded', val: -2 });
+    const penalty = woundPenalty(character) + injuryActionPenalty(character);
+    if (penalty) modifiers.push({ name: lang === 'ru' ? 'Ранения и травмы' : 'Wounds and injuries', val: penalty });
+    if (!Number.isInteger(luckSpent) || luckSpent < 0 || luckSpent > character.luckCurrent) {
+      alert(lang === 'ru' ? 'Недостаточно очков Удачи.' : 'Not enough Luck points.'); return;
     }
 
     const result = executeCyberpunkCheck({
@@ -79,12 +77,13 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
   };
 
   const handleRollDamage = () => {
-    const result = executeDamageRoll(damageTitle, damageFormula, lang);
-    onAddRollResult(result);
+    try { onAddRollResult(executeDamageRoll(damageTitle, damageFormula, lang)); }
+    catch (error) { alert(error instanceof Error ? error.message : String(error)); }
   };
 
   const handleRollDeathSave = () => {
-    const result = executeDeathSave(character.stats.BODY, character.deathSavePenalties, lang);
+    const result = executeDeathSave(effectiveStat(character, 'BODY'), character.deathSavePenalties + injuryDeathPenalty(character), lang);
+    onUpdateCharacter({ ...character, deathSavePenalties: character.deathSavePenalties + 1 });
     onAddRollResult(result);
   };
 

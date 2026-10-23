@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Character, Weapon, WeaponCategory, MartialArtsStyle } from '../types/character';
+import { Character, Weapon, WeaponCategory, MartialArtsStyle, RollResult } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { CPR_RANGE_DISTANCES, CPR_RANGE_DV_TABLE } from '../data/initialData';
 import { 
@@ -12,6 +12,7 @@ import {
   MartialArtsMove
 } from '../data/meleeRules';
 import { sfx } from '../utils/audio';
+import { effectiveStat, martialArtsLevel, selectedWeaponProfile, skillBase, updateWeaponAmmo, weaponPenetration } from '../utils/rules';
 import { 
   Crosshair, 
   Plus, 
@@ -36,9 +37,9 @@ import {
 interface WeaponsSectionProps {
   character: Character;
   onUpdateCharacter: (char: Character) => void;
-  onRollWeaponAttack: (weapon: Weapon, targetDv?: number, rangeStr?: string) => void;
+  onRollWeaponAttack: (weapon: Weapon, targetDv?: number, rangeStr?: string, autofire?: boolean) => void;
   onRollWeaponDamage: (weapon: Weapon) => void;
-  onRollCustomCheck?: (title: string, baseVal: number, targetDv?: number, modifiers?: { name: string; val: number }[]) => void;
+  onRollCustomCheck?: (title: string, baseVal: number, targetDv?: number, modifiers?: { name: string; val: number }[]) => RollResult;
   onRollCustomDamage?: (title: string, formula: string) => void;
   onOpenShop?: (category?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' | 'vehicles') => void;
   lang: Language;
@@ -53,7 +54,7 @@ const WEAPON_PRESETS: Partial<Weapon>[] = [
   { name: 'SMG (Federated Arms Tech-9)', category: 'SMG', damage: '2d6', standardRof: 1, magCapacity: 30, ammoType: 'Medium Pistol', concealable: true, skillId: 'handgun' },
   { name: 'Heavy SMG (Chadron Arasaka)', category: 'Heavy SMG', damage: '3d6', standardRof: 1, magCapacity: 40, ammoType: 'Heavy Pistol', concealable: false, skillId: 'handgun' },
   { name: 'Shotgun (Rostovic DB-2)', category: 'Shotgun', damage: '5d6', standardRof: 1, magCapacity: 4, ammoType: 'Shotgun Shells / Slugs', concealable: false, skillId: 'shoulder_arms' },
-  { name: 'Assault Rifle (Militech Ronin)', category: 'Assault Rifle', damage: '5d6', standardRof: 1, magCapacity: 30, ammoType: 'Rifle Ammo', concealable: false, skillId: 'shoulder_arms' },
+  { name: 'Assault Rifle (Militech Ronin)', category: 'Assault Rifle', damage: '5d6', standardRof: 1, magCapacity: 25, ammoType: 'Rifle Ammo', concealable: false, skillId: 'shoulder_arms' },
   { name: 'Sniper Rifle (Nomad Nomad-X)', category: 'Sniper Rifle', damage: '5d6', standardRof: 1, magCapacity: 4, ammoType: 'Rifle Ammo', concealable: false, skillId: 'shoulder_arms' },
   // Official Melee Tiers
   { name: 'Light Melee (Combat Knife / Brass Knuckles)', category: 'Light Melee', damage: '1d6', standardRof: 2, magCapacity: 0, ammoType: 'None', concealable: true, skillId: 'melee_weapon' },
@@ -92,21 +93,12 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
     skillId: 'handgun'
   });
 
-  // Calculate penalties for skills
-  const armorPenalty = Math.min(character.armor.head.penalty || 0, character.armor.body.penalty || 0);
-  const hpMax = 10 + 5 * Math.ceil((character.stats.BODY + character.stats.WILL) / 2);
-  const woundPenalty = character.hpCurrent <= 0 ? -4 : character.hpCurrent <= Math.ceil(hpMax / 2) ? -2 : 0;
-
-  // Unarmed calculations
-  const unarmedDamage = getUnarmedDamage(character.stats.BODY);
-  const brawlingSkill = character.skills.find((s) => s.id === 'brawling');
-  const brawlingLvl = brawlingSkill?.level || 0;
-  const brawlingBase = character.stats.DEX + brawlingLvl + armorPenalty + woundPenalty;
-
-  // Martial Arts calculations
-  const maSkill = character.skills.find((s) => s.id === 'martial_arts');
-  const maLvl = maSkill?.level || 0;
-  const maBase = character.stats.DEX + maLvl + armorPenalty + woundPenalty;
+  const body = effectiveStat(character, 'BODY');
+  const unarmedDamage = getUnarmedDamage(body, character.cyberware.some(item => /cyberarm|киберрука/i.test(item.name)));
+  const brawlingLvl = character.skills.find(skill => skill.id === 'brawling')?.level || 0;
+  const brawlingBase = skillBase(character, 'brawling');
+  const maLvl = martialArtsLevel(character);
+  const maBase = skillBase(character, 'martial_arts');
   const currentMaStyle: MartialArtsStyle = character.martialArtsStyle || 'Karate';
   const styleData = CPR_MARTIAL_ARTS_STYLES[currentMaStyle] || CPR_MARTIAL_ARTS_STYLES.Karate;
 
@@ -117,9 +109,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   const handleFireSingle = (weaponId: string) => {
     sfx.playGunshot();
     const updated = character.weapons.map((w) => {
-      if (w.id === weaponId && w.currentAmmo > 0) {
-        return { ...w, currentAmmo: w.currentAmmo - 1 };
-      }
+      if (w.id === weaponId) return updateWeaponAmmo(w, -1);
       return w;
     });
     onUpdateCharacter({ ...character, weapons: updated });
@@ -128,9 +118,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   const handleFireAutofire = (weaponId: string) => {
     sfx.playGunshot();
     const updated = character.weapons.map((w) => {
-      if (w.id === weaponId && w.currentAmmo >= 10) {
-        return { ...w, currentAmmo: w.currentAmmo - 10 };
-      }
+      if (w.id === weaponId) return updateWeaponAmmo(w, -10);
       return w;
     });
     onUpdateCharacter({ ...character, weapons: updated });
@@ -140,7 +128,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
     sfx.playReload();
     const updated = character.weapons.map((w) => {
       if (w.id === weaponId) {
-        return { ...w, currentAmmo: w.magCapacity };
+        return updateWeaponAmmo(w, 'reload');
       }
       return w;
     });
@@ -189,27 +177,28 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
     sfx.playClick();
     onUpdateCharacter({
       ...character,
+      legacyMartialArtsStyle: character.legacyMartialArtsStyle || character.martialArtsStyle || 'Karate',
       martialArtsStyle: style
     });
   };
 
   const handleRollBrawlingStrikeAttack = () => {
     onRollCustomCheck?.(
-      lang === 'ru' ? 'Рукопашная атака: Удар (Драка / Brawling) [Игнор 50% SP]' : 'Melee Attack: Brawling Strike [Half SP]',
+      lang === 'ru' ? 'Рукопашная атака: Удар (Драка / Brawling) [Полная броня]' : 'Melee Attack: Brawling Strike [Full SP]',
       brawlingBase
     );
   };
 
   const handleRollBrawlingStrikeDamage = () => {
     onRollCustomDamage?.(
-      lang === 'ru' ? `Урон безоружного удара (ТЕЛО ${character.stats.BODY}) [Игнор 50% ОС]` : `Unarmed Strike Damage (BODY ${character.stats.BODY}) [Half SP]`,
+      lang === 'ru' ? `Урон безоружного удара (ТЕЛО ${body}) [Полная броня]` : `Unarmed Strike Damage (BODY ${body}) [Full SP]`,
       unarmedDamage
     );
   };
 
   const handleRollGrab = () => {
     onRollCustomCheck?.(
-      lang === 'ru' ? 'Захват противника (Grab) [ЛВК + Драка vs Уклонение/Драка]' : 'Grapple Check (Grab) [DEX + Brawling vs Evasion/Brawling]',
+      lang === 'ru' ? 'Захват противника (Grab) [ЛВК + Драка vs Драка]' : 'Grapple Check (Grab) [DEX + Brawling vs Brawling]',
       brawlingBase
     );
   };
@@ -219,18 +208,16 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
     const title = lang === 'ru' 
       ? `Удушение (Choke): -${character.stats.BODY} урона прямо в ПЗ [ПОЛНЫЙ ИГНОР ОС!]` 
       : `Choke: -${character.stats.BODY} damage directly to HP [IGNORES ALL SP!]`;
-    onRollCustomCheck?.(title, character.stats.BODY);
+    onRollCustomDamage?.(title, String(body));
   };
 
   const handleRollThrow = () => {
-    onRollCustomDamage?.(
-      lang === 'ru' ? `Бросок (Throw): ${unarmedDamage} урона [Цель сбита с ног / Prone, Игнор 50% ОС]` : `Throw Damage: ${unarmedDamage} [Target Prone, Half SP]`,
-      unarmedDamage
-    );
+    onRollCustomDamage?.(lang === 'ru' ? 'Бросок: BODY напрямую по HP, цель сбита с ног' : 'Throw: BODY directly to HP, target Prone', String(body));
     setIsGrapplingTarget(false);
   };
 
   const handleRollMartialArtsStrike = () => {
+    if (maLvl < 1) return;
     onRollCustomCheck?.(
       lang === 'ru' ? `Атака Боевых Искусств: ${styleData.nameRu} [Игнор 50% ОС]` : `Martial Arts Strike: ${styleData.nameEn} [Half SP]`,
       maBase
@@ -238,6 +225,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   };
 
   const handleRollMartialArtsDamage = () => {
+    if (maLvl < 1) return;
     onRollCustomDamage?.(
       lang === 'ru' ? `Урон удара ${styleData.nameRu} (ТЕЛО ${character.stats.BODY}) [Игнор 50% ОС]` : `Martial Arts Damage (${styleData.nameEn}) [Half SP]`,
       unarmedDamage
@@ -245,6 +233,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   };
 
   const handleExecuteMaSpecialMove = (move: MartialArtsMove) => {
+    if (maLvl < 1) return;
     sfx.playCritSuccess();
 
     if (move.id === 'kip_up') {
@@ -256,42 +245,22 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
       return;
     }
 
-    if (move.id === 'karate_bone_break') {
-      onRollCustomDamage?.(
-        lang === 'ru' ? 'Каратэ: Костедробительный удар (+5 Crit HP, Перелом)' : 'Karate: Bone Breaking Strike (+5 Crit HP)',
-        unarmedDamage
-      );
-      return;
-    }
-
+    if (maLvl < 1) return;
+    if (['karate_bone_break', 'taekwondo_pressure_point'].includes(move.id) && effectiveStat(character, 'WILL') < 8) { alert(lang === 'ru' ? 'Требуется WILL 8.' : 'Requires WILL 8.'); return; }
     if (move.id === 'judo_counter_throw') {
-      onRollCustomDamage?.(
-        lang === 'ru' ? 'Дзюдо: Контрбросок (Враг сбит с ног / Prone!)' : 'Judo: Counter Throw (Target falls Prone!)',
-        unarmedDamage
-      );
+      const check = onRollCustomCheck?.(`${styleData.nameEn}: ${move.nameEn}`, maBase, 15);
+      if (check?.isSuccess) onRollCustomDamage?.('Counter Throw · BODY directly to HP · Prone', String(body));
       return;
     }
-
-    if (move.id === 'taekwondo_pressure_point') {
-      onRollCustomDamage?.(
-        lang === 'ru' ? 'Тхэквондо: Удар по болевым точкам (+5 Crit HP, Травма)' : 'Taekwondo: Pressure Point Strike (+5 Crit HP)',
-        unarmedDamage
-      );
-      return;
-    }
-
-    if (move.id === 'taekwondo_flying_kick') {
-      onRollCustomDamage?.(
-        lang === 'ru' ? 'Тхэквондо: Летящий удар (Сбит с ног / Prone!)' : 'Taekwondo: Flying Kick (Knocked Prone!)',
-        unarmedDamage
-      );
+    if (['karate_bone_break', 'taekwondo_pressure_point', 'taekwondo_flying_kick'].includes(move.id)) {
+      onRollCustomCheck?.(`${styleData.nameEn}: ${move.nameEn} · vs Evasion`, maBase);
       return;
     }
 
     if (move.id === 'boxing_knockout') {
       onRollCustomCheck?.(
         lang === 'ru' ? 'Бокс: Нокаутирующий удар (-5 штраф в голову, Травма Челюсти)' : 'Boxing: Knockout Punch (-5 aimed head penalty)',
-        maBase - 5,
+        maBase,
         undefined,
         [{ name: 'Aimed Penalty', val: -5 }]
       );
@@ -337,7 +306,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   };
 
   // Filter weapons based on sub-tab
-  const displayedWeapons = character.weapons.filter((w) => {
+  const displayedWeapons = character.weapons.map(selectedWeaponProfile).filter((w) => {
     if (combatSubTab === 'ranged') return w.magCapacity > 0 && !w.category.includes('Melee');
     if (combatSubTab === 'melee') return w.magCapacity === 0 || w.category.includes('Melee');
     return true;
@@ -529,12 +498,11 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                         {dv !== null ? (
                           <button
                             onClick={() => {
-                              const matchedWeapon = character.weapons.find((w) =>
-                                w.category.toLowerCase().includes(row.category.toLowerCase().split(' ')[0])
-                              ) || character.weapons[0];
-                              if (matchedWeapon) {
-                                onRollWeaponAttack(matchedWeapon, dv, CPR_RANGE_DISTANCES[idx]);
-                              }
+                              const autofire = row.category.startsWith('Autofire');
+                              const category = row.category === 'Autofire (Rifle)' ? 'Assault Rifle' : row.category === 'Autofire (SMG)' ? 'SMG' : row.category.startsWith('Shotgun') ? 'Shotgun' : row.category;
+                              const matchedWeapon = character.weapons.map(selectedWeaponProfile).find(w => (autofire || w.skillId !== 'autofire') && (w.category === category || (category === 'SMG' && w.category === 'Heavy SMG') || (category === 'Bow' && w.category === 'Crossbow')));
+                              if (!matchedWeapon) { alert(lang === 'ru' ? 'Добавьте подходящее оружие в лист.' : 'Add a matching weapon to the sheet.'); return; }
+                              onRollWeaponAttack(matchedWeapon, dv, CPR_RANGE_DISTANCES[idx], autofire);
                             }}
                             title={lang === 'ru' ? `Бросить атаку против DV ${dv} на дистанции ${CPR_RANGE_DISTANCES[idx]}` : `Roll attack vs DV ${dv} at range ${CPR_RANGE_DISTANCES[idx]}`}
                             className="px-2.5 py-1.5 min-h-[30px] min-w-[30px] bg-zinc-800 hover:bg-red-600 hover:text-white border border-zinc-700 hover:border-red-500 rounded font-mono font-bold text-zinc-200 transition text-xs inline-flex items-center justify-center"
@@ -571,7 +539,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   <div className="flex items-center gap-2 text-xs text-zinc-400">
                     <span>{lang === 'ru' ? 'Навык:' : 'Skill:'} <strong>{lang === 'ru' ? 'ЛВК' : 'DEX'} ({character.stats.DEX}) + {lang === 'ru' ? 'Драка' : 'Brawling'} ({brawlingLvl})</strong> = База <strong className="text-white font-mono">{brawlingBase}</strong></span>
                     <span>•</span>
-                    <span className="text-amber-300 font-semibold">{t.halfSpNotice}</span>
+                    <span className="text-amber-300 font-semibold">{lang === 'ru' ? 'Броня применяется полностью' : 'Full armor applies'}</span>
                   </div>
                 </div>
               </div>
@@ -736,7 +704,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 mt-0.5">
-                    <span>{lang === 'ru' ? 'Навык:' : 'Skill:'} <strong>DEX ({character.stats.DEX}) + БИ ({maLvl})</strong> = База <strong className="text-white font-mono">{maBase}</strong></span>
+                    <span>{lang === 'ru' ? 'Навык:' : 'Skill:'} <input aria-label={lang === 'ru' ? 'Ранг выбранного стиля' : 'Selected style rank'} type="number" min={0} max={10} value={maLvl} onChange={event => onUpdateCharacter({ ...character, legacyMartialArtsStyle: character.legacyMartialArtsStyle || character.martialArtsStyle || 'Karate', martialArtsLevels: { ...character.martialArtsLevels, [currentMaStyle]: Math.max(0, Math.min(10, Number(event.target.value) || 0)) } })} className="w-12 bg-zinc-900 mr-2 text-white" /><strong>DEX ({character.stats.DEX}) + БИ ({maLvl})</strong> = База <strong className="text-white font-mono">{maBase}</strong></span>
                     <span>•</span>
                     <span className="text-cyan-300 font-semibold">{t.halfSpNotice}</span>
                   </div>
@@ -1114,7 +1082,8 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
             </div>
           ) : (
             displayedWeapons.map((weapon) => {
-              const isMelee = weapon.magCapacity === 0 || weapon.category.includes('Melee');
+              const isMelee = weapon.category.includes('Melee') || ['melee_weapon','martial_arts','brawling'].includes(weapon.skillId || '');
+              const halvesSP = weaponPenetration(weapon) === 'half';
               const isOutOfAmmo = !isMelee && weapon.currentAmmo <= 0;
 
               return (
@@ -1158,6 +1127,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                         <span className="text-[10px] uppercase text-zinc-500 block">{t.damage}</span>
                         <span className="font-orbitron font-extrabold text-sm text-yellow-400">
                           {weapon.damage}
+                        {weapon.damageProfiles && <select aria-label={lang === 'ru' ? 'Режим урона' : 'Damage profile'} value={weapon.selectedProfile ?? 0} onChange={event => onUpdateCharacter({ ...character, weapons: character.weapons.map(item => item.id === weapon.id ? { ...item, selectedProfile: Number(event.target.value) } : item) })} className="bg-zinc-900 border border-zinc-700 rounded ml-2">{weapon.damageProfiles.map((profile,index) => <option key={index} value={index}>{profile.name}</option>)}</select>}
                         </span>
                       </div>
                       <div>
@@ -1169,7 +1139,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                       <div>
                         <span className="text-[10px] uppercase text-zinc-500 block">{t.ammo}</span>
                         <span className={`font-orbitron font-extrabold text-sm ${isOutOfAmmo ? 'text-red-500 font-black animate-pulse' : 'text-zinc-200'}`}>
-                          {isMelee ? (lang === 'ru' ? '50% SP' : 'Half SP') : `${weapon.currentAmmo} / ${weapon.magCapacity}`}
+                          {isMelee ? (halvesSP ? (lang === 'ru' ? '50% SP' : 'Half SP') : (lang === 'ru' ? 'Полная SP' : 'Full SP')) : `${weapon.currentAmmo} / ${weapon.magCapacity}`}
                         </span>
                       </div>
                     </div>
@@ -1177,7 +1147,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                     {isMelee && (
                       <div className="text-[11px] text-amber-400/90 mb-1.5 font-semibold flex items-center gap-1">
                         <Swords size={12} />
-                        <span>{lang === 'ru' ? 'Игнорирует 50% SP брони цели (парируется DEX + Evasion)' : 'Ignores 50% target SP (opposed by DEX + Evasion)'}</span>
+                        <span>{halvesSP ? (lang === 'ru' ? 'Половина SP брони цели' : 'Half target SP') : (lang === 'ru' ? 'Броня применяется полностью' : 'Full armor applies')}</span>
                       </div>
                     )}
 
@@ -1193,7 +1163,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                     {!isMelee && (
                       <div className="flex items-center gap-1.5">
                         <button
-                          disabled={weapon.currentAmmo <= 0}
+                          disabled={weapon.currentAmmo <= 0 || weapon.skillId === 'autofire'}
                           onClick={() => handleFireSingle(weapon.id)}
                           className="flex-1 py-2 sm:py-1 min-h-[36px] bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-xs font-semibold rounded transition disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
                         >
@@ -1221,7 +1191,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
 
                     <div className="grid grid-cols-2 gap-2">
                       <button
-                        onClick={() => onRollWeaponAttack(weapon)}
+                        onClick={() => weapon.skillId === 'autofire' ? setShowRangeMatrix(true) : onRollWeaponAttack(weapon)}
                         className="py-2.5 sm:py-1.5 min-h-[38px] bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 shadow-sm"
                       >
                         <Crosshair size={14} />
@@ -1229,6 +1199,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                       </button>
 
                       <button
+                        disabled={weapon.skillId === 'autofire'}
                         onClick={() => onRollWeaponDamage(weapon)}
                         className="py-2.5 sm:py-1.5 min-h-[38px] bg-zinc-800 hover:bg-yellow-950/60 border border-yellow-700/60 text-yellow-300 font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5"
                       >

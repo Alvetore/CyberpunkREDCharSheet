@@ -1,0 +1,565 @@
+[
+  {
+    "id": "DV_EQUALITY",
+    "observed": {
+      "total": 15,
+      "success": true
+    },
+    "expected": {
+      "total": 15,
+      "success": false
+    }
+  },
+  {
+    "id": "DEATH_NATURAL_10",
+    "observed": true,
+    "expected": false
+  },
+  {
+    "id": "HUMANITY_RELOAD",
+    "observed": 46,
+    "expected": 56,
+    "installedHL": 14
+  },
+  {
+    "id": "UNARMED_DAMAGE",
+    "observed": [
+      [
+        7,
+        "3d6"
+      ],
+      [
+        8,
+        "3d6"
+      ],
+      [
+        10,
+        "4d6"
+      ],
+      [
+        12,
+        "5d6"
+      ],
+      [
+        14,
+        "5d6"
+      ]
+    ],
+    "expected": [
+      [
+        7,
+        "3d6"
+      ],
+      [
+        8,
+        "3d6"
+      ],
+      [
+        10,
+        "3d6"
+      ],
+      [
+        12,
+        "4d6"
+      ],
+      [
+        14,
+        "4d6"
+      ]
+    ]
+  },
+  {
+    "id": "STREETRAT_SKILLS",
+    "observed": [
+      {
+        "role": "Solo",
+        "points": 86,
+        "unknownIds": []
+      },
+      {
+        "role": "Netrunner",
+        "points": 86,
+        "unknownIds": []
+      },
+      {
+        "role": "Tech",
+        "points": 86,
+        "unknownIds": []
+      },
+      {
+        "role": "Medtech",
+        "points": 86,
+        "unknownIds": []
+      },
+      {
+        "role": "Rockerboy",
+        "points": 86,
+        "unknownIds": []
+      },
+      {
+        "role": "Media",
+        "points": 86,
+        "unknownIds": []
+      },
+      {
+        "role": "Lawman",
+        "points": 86,
+        "unknownIds": []
+      },
+      {
+        "role": "Exec",
+        "points": 86,
+        "unknownIds": []
+      },
+      {
+        "role": "Fixer",
+        "points": 86,
+        "unknownIds": []
+      },
+      {
+        "role": "Nomad",
+        "points": 86,
+        "unknownIds": []
+      }
+    ],
+    "expected": "86 points per role; exact corebook packages and cultural language rank 4 in addition"
+  },
+  {
+    "id": "EMP_SKILL_BASE",
+    "observed": [
+      "conversation",
+      8
+    ],
+    "expected": [
+      "conversation",
+      4
+    ],
+    "baseEMP": 6,
+    "currentEMP": 2
+  },
+  {
+    "id": "LUCK_OVERSPEND",
+    "observed": {
+      "luckBonus": 100,
+      "remaining": 1
+    },
+    "expected": "Reject spending 100 with 1 available; never grant the bonus for free"
+  },
+  {
+    "id": "SHIELD_OVERFLOW",
+    "observed": 5,
+    "expected": 0
+  },
+  {
+    "id": "STALE_DAMAGE_CHARACTER",
+    "observed": {
+      "id": "other",
+      "bodySP": 0,
+      "hpLoss": 15
+    },
+    "expected": "Invalidate previous character calculation when reopening; SP 18, HP 40 until recalculated"
+  },
+  {
+    "id": "DUPLICATE_CRITICAL",
+    "observed": 1,
+    "expected": 2
+  },
+  {
+    "id": "WIZARD_FREE_ARMOR",
+    "observed": {
+      "cash": 2550,
+      "head": 11,
+      "body": 11,
+      "skillPoints": 28
+    },
+    "expected": "No free armor; validate skills and stat allocation before finishing"
+  },
+  {
+    "id": "THERAPY_HOOK_ORDER_STATIC_CONCERN",
+    "observed": {
+      "hooksWhenClosed": 0,
+      "hooksWhenOpen": 3
+    },
+    "expected": "Same hook order on every render (real React must also be checked)"
+  },
+  {
+    "id": "MALFORMED_BACKUP",
+    "observed": {
+      "characters": [],
+      "blankScreen": true
+    },
+    "expected": "Reject empty backup before replacing the collection"
+  },
+  {
+    "id": "ATTACK_IGNORES_SOLO_QUALITY_MODS",
+    "observed": 9,
+    "expectedWithoutTemporaryMods": 11,
+    "ignoredStoredTemporaryModifier": 2
+  },
+  {
+    "id": "RANGE_ATTACK_WRONG_SKILL",
+    "observed": {
+      "weapon": "Heavy Pistol",
+      "skill": "handgun",
+      "DV": 22
+    },
+    "expected": {
+      "weapon": "Assault Rifle",
+      "skill": "autofire",
+      "DV": 22
+    }
+  },
+  {
+    "id": "CATALOG_INVENTORY",
+    "observed": {
+      "DATAPOOL_ARMORS": 35,
+      "DATAPOOL_CYBERWARE": 173,
+      "DATAPOOL_GEAR": 126,
+      "DATAPOOL_WEAPONS": 200
+    },
+    "affected": [
+      {
+        "name": "Милитех Крашер",
+        "capacity": 6,
+        "cost": 500,
+        "category": "Medium Pistol",
+        "notes": "ЭРРАТОЙ УБРАН ТЕГ ЭКЗОТИЧЕСКОЕОчень тяжелый пистолет с 6 выстрелами, который может стрелять только дробью.Источник: 12ДнейКибероруждества"
+      },
+      {
+        "name": "Пистолет-Пулемет Мустарнг Армс ARS-5",
+        "capacity": 40,
+        "cost": 1000,
+        "category": "SMG",
+        "notes": "ЭРРАТОЙ УБРАН ТЕГ ЭКЗОТИЧЕСКОЕ тяже��ый пистолет-пулемет с коннектором Смартлинка, инфракрасным прицелом ночного видения и снайперским прицелом. Эти опции снаряжения не могут быть сняты.Источник: 12Дн"
+      },
+      {
+        "name": "Nova Arms Вествуд",
+        "capacity": 6,
+        "cost": 500,
+        "category": "Medium Pistol",
+        "notes": "Очень тяжелый пистолет Отличного Качества, имеющий всего 6 патронов. Он несовместим со всеми модификациями магазина. Его можно приобрести со стволом длиной 4 дюйма (10,16 см), 6-1/2 дюйма (16,51 см) и"
+      },
+      {
+        "name": "Militech ПП Мастиф",
+        "capacity": 3,
+        "cost": 500,
+        "category": "Medium Pistol",
+        "notes": "Экзотическая комбинация двуручного ПП и дробовика. Магазин дробовика рассчитан на три выстрела. Оба вида оружия стреляют из отдельных магазинов, и каждый из них должен быть перезаряжен отдельным дейст"
+      },
+      {
+        "name": "Штурмовая Винтовка Арасака WAA Буллпап",
+        "capacity": 30,
+        "cost": 1000,
+        "category": "Assault Rifle",
+        "notes": "ЭРРАТОЙ УБРАН ТЕГ ЭКЗОТИЧЕСКОЕ Штурмовая винтовка с магазином в 35 патронов и Коннектором Смартлинка. Источник: 12ДнейКибероруждества"
+      },
+      {
+        "name": "ПП Мастиф",
+        "capacity": 3,
+        "cost": 1000,
+        "category": "Medium Pistol",
+        "notes": "Экзотическая комбинация двуручного ПП и дробовика. Магазин дробовика рассчитан на три выстрела. Оба вида оружия стреляют из отдельных магазинов, и каждый из них должен быть перезаряжен отдельным дейст"
+      },
+      {
+        "name": "Militech Crusher (периода 207X)",
+        "capacity": 12,
+        "cost": 1000,
+        "category": "Medium Pistol",
+        "notes": "Одного вида Militech Crusher достаточно, чтобы вызвать слезы на глазах у любого любителя оружия. Этот мощный дробовик, предназначенный для боя на ближней дистанции, был впервые создан в 2020 году и вс"
+      }
+    ]
+  },
+  {
+    "id": "INVALID_DAMAGE_FORMULAS",
+    "observed": {
+      "count": 26,
+      "weapons": [
+        {
+          "name": "Хеллоу Кьюти Ульра-К8 Штурмовой Пистолет",
+          "formula": "3d64d6"
+        },
+        {
+          "name": "Centurion Essentials Томминокер",
+          "formula": "3d64d65d6"
+        },
+        {
+          "name": "Микромилашка от Hello Cutie",
+          "formula": "2d64d6"
+        },
+        {
+          "name": "Militech ПП Мастиф",
+          "formula": "2d63d65d6"
+        },
+        {
+          "name": "Centurion Essentials МодФайр 10Х",
+          "formula": "2d63d65d6"
+        },
+        {
+          "name": "Конститьюшенал Армс Ураган",
+          "formula": "3d65d6"
+        },
+        {
+          "name": "Живым или Мертвым",
+          "formula": "3d65d6"
+        },
+        {
+          "name": "Georgia Arms Сваха",
+          "formula": "3d65d6"
+        },
+        {
+          "name": "GunMart Трах Бабах",
+          "formula": "3d65d6"
+        },
+        {
+          "name": "Многоцелевой штурмовой дробовик Аид",
+          "formula": "3d65d6"
+        },
+        {
+          "name": "K-Tech ТехноМолот",
+          "formula": "3d65d68d6"
+        },
+        {
+          "name": "Midnight Arms Дробовик Зверь",
+          "formula": "3d65d6"
+        },
+        {
+          "name": "ПП Мастиф",
+          "formula": "2d63d65d6"
+        },
+        {
+          "name": "МодФайр10Х",
+          "formula": "2d63d65d6"
+        },
+        {
+          "name": "Штернмейер М-04 Изменяемая Штурмовка",
+          "formula": "5d66d6"
+        },
+        {
+          "name": "Ктех ТехноМолот",
+          "formula": "3d65d68d6"
+        },
+        {
+          "name": "Иглтех Выживальщик",
+          "formula": "4d65d6"
+        },
+        {
+          "name": "Цепной нож IMI",
+          "formula": "2d64d6"
+        },
+        {
+          "name": "SlamDance Клыкастый Кулак",
+          "formula": "2d64d6"
+        },
+        {
+          "name": "Вышибала",
+          "formula": "2d6Н/а"
+        },
+        {
+          "name": "Arasaka HJKE-11 Yukimura",
+          "formula": "2d63d6"
+        },
+        {
+          "name": "Arasaka HJSH-18 Masamune",
+          "formula": "4d65d6"
+        },
+        {
+          "name": "Arasaka TKI-20 Shingen",
+          "formula": "2d63d6"
+        },
+        {
+          "name": "Budget Arms Carnage",
+          "formula": "3d65d6"
+        },
+        {
+          "name": "Constitutional Arms Unity",
+          "formula": "3d64d6"
+        },
+        {
+          "name": "Rostović DB-2 Satara Shotgun",
+          "formula": "3d65d6"
+        }
+      ],
+      "fallback": 9
+    },
+    "expected": "Reject unsupported formulas or use explicit attack profiles; never silently roll 3d6"
+  },
+  {
+    "id": "CATALOG_TRUNCATION",
+    "observed": {
+      "notesExactly200Chars": 123,
+      "damagedUnicodeItems": 9,
+      "weaponCategoryCounts": {
+        "Medium Pistol": 162,
+        "Heavy Pistol": 1,
+        "Very Heavy Pistol": 1,
+        "SMG": 3,
+        "Heavy SMG": 1,
+        "Shotgun": 4,
+        "Assault Rifle": 8,
+        "Sniper Rifle": 3,
+        "Grenade Launcher": 6,
+        "Bow": 1,
+        "Light Melee": 3,
+        "Medium Melee": 2,
+        "Heavy Melee": 5
+      }
+    },
+    "expected": "Full rule text and correct structured categories; no decoding replacement characters"
+  },
+  {
+    "id": "SERIOUS_WOUND_BOUNDARY",
+    "observed": 7,
+    "expected": 9,
+    "hp": 20,
+    "maxHP": 40,
+    "note": "Includes Solo Threat Detection +1 on both sides"
+  },
+  {
+    "id": "NET_BOOSTER_AND_WOUNDS",
+    "observed": 4,
+    "expected": 2,
+    "installedSeeYa": true
+  },
+  {
+    "id": "NET_ACTIONS_RANK_3_CORRECT",
+    "observed": "Actions / Turn 2 NET",
+    "expected": "Actions / Turn 2 NET"
+  },
+  {
+    "id": "DEATH_COUNTER_NOT_INCREMENTED",
+    "observed": 0,
+    "expected": 1,
+    "note": "UI also has manual counter buttons"
+  },
+  {
+    "id": "ARMOR_MINIMUM_AND_MORTAL_MOVE",
+    "observed": [
+      "Roll REF (1d10 + 1)",
+      "Roll MOVE (1d10 + 2)"
+    ],
+    "expected": [
+      "Roll REF (1d10 + 0)",
+      "Roll MOVE (1d10 + 1)"
+    ]
+  },
+  {
+    "id": "CYBERWARE_REMOVE_HUMANITY_REFUND",
+    "observed": 48,
+    "expected": 46,
+    "note": "Removal raises recoverable cap; therapy restores current Humanity"
+  },
+  {
+    "id": "ROLE_CHANGE_REPLACES_EARNED_SKILLS",
+    "observed": 6,
+    "expected": 10
+  },
+  {
+    "id": "MORTAL_INCOMING_DAMAGE",
+    "observed": {
+      "injuries": 0,
+      "deathSavePenalties": 0
+    },
+    "expected": {
+      "injuries": 1,
+      "deathSavePenalties": 1
+    }
+  },
+  {
+    "id": "CRITICAL_HEAD_MULTIPLIER",
+    "observed": 18,
+    "expected": 27,
+    "rawDamage": 9
+  },
+  {
+    "id": "WIZARD_SHIELD_LOST",
+    "observed": {
+      "cash": 2450,
+      "hasShield": false
+    },
+    "expected": {
+      "cash": 2450,
+      "hasShield": true
+    }
+  },
+  {
+    "id": "TECH_STARTING_SPECIALTIES",
+    "observed": {
+      "makerRank": 4,
+      "specialtyRanks": 4
+    },
+    "expected": {
+      "makerRank": 4,
+      "specialtyRanks": 8
+    }
+  },
+  {
+    "id": "SOURCE_MANIFEST",
+    "observed": {
+      "src/data/initialData.ts": "2de938cab1b12580c2dfcec41df857977a6e76ec3fd029924c6a79fde2998111",
+      "src/data/roleTemplates.ts": "c9884e087d90082587908f786ae5568a884e12017fe70c90efa298a434733a81",
+      "src/utils/dice.ts": "9cbc203b6166d70dd182f2847fb2607c16030887a52ac7998060172d7c755b1e",
+      "src/utils/storage.ts": "4edd1c4f09df29028307dcf04fc2e6e527a63b7f80f26e6b19dc095c41c06e53",
+      "src/utils/roleUtils.ts": "f6c6188b81a2ceab030c70b7a0c78172ef476d8552ee98cc8534de0e5dc27dfa",
+      "src/data/meleeRules.ts": "0e4b34dca790887c415715787a1389058de61dae0223d056732aabcd5043ad4d",
+      "src/data/datapoolCatalog.ts": "252cb32d3a900a40318a0b7eddcad888c76af0e9fb21ec561fc3f3e2516e4253",
+      "src/components/DamageCalculatorModal.tsx": "e4433aeaf7eada3a44a72274f9d1e6f9e93d3d7663bb746b630e2c8620557603",
+      "src/locales/i18n.ts": "3d6439c46c19ebfbc4b298cfb182f760465cb159b60e821889a223ef90ccad44",
+      "src/components/CharacterWizardModal.tsx": "8e862f73f468f2f91d4defb4d507044d93dbddc52263f2bafc8eee671d57ebf8",
+      "src/components/SkillsSection.tsx": "a848ddd5586add9e862e27cb8c8032bcc763adc5e1a1176316fdb60eb9afe88f",
+      "src/components/DiceRollerModal.tsx": "cae56ab32d3e33e83336fce23d613fdb8f39698729b9716447ed969e599f9738",
+      "src/components/WeaponsSection.tsx": "45820c498be016b5a186b7faa66ccff149641c862e7919a157e02e23c6b38d2c",
+      "src/components/TherapyModal.tsx": "b41b78a20e51b373e7e4919f928883036aaeec105d849a7263a0b9056aaf3dba",
+      "src/App.tsx": "6d759e5211131fffa4de8bf673f77516f87bb9b7d5df6073e5323eea1b0833e6",
+      "src/components/Header.tsx": "2451f4554d91fb36160194e43dd629f9724f6c5abc5f07769f88f08cf945fdd8",
+      "src/components/StatsSection.tsx": "e2f77827f101aca9c7d08a74936425bdb9dd5eb17fc74ed3dfe71e31a87b70d5",
+      "src/components/NetrunnerSection.tsx": "07bc4f46322dbcd3ebf6b98c86da888dd0e07149c0ca3adbfdae65db3a646530",
+      "src/components/RoleSection.tsx": "603d1fb7d7dc2148203b4c44d2be44ad511ae99a5bb7db02effac602155f6544",
+      "src/components/CyberwareSection.tsx": "31cd05117a50850d1a35f0d26eaeed22dfe833568552dd9d07536e836fe0131b",
+      "src/components/InjuriesSection.tsx": "971f88343854f8f0a44d6e5465b25ed10fe9c2ff64dafa4de0d9c6226280ea5c",
+      "src/components/LifepathSection.tsx": "6fdb5c8fc19fa05ef5e7c77f2097acaacb8298ab05968c52a7a12b0819a16b42",
+      "src/components/GearSection.tsx": "d3a51c565861f63ead92e350b9d7e7051e0a1215d9b1df72643103b02d3800d7",
+      "src/components/NotesSection.tsx": "c447e2c2e5d90c5eb45b371c8279469dbe47135b5b8501cea8b24efca31b1905",
+      "src/components/DataPoolShopModal.tsx": "392536daf20206a1c762b18d1d25deb31ec07d54362b9becd143649554e4e47e",
+      "src/data/datapoolVehicles.ts": "abe83546049976407dd090e447be29ada4a66b4028d5a40cf89533a24b919f6d",
+      "src/components/VehiclesSection.tsx": "9831964e2f195dfde4be005e3d88ee45f0561f05ddcbb75ded519d7866074644",
+      "src/components/SectionNav.tsx": "d955858d38fa93939ae824e4039e7bf7893ec1785557925ee8fb5cf87c8ea6d2"
+    }
+  },
+  {
+    "id": "BASELINE_CORRECT",
+    "observed": {
+      "HP": 40,
+      "criticalExplosion": 20,
+      "noCriticalDeathDie": 1,
+      "humanityTherapyCap": 56,
+      "assaultRifleDVs": [
+        17,
+        16,
+        15,
+        13,
+        15,
+        20,
+        25,
+        30
+      ],
+      "programCount": 8
+    },
+    "expected": {
+      "HP": 40,
+      "criticalExplosion": 20,
+      "noCriticalDeathDie": 1,
+      "humanityTherapyCap": 56,
+      "assaultRifleDVs": [
+        17,
+        16,
+        15,
+        13,
+        15,
+        20,
+        25,
+        30
+      ],
+      "programCount": 8
+    }
+  }
+]

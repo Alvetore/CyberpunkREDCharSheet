@@ -11,11 +11,14 @@ import {
   AppTheme,
   exportSingleCharacter,
   exportAllCharacters,
-  parseImportedJson
+  parseImportedJson,
+  hasStorageRecovery,
+  exportStorageRecovery
 } from './utils/storage';
 import { createEmptyCharacter } from './data/initialData';
 import { executeCyberpunkCheck, executeDamageRoll, executeDeathSave } from './utils/dice';
 import { sfx } from './utils/audio';
+import { effectiveStat, initiativeBase, injuryDeathPenalty, netActionBase, selectedWeaponProfile, updateWeaponAmmo, weaponAttackBase, weaponPenetration } from './utils/rules';
 
 import { Header } from './components/Header';
 import { StatsSection } from './components/StatsSection';
@@ -52,6 +55,7 @@ import {
 
 export const App: React.FC = () => {
   const [characters, setCharacters] = useState<Character[]>(() => loadStoredCharacters());
+  const [saveFailed, setSaveFailed] = useState(false);
   const [activeCharId, setActiveId] = useState<string>(() => {
     const saved = getActiveCharacterId();
     if (saved && characters.some((c) => c.id === saved)) return saved;
@@ -108,7 +112,7 @@ export const App: React.FC = () => {
 
   // Save characters to storage on change
   useEffect(() => {
-    saveCharactersToStorage(characters);
+    setSaveFailed(!saveCharactersToStorage(characters));
   }, [characters]);
 
   // Update active character ID in storage
@@ -215,12 +219,7 @@ export const App: React.FC = () => {
   };
 
   const handleRollInitiative = () => {
-    const armorPenalty = Math.min(
-      activeChar.armor.head.penalty || 0,
-      activeChar.armor.body.penalty || 0
-    );
-    const soloInit = activeChar.role === 'Solo' ? activeChar.roleAbilities.solo.initiativeReaction || 0 : 0;
-    const base = activeChar.stats.REF + armorPenalty + soloInit;
+    const base = initiativeBase(activeChar);
 
     const result = executeCyberpunkCheck({
       title: lang === 'ru' ? `Инициатива (${activeChar.name})` : `Initiative (${activeChar.name})`,
@@ -232,7 +231,8 @@ export const App: React.FC = () => {
   };
 
   const handleRollDeathSave = () => {
-    const result = executeDeathSave(activeChar.stats.BODY, activeChar.deathSavePenalties, lang);
+    const result = executeDeathSave(effectiveStat(activeChar, 'BODY'), activeChar.deathSavePenalties + injuryDeathPenalty(activeChar), lang);
+    handleUpdateActiveCharacter({ ...activeChar, deathSavePenalties: activeChar.deathSavePenalties + 1 });
     addRollResult(result);
   };
 
@@ -247,38 +247,63 @@ export const App: React.FC = () => {
     addRollResult(result);
   };
 
-  const handleRollWeaponAttack = (weapon: Weapon, targetDv?: number, rangeStr?: string) => {
-    // Find skill base
-    const skill = activeChar.skills.find((s) => s.id === weapon.skillId);
+  const handleRollWeaponAttack = (weapon: Weapon, targetDv?: number, rangeStr?: string, autofire = false) => {
+    weapon = selectedWeaponProfile(activeChar.weapons.find(item => item.id === weapon.id) ?? weapon);
+    autofire = autofire || weapon.skillId === 'autofire';
+    if (weapon.bodyRequirement && effectiveStat(activeChar, 'BODY') < weapon.bodyRequirement) { alert(`BODY ${weapon.bodyRequirement}+`); return; }
+    if (autofire && (weapon.currentAmmo < 10 || targetDv === undefined)) {
+      alert(lang === 'ru' ? 'Автоогонь требует 10 патронов и DV дистанции.' : 'Autofire needs 10 rounds and a range DV.');
+      return;
+    }
     const isMelee = weapon.skillId === 'melee_weapon' || weapon.skillId === 'brawling' || weapon.skillId === 'martial_arts' || weapon.category.includes('Melee');
-    const statVal = isMelee ? activeChar.stats.DEX : activeChar.stats.REF;
-    const skillLvl = skill ? skill.level : 0;
-    const armorPenalty = Math.min(activeChar.armor.head.penalty || 0, activeChar.armor.body.penalty || 0);
-
-    const hpMax = 10 + 5 * Math.ceil((activeChar.stats.BODY + activeChar.stats.WILL) / 2);
-    const woundPenalty = activeChar.hpCurrent <= 0 ? -4 : activeChar.hpCurrent <= Math.ceil(hpMax / 2) ? -2 : 0;
-
-    const baseVal = statVal + skillLvl + armorPenalty + woundPenalty;
+    const baseVal = weaponAttackBase(activeChar, autofire ? { ...weapon, skillId: 'autofire' } : weapon);
 
     const result = executeCyberpunkCheck({
       title: lang === 'ru' 
-        ? `Атака (${isMelee ? 'DEX' : 'REF'}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : isMelee ? ' [Ближний бой · 50% SP]' : ''}` 
-        : `Attack (${isMelee ? 'DEX' : 'REF'}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : isMelee ? ' [Melee · Half SP]' : ''}`,
+        ? `Атака (${isMelee ? 'DEX' : 'REF'}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : weaponPenetration(weapon) === 'half' ? ' [50% SP]' : ''}`
+        : `Attack (${isMelee ? 'DEX' : 'REF'}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : weaponPenetration(weapon) === 'half' ? ' [Half SP]' : ''}`,
       type: 'attack',
       baseVal,
       targetDv,
       lang
     });
     addRollResult(result);
+    if (autofire) {
+      handleUpdateActiveCharacter({ ...activeChar, weapons: activeChar.weapons.map(item => item.id === weapon.id ? updateWeaponAmmo(item, -10) : item) });
+      if (result.isSuccess) {
+        const damage = executeDamageRoll(`${weapon.name} · Autofire`, '2d6', lang);
+        const multiplier = Math.min(result.margin!, weapon.autofireLimit ?? (weapon.category === 'Assault Rifle' ? 4 : 3));
+        const spot = activeChar.role === 'Solo' && !activeChar.soloSpotWeaknessUsed ? activeChar.roleAbilities.solo.spotWeakness : 0;
+        damage.rawDamage = damage.rawDamage! * multiplier + spot;
+        damage.total = damage.rawDamage + (damage.bonusDamage || 0);
+        damage.summary += ` · ×${multiplier}${spot ? ` + Spot Weakness ${spot}` : ''} → ${damage.total}`;
+        addRollResult(damage);
+        if (spot) handleUpdateActiveCharacter({ ...activeChar, soloSpotWeaknessUsed: true, weapons: activeChar.weapons.map(item => item.id === weapon.id ? updateWeaponAmmo(item, -10) : item) });
+      }
+    }
   };
 
   const handleRollWeaponDamage = (weapon: Weapon) => {
-    const isMelee = weapon.skillId === 'melee_weapon' || weapon.skillId === 'brawling' || weapon.skillId === 'martial_arts' || weapon.category.includes('Melee');
+    weapon = selectedWeaponProfile(activeChar.weapons.find(item => item.id === weapon.id) ?? weapon);
+    if (weapon.skillId === 'autofire') { alert(lang === 'ru' ? 'Используйте строку Автоогонь в таблице дистанций: урон зависит от превышения DV.' : 'Use Autofire in the range table: damage depends on the margin over DV.'); return; }
+    if (weapon.bodyRequirement && effectiveStat(activeChar, 'BODY') < weapon.bodyRequirement) { alert(`BODY ${weapon.bodyRequirement}+`); return; }
+    const isMelee = weaponPenetration(weapon) === 'half';
     const title = lang === 'ru' 
       ? `Урон: ${weapon.name}${isMelee ? ' (Игнорирует 50% SP)' : ''}` 
       : `Damage: ${weapon.name}${isMelee ? ' (Ignores 50% SP)' : ''}`;
-    const result = executeDamageRoll(title, weapon.damage, lang);
-    addRollResult(result);
+    try {
+      const result = executeDamageRoll(title, weapon.damage, lang);
+      if (weapon.canCrit === false) { result.total -= result.bonusDamage || 0; result.bonusDamage = 0; result.isCritInjury = false; result.summary = `${result.damageDice?.join(' + ')} = ${result.total}`; }
+      if (weapon.armorPenetration === 'ignore') result.title += lang === 'ru' ? ' · Напрямую по HP' : ' · Direct HP';
+      const spot = activeChar.role === 'Solo' && !activeChar.soloSpotWeaknessUsed ? activeChar.roleAbilities.solo.spotWeakness : 0;
+      if (spot) {
+        result.total += spot;
+        result.rawDamage! += spot;
+        result.summary += ` + Spot Weakness ${spot} → ${result.total}`;
+        handleUpdateActiveCharacter({ ...activeChar, soloSpotWeaknessUsed: true });
+      }
+      addRollResult(result);
+    } catch (error) { alert(error instanceof Error ? error.message : String(error)); }
   };
 
   const handleRollCustomCheck = (title: string, baseVal: number, targetDv?: number, modifiers?: { name: string; val: number }[]) => {
@@ -291,16 +316,19 @@ export const App: React.FC = () => {
       lang
     });
     addRollResult(result);
+    return result;
   };
 
   const handleRollCustomDamage = (title: string, formula: string) => {
-    const result = executeDamageRoll(title, formula, lang);
-    addRollResult(result);
+    try {
+      if (/^\d+$/.test(formula)) {
+        addRollResult({ id: crypto.randomUUID(), timestamp: Date.now(), title, type: 'damage', total: Number(formula), rawDamage: Number(formula), summary: `${formula} HP · ${lang === 'ru' ? 'Напрямую, без кубов и абляции' : 'Direct, no dice or ablation'}` });
+      } else addRollResult(executeDamageRoll(title, formula, lang));
+    } catch (error) { alert(error instanceof Error ? error.message : String(error)); }
   };
 
   const handleRollInterfaceAction = (actionName: string, dv?: number, bonus = 0) => {
-    const interfaceRank = activeChar.roleAbilities.netrunner.interfaceRank || 4;
-    const baseVal = interfaceRank + bonus;
+    const baseVal = netActionBase(activeChar, actionName, bonus);
 
     const result = executeCyberpunkCheck({
       title: `NET: ${actionName}`,
@@ -313,15 +341,17 @@ export const App: React.FC = () => {
   };
 
   const handleRollProgramAttack = (prog: ProgramItem) => {
-    const interfaceRank = activeChar.roleAbilities.netrunner.interfaceRank || 4;
-    const baseVal = interfaceRank + prog.atkBonus;
+    if (!prog.isInstalled || (prog.category !== 'Attacker' && !prog.isActive)) return;
+    const baseVal = prog.category === 'Black ICE' ? prog.atkBonus : netActionBase(activeChar, prog.name, prog.atkBonus);
 
     const result = executeCyberpunkCheck({
       title: lang === 'ru' ? `NET Атака: ${prog.name} (ATK +${prog.atkBonus})` : `NET Attack: ${prog.name} (ATK +${prog.atkBonus})`,
       type: 'net',
-      baseVal
+      baseVal,
+      lang
     });
     addRollResult(result);
+    if (prog.category === 'Attacker') handleUpdateActiveCharacter({ ...activeChar, programs: activeChar.programs.map(item => item.id === prog.id ? { ...item, isActive: false } : item) });
   };
 
   if (!activeChar) return null;
@@ -354,6 +384,12 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-2.5 sm:p-4 md:p-5 space-y-4 pb-24 sm:pb-8 min-w-0">
+        {(saveFailed || hasStorageRecovery()) && (
+          <div role="alert" className="p-3 border border-amber-500 text-amber-300 rounded text-sm">
+            {saveFailed ? (lang === 'ru' ? 'Не удалось сохранить лист. Экспортируйте данные перед закрытием страницы.' : 'Saving failed. Export your data before closing this page.') : (lang === 'ru' ? 'Повреждённое сохранение сохранено отдельно для восстановления.' : 'The damaged original has been preserved for recovery.')}
+            <button className="underline ml-3" onClick={exportStorageRecovery}>{lang === 'ru' ? 'Выгрузить резервную копию' : 'Download recovery copy'}</button>
+          </div>
+        )}
         {/* Core Stats always visible on top */}
         <StatsSection
           character={activeChar}
@@ -501,6 +537,7 @@ export const App: React.FC = () => {
 
       {/* Damage Calculator & Armor Ablation Modal */}
       <DamageCalculatorModal
+        key={`${activeChar.id}:${isDamageCalcOpen}`}
         isOpen={isDamageCalcOpen}
         onClose={() => setIsDamageCalcOpen(false)}
         character={activeChar}

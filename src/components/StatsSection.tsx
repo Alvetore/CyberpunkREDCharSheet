@@ -4,7 +4,7 @@ import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { calculateHumanityStats } from '../utils/roleUtils';
 import { TherapyModal } from './TherapyModal';
-import { CPR_ROLE_PACKAGES } from '../data/roleTemplates';
+import { effectiveStat, initiativeBase, maxHP } from '../utils/rules';
 import { CPR_SKILLS } from '../data/initialData';
 import { 
   Heart, 
@@ -59,7 +59,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
   const [isTherapyOpen, setIsTherapyOpen] = useState(false);
 
   // Derived formulas
-  const hpMax = character.hpMaxManual || (10 + 5 * Math.ceil((character.stats.BODY + character.stats.WILL) / 2));
+  const hpMax = maxHP(character);
   const seriouslyWoundedThreshold = Math.ceil(hpMax / 2);
 
   // Humanity & Cyberware Loss calculations (Cyberpunk RED Corebook p. 229)
@@ -92,12 +92,12 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
 
   // Wound state
   const isMortallyWounded = character.hpCurrent <= 0;
-  const isSeriouslyWounded = !isMortallyWounded && character.hpCurrent <= seriouslyWoundedThreshold;
+  const isSeriouslyWounded = !isMortallyWounded && character.hpCurrent < seriouslyWoundedThreshold;
 
   const handleStatChange = (key: StatKey, delta: number) => {
     sfx.playClick();
     const current = character.stats[key];
-    const newVal = Math.max(1, Math.min(10, current + delta));
+    const newVal = Math.max(0, Math.min(key === 'BODY' ? 20 : 10, current + delta));
     const updatedStats = { ...character.stats, [key]: newVal };
 
     // Auto update luck max if luck changed
@@ -108,7 +108,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
       const empDelta = newVal - current;
       const newBaseMax = character.humanityMaxManual || (newVal * 10);
       const newMaxRecoverable = Math.max(0, newBaseMax - cyberwarePermanentLoss);
-      humanityCurrent = Math.max(0, Math.min(newMaxRecoverable, character.humanityCurrent + empDelta * 10));
+      humanityCurrent = Math.min(newMaxRecoverable, character.humanityCurrent + empDelta * 10);
     }
 
     onUpdateCharacter({
@@ -130,7 +130,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
 
   const handleHumanityChange = (delta: number) => {
     sfx.playClick();
-    const newHumanity = Math.max(0, Math.min(maxRecoverableHumanity, character.humanityCurrent + delta));
+    const newHumanity = Math.min(maxRecoverableHumanity, character.humanityCurrent + delta);
     onUpdateCharacter({
       ...character,
       humanityCurrent: newHumanity
@@ -141,24 +141,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
     sfx.playClick();
     if (newRole === character.role) return;
 
-    const pkg = CPR_ROLE_PACKAGES[newRole];
-    let updatedSkills = character.skills;
-    if (pkg) {
-      const customSkills = character.skills.filter((s) => s.isCustom);
-      updatedSkills = [
-        ...CPR_SKILLS.map((s) => ({
-          ...s,
-          level: pkg.streetratSkills[s.id] || 0
-        })),
-        ...customSkills
-      ];
-    }
-
-    onUpdateCharacter({
-      ...character,
-      role: newRole,
-      skills: updatedSkills
-    });
+    onUpdateCharacter({ ...character, role: newRole });
   };
 
   const hpPercent = Math.max(0, Math.min(100, Math.round((character.hpCurrent / hpMax) * 100)));
@@ -225,7 +208,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                 min="1"
                 max="10"
                 value={character.roleRank}
-                onChange={(e) => onUpdateCharacter({ ...character, roleRank: parseInt(e.target.value, 10) || 1 })}
+                onChange={(e) => { const rank = Math.max(1, Math.min(10, parseInt(e.target.value, 10) || 1)); onUpdateCharacter({ ...character, roleRank: rank, roleAbilities: { ...character.roleAbilities, netrunner: character.role === 'Netrunner' ? { interfaceRank: rank } : character.roleAbilities.netrunner, tech: character.role === 'Tech' ? { ...character.roleAbilities.tech, makerRank: rank } : character.roleAbilities.tech, medtech: character.role === 'Medtech' ? { ...character.roleAbilities.medtech, medicineRank: rank } : character.roleAbilities.medtech } }); }}
                 className="w-full bg-zinc-950 border border-zinc-800 focus:border-red-500 rounded px-2.5 py-1.5 text-zinc-100 font-bold text-sm text-center focus:outline-none"
               />
             </div>
@@ -238,16 +221,20 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                 type="button"
                 onClick={onRollInitiative}
                 className="w-full bg-zinc-950 hover:bg-yellow-950/40 border border-yellow-700/60 text-yellow-300 font-bold text-sm py-1.5 rounded flex items-center justify-center gap-1 transition"
-                title={`${t.rollInitiative}: REF (${character.stats.REF}) + 1d10`}
+                title={`${t.rollInitiative}: REF (${initiativeBase(character)}) + 1d10`}
               >
                 <Zap size={13} />
-                <span>{character.stats.REF + armorPenalty}</span>
+                <span>{initiativeBase(character)}</span>
               </button>
             </div>
           </div>
         </div>
       </div>
 
+      <label className="flex gap-2 items-center text-xs text-zinc-400">
+        <input type="checkbox" checked={character.automaticCyberwareEffects ?? false} onChange={event => onUpdateCharacter({ ...character, automaticCyberwareEffects: event.target.checked })} />
+        {lang === 'ru' ? 'Автоматически учитывать эффекты поддержанных имплантов (отключите, если уже внесли бонусы вручную)' : 'Apply supported cyberware effects (disable if bonuses were already entered manually)'}
+      </label>
       {/* Vital Stats Cards: HP, Humanity, Luck, Death Save */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* HP CARD */}
@@ -603,7 +590,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
           {STAT_ORDER.map((statKey) => {
             const rawVal = character.stats[statKey];
             const isPenalized = (statKey === 'REF' || statKey === 'DEX' || statKey === 'MOVE') && armorPenalty < 0;
-            const effectiveVal = isPenalized ? Math.max(1, rawVal + armorPenalty) : rawVal;
+            const effectiveVal = effectiveStat(character, statKey);
 
             return (
               <div

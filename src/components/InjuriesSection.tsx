@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Character, ArmorItem } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { PRESET_ARMOR_OPTIONS } from '../data/initialData';
+import { rollNewInjury } from '../utils/rules';
 import { rollD6 } from '../utils/dice';
 import { sfx } from '../utils/audio';
 import { 
@@ -143,13 +144,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
   // Roll Random 2d6 Injury
   const handleRollRandomInjury = (loc: 'head' | 'body') => {
     sfx.playDiceRoll();
-    const d1 = rollD6();
-    const d2 = rollD6();
-    const rollTotal = d1 + d2;
-
-    const matched = character.criticalInjuries.find(
-      (inj) => inj.location === loc && inj.rollNumber === rollTotal
-    );
+    const matched = rollNewInjury(character.criticalInjuries, loc, rollD6);
 
     if (matched) {
       setTimeout(() => sfx.playCritFailure(), 200);

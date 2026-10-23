@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Character } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
@@ -34,7 +34,6 @@ export const TherapyModal: React.FC<TherapyModalProps> = ({
   onAddRollResult,
   lang
 }) => {
-  if (!isOpen) return null;
 
   const stats = calculateHumanityStats(character);
   const [deductCost, setDeductCost] = useState(true);
@@ -48,6 +47,11 @@ export const TherapyModal: React.FC<TherapyModalProps> = ({
   } | null>(null);
 
   const [manualInput, setManualInput] = useState(stats.currentHumanity.toString());
+  useEffect(() => {
+    if (isOpen) { setManualInput(String(character.humanityCurrent)); setLastTherapyResult(null); }
+  }, [isOpen, character.id]);
+
+  if (!isOpen) return null;
 
   const rollDice = (count: number): number[] => {
     const rolls: number[] = [];
@@ -138,7 +142,7 @@ export const TherapyModal: React.FC<TherapyModalProps> = ({
     sfx.playClick();
     const parsed = parseInt(manualInput, 10);
     if (isNaN(parsed)) return;
-    const clamped = Math.max(0, Math.min(stats.maxRecoverableHumanity, parsed));
+    const clamped = Math.min(stats.maxRecoverableHumanity, parsed);
 
     onUpdateCharacter({
       ...character,

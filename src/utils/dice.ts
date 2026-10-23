@@ -68,8 +68,8 @@ export function executeCyberpunkCheck(options: RollCheckOptions): RollResult {
   let margin: number | undefined = undefined;
 
   if (options.targetDv !== undefined && options.targetDv !== null) {
-    // In CPR, you must MEET or BEAT the DV (Total >= DV)
-    isSuccess = total >= options.targetDv;
+    // The acting character must beat the DV; ties go to the defender.
+    isSuccess = total > options.targetDv;
     margin = total - options.targetDv;
   }
 
@@ -108,14 +108,21 @@ export function executeCyberpunkCheck(options: RollCheckOptions): RollResult {
   };
 }
 
+export function parseDamageFormula(formula: string): { numDice: number; flatBonus: number } {
+  const match = formula.trim().match(/^(\d+)d6(?:\+(\d+))?$/i);
+  if (!match) throw new Error('Invalid damage formula. Use Nd6 or Nd6+N.');
+  const numDice = Number(match[1]);
+  const flatBonus = Number(match[2] || 0);
+  if (!Number.isSafeInteger(numDice) || numDice < 1 || numDice > 100 || !Number.isSafeInteger(flatBonus) || flatBonus > 10000) throw new Error('Damage formula is out of range (1–100 dice).');
+  return { numDice, flatBonus };
+}
+
 export function executeDamageRoll(title: string, formula: string, lang: 'ru' | 'en' = 'ru'): RollResult {
   sfx.playDiceRoll();
 
   const isRu = lang !== 'en';
   // Parse formula like "3d6", "4d6+2", "5d6"
-  const match = formula.match(/^(\d+)d6(?:\+(\d+))?$/i);
-  const numDice = match ? parseInt(match[1], 10) : 3;
-  const flatBonus = match && match[2] ? parseInt(match[2], 10) : 0;
+  const { numDice, flatBonus } = parseDamageFormula(formula);
 
   const diceResults: number[] = [];
   let sixCount = 0;
@@ -152,6 +159,7 @@ export function executeDamageRoll(title: string, formula: string, lang: 'ru' | '
     damageDice: diceResults,
     isCritInjury,
     bonusDamage,
+    rawDamage: sum + flatBonus,
     total,
     summary
   };
@@ -164,7 +172,7 @@ export function executeDeathSave(bodyStat: number, penalty: number, lang: 'ru' |
   const die = rollD10();
   const effectiveRoll = die + penalty;
   // CPR Rule: Roll 1d10 + penalties. If roll >= BODY, character fails. Must roll < BODY!
-  const isSuccess = effectiveRoll < bodyStat;
+  const isSuccess = die !== 10 && effectiveRoll < bodyStat;
 
   if (isSuccess) {
     setTimeout(() => sfx.playCritSuccess(), 100);

@@ -56,24 +56,21 @@ export interface MartialArtsStyleInfo {
  * Calculates Unarmed Strike damage from character's BODY stat according to official CPR rules.
  * BODY <= 4: 1d6
  * BODY 5-6: 2d6
- * BODY 7-8: 3d6
- * BODY 9-10: 4d6
- * BODY 11+: 5d6 (Linear Frame Sigma/Beta, Grafted Muscle, etc.)
+ * BODY 7-10: 3d6
+ * BODY 11+: 4d6 (Linear Frame Sigma/Beta, Grafted Muscle, etc.)
  */
-export function getUnarmedDamage(body: number): string {
-  if (body <= 4) return '1d6';
+export function getUnarmedDamage(body: number, hasCyberarm = false): string {
+  if (body <= 4) return hasCyberarm ? '2d6' : '1d6';
   if (body <= 6) return '2d6';
-  if (body <= 8) return '3d6';
-  if (body <= 10) return '4d6';
-  return '5d6';
+  if (body <= 10) return '3d6';
+  return '4d6';
 }
 
 export const CPR_BODY_DAMAGE_SCALE = [
-  { range: 'BODY ≤ 4', damage: '1d6', descRu: 'Слабое телосложение (1–4)', descEn: 'Weak physique (1–4)' },
-  { range: 'BODY 5–6', damage: '2d6', descRu: 'Среднее телосложение (5–6)', descEn: 'Average street physique (5–6)' },
-  { range: 'BODY 7–8', damage: '3d6', descRu: 'Крепкий атлет / Соло (7–8)', descEn: 'Tough athlete / Solo (7–8)' },
-  { range: 'BODY 9–10', damage: '4d6', descRu: 'Пик человеческих сил (9–10)', descEn: 'Peak human power (9–10)' },
-  { range: 'BODY 11+', damage: '5d6', descRu: 'Кибернетический каркас / Экзоскелет (11+)', descEn: 'Linear Frame / Cyborg (11+)' },
+  { range: 'BODY ≤ 4', damage: '1d6', descRu: 'С киберрукой: минимум 2d6', descEn: 'With a cyberarm: minimum 2d6' },
+  { range: 'BODY 5–6', damage: '2d6', descRu: 'Среднее телосложение', descEn: 'Average physique' },
+  { range: 'BODY 7–10', damage: '3d6', descRu: 'Крепкое телосложение', descEn: 'Strong physique' },
+  { range: 'BODY 11+', damage: '4d6', descRu: 'Кибернетический каркас', descEn: 'Linear frame' },
 ];
 
 export const CPR_MELEE_WEAPON_TIERS: MeleeWeaponTier[] = [
@@ -132,8 +129,8 @@ export const CPR_BRAWLING_MANEUVERS: BrawlingManeuver[] = [
     requirementEn: '1 free hand or foot',
     checkRu: 'ЛВК + Драка + 1d10 против ЛВК + Уклонение цели',
     checkEn: 'DEX + Brawling + 1d10 vs Defender DEX + Evasion + 1d10',
-    effectRu: 'Наносит урон на основе вашего ТЕЛО (игнорирует 50% ОС брони цели, округление вверх). Темп боя: СКОР 2 (2 удара за действие).',
-    effectEn: 'Deals damage based on your BODY stat (ignores half of target SP, rounded up). ROF 2 (2 attacks per action).',
+    effectRu: 'Наносит урон на основе вашего ТЕЛО (броня учитывается полностью). Темп боя: СКОР 2 (2 удара за действие).',
+    effectEn: 'Deals damage based on your BODY stat (armor applies in full). ROF 2 (2 attacks per action).',
     damageType: 'unarmed'
   },
   {
@@ -142,10 +139,10 @@ export const CPR_BRAWLING_MANEUVERS: BrawlingManeuver[] = [
     nameEn: 'Grapple / Grab',
     requirementRu: '1 свободная рука, цель в пределах досягаемости',
     requirementEn: '1 free hand, target within melee reach',
-    checkRu: 'ЛВК + Драка + 1d10 против ЛВК + Драка (или Уклонение) цели',
-    checkEn: 'DEX + Brawling + 1d10 vs Target DEX + Brawling (or Evasion) + 1d10',
-    effectRu: 'При успехе цель захвачена (Grappled): не может перемещаться самостоятельно, получает штраф -2 ко всем действиям (кроме попыток вырваться). Вы можете волочить цель со скоростью 1/2 СКО или использовать как живой щит (Human Shield). Для освобождения цель тратит Действие на встречный бросок Драки.',
-    effectEn: 'Target is Grappled: cannot move on their own, suffers -2 to all actions (except escape). You can drag target at 1/2 MOVE or use as Human Shield. Target spends Action on their turn to roll DEX + Brawling to break free.',
+    checkRu: 'ЛВК + Драка + 1d10 против ЛВК + Драка цели',
+    checkEn: 'DEX + Brawling + 1d10 vs Target DEX + Brawling + 1d10',
+    effectRu: 'При успехе цель захвачена (Grappled): не может перемещаться самостоятельно, получает штраф -2 ко всем действиям (кроме попыток вырваться). Оба участника получают −2 ко всем действиям. Вы можете волочить цель со своей СКО или использовать как живой щит (Human Shield). Для освобождения цель тратит Действие на встречный бросок Драки.',
+    effectEn: 'Target is Grappled: cannot move on their own, suffers -2 to all actions (except escape). Both participants take -2 to all Actions. You can drag the target at your MOVE or use as Human Shield. Target spends Action on their turn to roll DEX + Brawling to break free.',
     damageType: 'none'
   },
   {
@@ -168,8 +165,8 @@ export const CPR_BRAWLING_MANEUVERS: BrawlingManeuver[] = [
     requirementEn: 'Target is already Grappled by you',
     checkRu: 'Требует Действие. Завершает захват.',
     checkEn: 'Requires Action. Ends the grapple.',
-    effectRu: 'Вы бросаете цель на землю: цель сбита с ног (Prone) и получает полный урон рукопашного удара (на основе вашего ТЕЛО, игнорируя 50% ОС). Если бросить во второго врага — оба падают с ног и получают урон!',
-    effectEn: 'You throw target to ground: target falls Prone and takes full unarmed strike damage (based on your BODY, ignoring 50% SP). If thrown into another person, both take damage and fall Prone!',
+    effectRu: 'Вы бросаете цель на землю: цель сбита с ног (Prone) и получает урон, равный вашему ТЕЛО, напрямую по ПЗ, без абляции брони.',
+    effectEn: 'You throw target to ground: target falls Prone and takes damage equal to your BODY directly to HP, without armor ablation.',
     damageType: 'unarmed'
   },
   {
@@ -218,8 +215,8 @@ export const CPR_MARTIAL_ARTS_STYLES: Record<MartialArtsStyle, MartialArtsStyleI
         "nameRu": "Приём обезоруживания (Disarming Strike)",
         "nameEn": "Disarming Strike",
         "style": "Aikido",
-        "requirementRu": "В этот ход вы нанесли удар одной и той же цели атакой Рукопашного боя и атакой Боевых Искусств.",
-        "requirementEn": "You hit the same target with both a Brawling attack and a Martial Arts attack this turn.",
+        "requirementRu": "В этот ход вы попали по одной цели Холодным оружием и Боевыми искусствами.",
+        "requirementEn": "You hit the same target with both a Melee Weapon attack and a Martial Arts attack this turn.",
         "checkRu": "DEX + Боевые искусства + 1d10 против СЛ15",
         "checkEn": "DEX + Martial Arts + 1d10 vs DV 15",
         "effectRu": "Раз за ход при успехе любой предмет или оружие в руках у цели оказывается у вас в руках либо падает на пол (на ваш выбор).",
@@ -257,8 +254,8 @@ export const CPR_MARTIAL_ARTS_STYLES: Record<MartialArtsStyle, MartialArtsStyleI
         "nameRu": "Сломать броню (Armor Breaking Strike)",
         "nameEn": "Armor Breaking Strike",
         "style": "Karate",
-        "requirementRu": "В этот ход вы нанесли удар одной и той же цели атакой Рукопашного боя и атакой Боевых Искусств.",
-        "requirementEn": "You hit the same target with both a Brawling attack and a Martial Arts attack this turn.",
+        "requirementRu": "В этот ход вы попали по одной цели Холодным оружием и Боевыми искусствами.",
+        "requirementEn": "You hit the same target with both a Melee Weapon attack and a Martial Arts attack this turn.",
         "checkRu": "DEX + Боевые искусства + 1d10 против СЛ15",
         "checkEn": "DEX + Martial Arts + 1d10 vs DV 15",
         "effectRu": "Броня противника снижается ещё на два пункта (-2 SP дополнительной абляции брони за один ход!).",

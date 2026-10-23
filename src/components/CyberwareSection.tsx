@@ -3,6 +3,7 @@ import { Character, CyberwareItem, CyberwareCategory, RollResult } from '../type
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { calculateHumanityStats } from '../utils/roleUtils';
+import { initializeCyberware } from '../utils/rules';
 import { TherapyModal } from './TherapyModal';
 import { 
   Cpu, 
@@ -100,7 +101,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
       newHumanity = Math.min(nextStats.maxRecoverableHumanity, character.humanityCurrent + cost);
     } else {
       // CPR in-game removal rules: only refund permanent cap penalty (+2 standard, +4 borgware)
-      newHumanity = Math.min(nextStats.maxRecoverableHumanity, character.humanityCurrent + (cost > 0 ? permRefund : 0));
+      newHumanity = Math.min(nextStats.maxRecoverableHumanity, character.humanityCurrent);
     }
 
     onUpdateCharacter({
@@ -124,13 +125,13 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
       description: newItem.description || ''
     };
 
-    const newCyberware = [...character.cyberware, item];
+    const newCyberware = [...character.cyberware, initializeCyberware(item)];
     const nextStats = calculateHumanityStats({ ...character, cyberware: newCyberware });
 
     // Deduct immediate installation HL trauma, capped at new maximum recoverable
     const newHumanity = Math.min(
       nextStats.maxRecoverableHumanity,
-      Math.max(0, character.humanityCurrent - cost)
+      character.humanityCurrent - cost
     );
 
     onUpdateCharacter({
