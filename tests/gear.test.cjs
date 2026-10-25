@@ -64,8 +64,8 @@ test('free apps and subscriptions keep zero price and monthly billing through sa
 });
 
 test('actual gear modal selects a catalog card, buys quantity and supports owned gear without cash loss',()=>{
-  let updated;const view=mount(GearSection,{character:fresh(),lang:'en',onOpenShop(){throw new Error('Gear catalog must open directly');},onUpdateCharacter:c=>updated=c});
-  button(view.render(),'DataPool Catalog').props.onClick();
+  let updated;const view=mount(GearSection,{character:fresh(),lang:'en',onUpdateCharacter:c=>updated=c});
+  button(view.render(),'Add Gear Item').props.onClick();
   const browser=nodes(view.render(),n=>n.type===GearCatalogBrowser)[0];browser.props.onSelect(find('Фонарик'));
   nodes(view.render(),n=>n.props['aria-label']==='Item quantity')[0].props.onChange({target:{value:'3'}});
   button(view.render(),'Buy').props.onClick();assert.equal(updated.cashEb,940);assert.equal(updated.gear[0].quantity,3);

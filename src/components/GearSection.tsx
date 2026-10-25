@@ -11,14 +11,12 @@ import {
   Plus, 
   Trash2, 
   CreditCard,
-  Utensils,
-  ShoppingCart
+  Utensils
 } from 'lucide-react';
 
 interface GearSectionProps {
   character: Character;
   onUpdateCharacter: (char: Character) => void;
-  onOpenShop?: (category?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' | 'vehicles') => void;
   lang: Language;
 }
 
@@ -44,7 +42,6 @@ const HOUSING_OPTIONS: { id: string; nameRu: string; nameEn: string }[] = [
 export const GearSection: React.FC<GearSectionProps> = ({
   character,
   onUpdateCharacter,
-  onOpenShop,
   lang
 }) => {
   const t = translations[lang];
@@ -199,21 +196,6 @@ export const GearSection: React.FC<GearSectionProps> = ({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {onOpenShop && (
-              <button
-                onClick={() => {
-                  sfx.playClick();
-                  setShowAddModal(true);
-                  setError('');
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-950/60 hover:bg-yellow-600 border border-yellow-700/80 text-yellow-300 hover:text-black font-bold text-xs uppercase tracking-wider rounded transition font-orbitron"
-                title={lang === 'ru' ? "Купить снаряжение из каталога DataPool" : "Buy gear from DataPool catalog"}
-              >
-                <ShoppingCart size={14} className="text-yellow-400" />
-                <span>{lang === 'ru' ? 'Каталог DataPool' : 'DataPool Catalog'}</span>
-              </button>
-            )}
-
             <button
               onClick={() => {
                 sfx.playClick();

@@ -477,7 +477,6 @@ export const App: React.FC = () => {
             <GearSection
               character={activeChar}
               onUpdateCharacter={handleUpdateActiveCharacter}
-              onOpenShop={handleOpenShop}
               lang={lang}
             />
           )}
