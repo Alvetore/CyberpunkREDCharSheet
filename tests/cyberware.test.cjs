@@ -10,6 +10,8 @@ const { isCharacter } = load('src/utils/characterValidation.ts');
 const { calculateHumanityStats } = load('src/utils/roleUtils.ts');
 const { DataPoolShopModal } = load('src/components/DataPoolShopModal.tsx');
 const { CyberwareInstallModal } = load('src/components/CyberwareInstallModal.tsx');
+const { CyberwareCatalogBrowser } = load('src/components/CyberwareCatalogBrowser.tsx');
+const { CyberwareSection } = load('src/components/CyberwareSection.tsx');
 let serial=0;
 const fresh=()=>({...createEmptyCharacter('Chrome'),cyberware:[],weapons:[],humanityCurrent:80,stats:{...createEmptyCharacter('Stats').stats,EMP:8}});
 const owned=(id,extra={})=>({...structuredClone(DATAPOOL_CYBERWARE.find(item=>item.id===`cat-cyber-${id}`)),id:`owned-${++serial}`,isInstalled:false,...extra});
@@ -20,6 +22,32 @@ const put=(c,item,targets,weaponId)=>{
 };
 beforeEach(()=>{
   const memory=new Map();global.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)};global.alert=()=>{};
+});
+
+test('sectioned cyberware catalog keeps all 173 choices reachable and combines section and search filters',()=>{
+  const view=mount(CyberwareCatalogBrowser,{lang:'en',onSelect(){}});
+  const cards=tree=>nodes(tree,n=>n.type==='button'&&n.props['aria-label']?.startsWith('Select:'));
+  assert.equal(cards(view.render()).length,173);
+  button(view.render(),'Cyberlegs & options').props.onClick();
+  const legs=cards(view.render());assert.ok(legs.length>0&&legs.length<173);
+  assert.ok(legs.every(card=>!card.props['aria-label'].includes('гранатомёт')));
+  nodes(view.render(),n=>n.type==='input')[0].props.onChange({target:{value:'  выкидной гранатомёт  '}});
+  assert.equal(cards(view.render()).length,0);
+  button(view.render(),'All sections').props.onClick();
+  assert.equal(cards(view.render()).length,1);
+  assert.equal(cards(view.render())[0].props['aria-label'],'Select: Выкидной гранатомёт');
+});
+
+test('choosing a catalog card preserves weapon and slot metadata through the actual add handler',()=>{
+  let updated;const c=fresh();
+  const parent=mount(CyberwareSection,{character:c,lang:'en',onUpdateCharacter:next=>updated=next});
+  button(parent.render(),'Install Cyberware').props.onClick();
+  const browser=nodes(parent.render(),n=>n.type===CyberwareCatalogBrowser)[0];assert.ok(browser);
+  const view=mount(CyberwareCatalogBrowser,browser.props);
+  button(view.render(),'Cyberarms & options').props.onClick();
+  nodes(view.render(),n=>n.type==='button'&&n.props['aria-label']==='Select: Выкидной гранатомёт')[0].props.onClick();
+  button(parent.render(),'Add and choose slots').props.onClick();
+  const item=updated.cyberware.at(-1);assert.equal(item.catalogId,'cat-cyber-108');assert.equal(item.installRule.slots,2);assert.equal(item.weapon.damage,'6d6');assert.equal(item.isInstalled,false);assert.equal(updated.humanityCurrent,c.humanityCurrent);
 });
 
 test('all 173 catalog records keep valid metadata, descriptions and source identities',()=>{

@@ -8,6 +8,7 @@ import { TherapyModal } from './TherapyModal';
 import { DATAPOOL_CYBERWARE } from '../data/datapoolCatalog';
 import { cyberwareCapLoss, cyberwareDefinition, cyberwareHosts, cyberwareSlotLabel, cyberwareWarnings, isCyberwareInstalled, uninstallCyberware } from '../utils/cyberware';
 import { CyberwareInstallModal } from './CyberwareInstallModal';
+import { CyberwareCatalogBrowser } from './CyberwareCatalogBrowser';
 import { 
   Cpu, 
   Plus, 
@@ -65,7 +66,6 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
   const [itemToDelete, setItemToDelete] = useState<CyberwareItem | null>(null);
   const [installId, setInstallId] = useState<string | null>(null);
-  const [catalogQuery, setCatalogQuery] = useState('');
   const itemToInstall = character.cyberware.find(item => item.id === installId);
   const warnings = cyberwareWarnings(character, lang);
   const hosts = cyberwareHosts(character);
@@ -260,12 +260,13 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
       {/* Add Cyberware Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
-          <div className="bg-zinc-900 border-2 border-cyan-500 w-full max-w-lg rounded-lg shadow-2xl p-4 sm:p-5 space-y-4 max-h-[92dvh] overflow-y-auto">
+          <div role="dialog" aria-modal="true" aria-label={lang === 'ru' ? 'Каталог киберимплантов' : 'Cyberware catalog'} className="bg-zinc-900 border-2 border-cyan-500 w-full max-w-4xl rounded-lg shadow-2xl p-4 sm:p-5 space-y-4 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
               <h3 className="font-orbitron font-bold text-cyan-400 text-sm uppercase">
                 {t.addCyberware}
               </h3>
               <button
+                aria-label={lang === 'ru' ? 'Закрыть каталог' : 'Close catalog'}
                 onClick={() => setShowAddModal(false)}
                 className="text-zinc-400 hover:text-white"
               >
@@ -273,28 +274,15 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
               </button>
             </div>
 
-            {/* Presets */}
-            <div>
-              <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                {lang === 'ru' ? 'Полный каталог имплантов DataPool' : 'Full DataPool cyberware catalog'}
-              </label>
-              <input aria-label="Search cyberware" placeholder={lang === 'ru' ? 'Поиск импланта...' : 'Search cyberware...'} value={catalogQuery} onChange={event => setCatalogQuery(event.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs mb-2" />
-              <select
-                aria-label="Cyberware catalog"
-                onChange={(e) => {
-                  const preset = DATAPOOL_CYBERWARE.find((p) => p.id === e.target.value);
-                  if (preset) handleApplyPreset(preset);
-                }}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-xs min-h-[38px]"
-              >
-                <option value="">{lang === 'ru' ? 'Выберите из каталога...' : 'Select from catalog...'}</option>
-                {DATAPOOL_CYBERWARE.filter(item => `${item.name} ${item.description}`.toLowerCase().includes(catalogQuery.toLowerCase())).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.category}, {p.humanityCostKnown === false ? 'HL —' : `${p.humanityCost} HL`})
-                  </option>
-                ))}
-              </select>
+            <CyberwareCatalogBrowser lang={lang} selectedId={newItem.catalogId ?? newItem.id} onSelect={handleApplyPreset} />
+
+            <div className="border border-cyan-900 bg-cyan-950/20 rounded p-3 text-xs text-zinc-300 space-y-1">
+              <p className="font-semibold text-cyan-200">{lang === 'ru' ? 'Выбран' : 'Selected'}: {newItem.name}</p>
+              <p className="whitespace-pre-line max-h-24 overflow-y-auto">{newItem.description}</p>
             </div>
+
+            <details className="space-y-3">
+              <summary className="text-xs text-zinc-400 cursor-pointer">{lang === 'ru' ? 'Изменить параметры / свой имплант' : 'Edit parameters / custom cyberware'}</summary>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -366,6 +354,8 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
             <details className="text-xs text-zinc-400"><summary>{lang === 'ru' ? 'Правила слотов (ручной имплант / домашние правила)' : 'Slot rules (custom / homebrew implant)'}</summary>
               <label className="block mt-2">{lang === 'ru' ? 'Тип основания' : 'Host type'} <select aria-label="Custom cyberware host type" value={newItem.installRule?.allowedHosts[0] ?? 'internal'} onChange={event => setNewItem({ ...newItem, catalogId: undefined, installRule: { ...newItem.installRule, allowedHosts: [event.target.value as CyberwareSlotType], slots: newItem.installRule?.slots ?? 1 } })} className="bg-zinc-950 border border-zinc-700 p-1">{CYBERWARE_SLOT_TYPES.map(type => <option key={type} value={type}>{cyberwareSlotLabel(type,lang)}</option>)}</select></label>
               <label className="block mt-2">{lang === 'ru' ? 'Занимает слотов' : 'Slots used'} <input aria-label="Custom cyberware slot cost" type="number" min="0" max="20" value={newItem.installRule?.slots ?? 1} onChange={event => setNewItem({ ...newItem, installRule: { allowedHosts: ['internal'], ...newItem.installRule, slots: Math.max(0, Math.min(20, Number(event.target.value) || 0)) } })} className="w-16 bg-zinc-950 border border-zinc-700 p-1" /></label>
+            </details>
+
             </details>
 
             <div className="flex justify-end gap-2 pt-2">
