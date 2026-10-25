@@ -2,7 +2,7 @@ const { test, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { load, mount, nodes, button, label } = require('./helpers.cjs');
 const { createEmptyCharacter } = load('src/data/initialData.ts');
-const { DATAPOOL_GEAR } = load('src/data/datapoolCatalog.ts');
+const { DATAPOOL_GEAR, DATAPOOL_WEAPONS, DATAPOOL_ARMORS, DATAPOOL_CYBERWARE } = load('src/data/datapoolCatalog.ts');
 const { GEAR_SECTIONS } = load('src/data/gearCatalog.ts');
 const { CatalogBrowser } = load('src/components/CatalogBrowser.tsx');
 const { GearCatalogBrowser } = load('src/components/GearCatalogBrowser.tsx');
@@ -30,13 +30,27 @@ test('gear catalogue covers the priced equipment tables and retains all 126 lega
 });
 
 test('gear navigation and search keep all offers reachable and pass the original selected item',()=>{
-  let selected;const props=GearCatalogBrowser({lang:'en',onSelect:item=>selected=item}).props;
-  const view=mount(CatalogBrowser,props);assert.equal(cards(view.render()).length,261);
+  let selected,equipment;const props=GearCatalogBrowser({lang:'en',onSelect:(item,entry)=>{selected=item;equipment=entry;}}).props;
+  const view=mount(CatalogBrowser,props);
+  assert.equal(cards(view.render()).length,261+DATAPOOL_WEAPONS.length+DATAPOOL_ARMORS.length+DATAPOOL_CYBERWARE.length);
   button(view.render(),'Medical equipment').props.onClick();assert.equal(cards(view.render()).length,5);
   nodes(view.render(),n=>n.type==='input')[0].props.onChange({target:{value:'  Фонарик  '}});assert.equal(cards(view.render()).length,0);
   button(view.render(),'All sections').props.onClick();
   const flashlight=cards(view.render()).find(card=>card.props['aria-label']==='Select: Фонарик');assert.ok(flashlight);
-  flashlight.props.onClick();assert.equal(selected,find('Фонарик'));
+  flashlight.props.onClick();assert.equal(selected,find('Фонарик'));assert.equal(equipment,undefined);
+  nodes(view.render(),n=>n.type==='input')[0].props.onChange({target:{value:''}});
+  for(const [section,kind,items] of [
+    ['Weapons','weapon',DATAPOOL_WEAPONS.filter(item=>item.category!=='Thrown Grenade')],
+    ['Grenades','weapon',DATAPOOL_WEAPONS.filter(item=>item.category==='Thrown Grenade')],
+    ['Armor & shields','armor',DATAPOOL_ARMORS],
+    ['Cyberware','cyberware',DATAPOOL_CYBERWARE],
+  ]) {
+    button(view.render(),section).props.onClick();const visible=cards(view.render());
+    assert.equal(visible.length,items.length);assert.ok(visible.length>0);
+    if(section==='Grenades') assert.equal(visible.length,18);
+    visible[0].props.onClick();assert.equal(equipment.kind,kind);assert.equal(equipment.item,items[0]);
+    assert.equal(selected.catalogId,items[0].id);assert.equal(selected.costEb,items[0].costEb);
+  }
 });
 
 test('purchasing a quantity charges once, stacks identical offers and preserves edited and legacy rows',()=>{
@@ -63,14 +77,34 @@ test('free apps and subscriptions keep zero price and monthly billing through sa
   assert.equal(isCharacter({...c,gear:[{...c.gear[0],billingPeriod:123}]}),false);
 });
 
-test('actual gear modal selects a catalog card, buys quantity and supports owned gear without cash loss',()=>{
-  let updated;const view=mount(GearSection,{character:fresh(),lang:'en',onUpdateCharacter:c=>updated=c});
+test('actual gear modal adds different selections cumulatively without reopening and retains receipts on failure',()=>{
+  let updated,updates=0;const view=mount(GearSection,{character:fresh(),lang:'en',onUpdateCharacter:c=>{updated=c;updates++;}});
   button(view.render(),'Add Gear Item').props.onClick();
   const browser=nodes(view.render(),n=>n.type===GearCatalogBrowser)[0];browser.props.onSelect(find('Фонарик'));
   nodes(view.render(),n=>n.props['aria-label']==='Item quantity')[0].props.onChange({target:{value:'3'}});
   button(view.render(),'Buy').props.onClick();assert.equal(updated.cashEb,940);assert.equal(updated.gear[0].quantity,3);
-  view.props.character=updated;button(view.render(),'Add Gear Item').props.onClick();
-  button(view.render(),'Add owned gear').props.onClick();assert.equal(updated.cashEb,940);assert.equal(updated.gear[0].quantity,6);
+  view.props.character=updated;
+  assert.equal(nodes(view.render(),n=>n.props.role==='dialog').length,1);
+  assert.equal(nodes(view.render(),n=>n.type===GearCatalogBrowser)[0].props.selectedId,find('Фонарик').id);
+  assert.match(label(nodes(view.render(),n=>n.props.role==='status')[0]),/Фонарик\s+×3.*Total this session\s*:\s*3\b/);
+
+  const second=find('Сумка Медтеха');nodes(view.render(),n=>n.type===GearCatalogBrowser)[0].props.onSelect(second);
+  nodes(view.render(),n=>n.props['aria-label']==='Item quantity')[0].props.onChange({target:{value:'1'}});
+  button(view.render(),'Buy').props.onClick();assert.equal(updated.cashEb,840);assert.equal(updated.gear.length,2);
+  assert.equal(updated.gear[0].quantity,3);assert.equal(updated.gear[1].catalogId,second.id);assert.equal(updated.gear[1].quantity,1);
+  view.props.character=updated;
+  assert.equal(nodes(view.render(),n=>n.props.role==='dialog').length,1);
+  assert.equal(nodes(view.render(),n=>n.type===GearCatalogBrowser)[0].props.selectedId,second.id);
+  assert.match(label(nodes(view.render(),n=>n.props.role==='status')[0]),/Сумка Медтеха.*Total this session\s*:\s*4\b/);
+
+  button(view.render(),'Add owned gear').props.onClick();assert.equal(updated.cashEb,840);assert.equal(updated.gear[1].quantity,2);
+  view.props.character=updated;const snapshot=JSON.stringify(updated);
+  nodes(view.render(),n=>n.props['aria-label']==='Item quantity')[0].props.onChange({target:{value:'999'}});
+  button(view.render(),'Buy').props.onClick();assert.equal(updates,3);assert.equal(JSON.stringify(updated),snapshot);
+  assert.equal(nodes(view.render(),n=>n.props.role==='dialog').length,1);
+  assert.equal(nodes(view.render(),n=>n.type===GearCatalogBrowser)[0].props.selectedId,second.id);
+  assert.match(label(nodes(view.render(),n=>n.props.role==='status')[0]),/Total this session\s*:\s*5\b/);
+  assert.match(label(view.render()),/Not enough Eurodollars/);
 });
 
 test('gear modal refuses overspending and keeps entered choice open for correction',()=>{

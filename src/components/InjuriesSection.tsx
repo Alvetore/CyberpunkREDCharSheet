@@ -5,6 +5,7 @@ import { PRESET_ARMOR_OPTIONS } from '../data/initialData';
 import { rollNewInjury } from '../utils/rules';
 import { rollD6 } from '../utils/dice';
 import { sfx } from '../utils/audio';
+import { stowArmor } from '../utils/backpack';
 import { 
   ShieldAlert, 
   ShieldCheck, 
@@ -32,6 +33,18 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
 }) => {
   const t = translations[lang];
   const [injuryTab, setInjuryTab] = useState<'head' | 'body'>('head');
+
+  const stowArmorButton = (loc: 'head' | 'body' | 'shield') => (
+    <button
+      type="button"
+      aria-label={lang === 'ru' ? `Убрать в рюкзак: ${character.armor[loc]?.name}` : `Stow ${loc} armor in backpack`}
+      disabled={(character.armor[loc]?.spMax ?? 0) <= 0}
+      onClick={() => { sfx.playClick(); onUpdateCharacter(stowArmor(character, loc, lang)); }}
+      className="w-full py-1.5 min-h-[34px] bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-zinc-800 text-cyan-300 rounded text-xs font-semibold transition"
+    >
+      {lang === 'ru' ? 'Убрать в рюкзак' : 'Stow in backpack'}
+    </button>
+  );
 
   // Armor ablation / restore
   const handleAblateArmor = (loc: 'head' | 'body' | 'shield', amount: number) => {
@@ -116,16 +129,18 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
     const preset = PRESET_ARMOR_OPTIONS.find((p) => p.name === presetName);
     if (!preset) return;
     sfx.playClick();
+    const stowed = stowArmor(character, loc, lang);
     const updated: ArmorItem = {
-      ...character.armor[loc],
+      id: 'armor-' + crypto.randomUUID(),
+      location: loc,
       name: preset.name,
       spMax: preset.sp,
       spCurrent: preset.sp,
       penalty: preset.penalty
     };
     onUpdateCharacter({
-      ...character,
-      armor: { ...character.armor, [loc]: updated }
+      ...stowed,
+      armor: { ...stowed.armor, [loc]: updated }
     });
   };
 
@@ -215,6 +230,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
                   </div>
                 </div>
 
+                {stowArmorButton('head')}
                 {/* Presets dropdown */}
                 <select
                   value={headPresetSelected}
@@ -295,6 +311,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
                   </div>
                 </div>
 
+                {stowArmorButton('body')}
                 {/* Presets dropdown */}
                 <select
                   value={bodyPresetSelected}
@@ -373,6 +390,7 @@ export const InjuriesSection: React.FC<InjuriesSectionProps> = ({
                 </div>
               </div>
 
+              {stowArmorButton('shield')}
               {/* Shield Bar */}
               <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
                 <div

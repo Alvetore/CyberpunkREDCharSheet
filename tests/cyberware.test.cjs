@@ -116,6 +116,26 @@ test('embedded owned weapon and all live magazine state return intact on uninsta
   assert.equal(c.weapons.length,1);assert.equal(c.weapons[0].id,'my-pistol');assert.equal(c.weapons[0].currentAmmo,3);assert.equal(c.weapons[0].selectedProfile,1);assert.deepEqual(c.weapons[0].profileAmmo,saved.profileAmmo);
   c=put(c,c.cyberware.find(item=>item.id===popup.id),[`${arm.id}:arm`],'my-pistol');assert.equal(c.weapons.length,1);assert.equal(rules.selectedWeaponProfile(c.weapons[0]).currentAmmo,2);
 });
+test('embedding a backpack pistol activates only its linked weapon and restores backpack state on uninstall',()=>{
+  const { setWeaponEquipped }=load('src/utils/backpack.ts');
+  const { WeaponsSection }=load('src/components/WeaponsSection.tsx');
+  let c=fresh(),arm,popup;[c,arm]=add(c,96);c=put(c,arm,['body:left-arm']);[c,popup]=add(c,111);
+  const pistol={...createEmptyCharacter('Pistol').weapons[0],id:'backpack-pistol',currentAmmo:3,isEquipped:false};
+  c.weapons=[pistol];c=put(c,popup,[`${arm.id}:arm`],pistol.id);
+  assert.equal(c.weapons.length,1);const linked=c.weapons[0];
+  assert.equal(linked.sourceCyberwareId,popup.id);assert.equal(linked.isEquipped,true);assert.equal(linked.currentAmmo,3);
+  assert.equal(c.cyberware.find(item=>item.id===popup.id).weapon.isEquipped,false);
+  assert.deepEqual(setWeaponEquipped(c,linked.id,false).weapons[0],linked);
+  let attacked;const view=mount(WeaponsSection,{character:c,lang:'en',onUpdateCharacter:next=>c=next,onRollWeaponAttack:weapon=>attacked=weapon,onRollWeaponDamage(){}});
+  assert.equal(nodes(view.render(),n=>n.type==='button'&&n.props.title==='Store in backpack').length,0);
+  button(view.render(),'Attack').props.onClick();assert.equal(attacked.id,linked.id);
+  button(view.render(),'Fire (1)').props.onClick();assert.equal(c.weapons[0].currentAmmo,2);
+  c=cyber.syncCyberwareWeapons(c);assert.equal(c.weapons[0].isEquipped,true);assert.equal(c.weapons[0].currentAmmo,2);
+  c=cyber.uninstallCyberware(c,popup.id);
+  assert.equal(c.weapons.length,1);assert.equal(c.weapons[0].id,pistol.id);assert.equal(c.weapons[0].isEquipped,false);
+  assert.equal(c.weapons[0].currentAmmo,2);assert.equal(c.weapons[0].sourceCyberwareId,undefined);
+});
+
 test('linked cyberweapon ammo survives synchronization and a save/load',()=>{
   let c=fresh(),arm,gun;[c,arm]=add(c,96);c=put(c,arm,['body:left-arm']);[c,gun]=add(c,108);c=put(c,gun,[`${arm.id}:arm`]);
   c.weapons[0]=rules.updateWeaponAmmo(c.weapons[0],-1);assert.equal(c.weapons[0].currentAmmo,0);

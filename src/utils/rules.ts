@@ -80,6 +80,7 @@ function magazineKey(weapon: Weapon): string {
 /** Mutates the selected magazine on the stored weapon, never on its display profile. */
 export function updateWeaponAmmo(weapon: Weapon, change: number | 'reload'): Weapon {
   const selected = selectedWeaponProfile(weapon);
+  if (selected.consumable && (change === 'reload' || change > 0)) return weapon;
   if (typeof change === 'number' && selected.currentAmmo + change < 0) return weapon;
   const currentAmmo = change === 'reload' ? selected.magCapacity : Math.max(0, Math.min(selected.magCapacity, selected.currentAmmo + change));
   return magazineKey(selected) === magazineKey(weapon)

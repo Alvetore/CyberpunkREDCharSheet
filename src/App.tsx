@@ -249,8 +249,11 @@ export const App: React.FC = () => {
   };
 
   const handleRollWeaponAttack = (weapon: Weapon, targetDv?: number, rangeStr?: string, autofire = false) => {
-    weapon = selectedWeaponProfile(activeChar.weapons.find(item => item.id === weapon.id) ?? weapon);
+    const owned = activeChar.weapons.find(item => item.id === weapon.id);
+    if (!owned || owned.isEquipped === false) return;
+    weapon = selectedWeaponProfile(owned);
     if (weapon.attackRequiresRoll === false) return;
+    if (weapon.consumable && weapon.currentAmmo < 1) return;
     autofire = autofire || weapon.skillId === 'autofire';
     if (weapon.bodyRequirement && effectiveStat(activeChar, 'BODY') < weapon.bodyRequirement) { alert(`BODY ${weapon.bodyRequirement}+`); return; }
     if (autofire && (weapon.currentAmmo < 10 || targetDv === undefined)) {
@@ -258,18 +261,20 @@ export const App: React.FC = () => {
       return;
     }
     const isMelee = weapon.skillId === 'melee_weapon' || weapon.skillId === 'brawling' || weapon.skillId === 'martial_arts' || weapon.category.includes('Melee');
+    const attackStat = activeChar.skills.find(skill => skill.id === weapon.skillId)?.stat ?? (isMelee ? 'DEX' : 'REF');
     const baseVal = weaponAttackBase(activeChar, autofire ? { ...weapon, skillId: 'autofire' } : weapon);
 
     const result = executeCyberpunkCheck({
       title: lang === 'ru' 
-        ? `Атака (${isMelee ? 'DEX' : 'REF'}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : weaponPenetration(weapon) === 'half' ? ' [50% SP]' : ''}`
-        : `Attack (${isMelee ? 'DEX' : 'REF'}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : weaponPenetration(weapon) === 'half' ? ' [Half SP]' : ''}`,
+        ? `Атака (${attackStat}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : weaponPenetration(weapon) === 'half' ? ' [50% SP]' : ''}`
+        : `Attack (${attackStat}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : weaponPenetration(weapon) === 'half' ? ' [Half SP]' : ''}`,
       type: 'attack',
       baseVal,
       targetDv,
       lang
     });
     addRollResult(result);
+    if (weapon.consumable) handleUpdateActiveCharacter({ ...activeChar, weapons: activeChar.weapons.map(item => item.id === weapon.id ? updateWeaponAmmo(item, -1) : item) });
     if (autofire) {
       handleUpdateActiveCharacter({ ...activeChar, weapons: activeChar.weapons.map(item => item.id === weapon.id ? updateWeaponAmmo(item, -10) : item) });
       if (result.isSuccess) {
@@ -286,7 +291,9 @@ export const App: React.FC = () => {
   };
 
   const handleRollWeaponDamage = (weapon: Weapon) => {
-    weapon = selectedWeaponProfile(activeChar.weapons.find(item => item.id === weapon.id) ?? weapon);
+    const owned = activeChar.weapons.find(item => item.id === weapon.id);
+    if (!owned || owned.isEquipped === false) return;
+    weapon = selectedWeaponProfile(owned);
     if (weapon.skillId === 'autofire') { alert(lang === 'ru' ? 'Используйте строку Автоогонь в таблице дистанций: урон зависит от превышения DV.' : 'Use Autofire in the range table: damage depends on the margin over DV.'); return; }
     if (weapon.bodyRequirement && effectiveStat(activeChar, 'BODY') < weapon.bodyRequirement) { alert(`BODY ${weapon.bodyRequirement}+`); return; }
     const isMelee = weaponPenetration(weapon) === 'half';

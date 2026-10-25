@@ -57,6 +57,7 @@ export type WeaponCategory =
   | 'Crossbow'
   | 'Grenade Launcher'
   | 'Rocket Launcher'
+  | 'Thrown Grenade'
   | 'Light Melee'
   | 'Medium Melee'
   | 'Heavy Melee'
@@ -94,6 +95,9 @@ export type MartialArtsStyle =
 
 export interface Weapon {
   id: string;
+  isEquipped?: boolean; // Legacy/unspecified weapons remain ready for use.
+  catalogId?: string;
+  costEb?: number;
   name: string;
   category: WeaponCategory;
   damage: string; // e.g. "3d6", "4d6", "5d6"
@@ -115,10 +119,14 @@ export interface Weapon {
   bodyRequirement?: number;
   sourceCyberwareId?: string;
   attackRequiresRoll?: boolean;
+  consumable?: boolean;
 }
 
 export interface ArmorItem {
   id: string;
+  catalogId?: string;
+  costEb?: number;
+  sourceUrl?: string;
   name: string;
   location: 'head' | 'body' | 'shield';
   spMax: number;
@@ -158,6 +166,7 @@ export interface CyberwareInstallRule {
 }
 
 export interface CyberwareItem {
+  costEb?: number;
   id: string;
   name: string;
   category: CyberwareCategory;
@@ -366,6 +375,7 @@ export interface Character {
   // Lists
   skills: Skill[];
   weapons: Weapon[];
+  spareArmor?: ArmorItem[];
   cyberware: CyberwareItem[];
   criticalInjuries: CriticalInjury[];
   cyberdeck: Cyberdeck;

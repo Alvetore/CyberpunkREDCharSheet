@@ -3,6 +3,9 @@ import { Character, GearItem } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { GearCatalogBrowser } from './GearCatalogBrowser';
+import { useCatalogNotice } from './CatalogNotice';
+import { addEquipmentToBackpack, BackpackEquipment, backpackCyberware } from '../utils/backpack';
+import { BackpackEquipmentSection } from './BackpackEquipmentSection';
 import { addGearToInventory, gearErrorMessage, gearPrice } from '../utils/gear';
 import { 
   Package, 
@@ -47,6 +50,9 @@ export const GearSection: React.FC<GearSectionProps> = ({
   const t = translations[lang];
   const [showAddModal, setShowAddModal] = useState(false);
   const [error, setError] = useState('');
+  const catalog = useCatalogNotice(lang);
+  const [selectedEquipment, setSelectedEquipment] = useState<BackpackEquipment | undefined>();
+  const backpackCount = character.gear.length + character.weapons.filter(item => item.isEquipped === false).length + (character.spareArmor?.length ?? 0) + backpackCyberware(character).length;
 
   const [newItem, setNewItem] = useState<Partial<GearItem>>({
     name: '',
@@ -68,10 +74,11 @@ export const GearSection: React.FC<GearSectionProps> = ({
       notes: newItem.notes || ''
     };
 
-    const result = addGearToInventory(character, item, item.quantity, purchase);
+    const result = selectedEquipment ? addEquipmentToBackpack(character, selectedEquipment, item, item.quantity, purchase) : addGearToInventory(character, item, item.quantity, purchase);
     if (!result.character) { setError(gearErrorMessage(result.error!, lang)); return; }
     onUpdateCharacter(result.character);
-    setShowAddModal(false);
+    setError('');
+    catalog.added(item.name, item.quantity);
   };
 
   const handleDeleteItem = (itemId: string) => {
@@ -192,7 +199,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
             <h2 className="font-orbitron font-bold text-sm text-red-500 uppercase tracking-wider">
               {t.gearTitle}
             </h2>
-            <span className="text-xs text-zinc-400 font-mono">({character.gear.length})</span>
+            <span className="text-xs text-zinc-400 font-mono">({backpackCount})</span>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -200,6 +207,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
               onClick={() => {
                 sfx.playClick();
                 setShowAddModal(true);
+                catalog.reset();
                 setError('');
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition"
@@ -266,6 +274,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
       </div>
 
       {/* Add Gear Modal */}
+      <BackpackEquipmentSection character={character} lang={lang} onUpdateCharacter={onUpdateCharacter} />
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
           <div role="dialog" aria-modal="true" aria-label={lang === 'ru' ? 'Каталог снаряжения' : 'Gear catalog'} className="bg-zinc-900 border-2 border-cyan-500 w-full max-w-4xl rounded-lg shadow-2xl p-4 sm:p-5 space-y-4 max-h-[92dvh] overflow-y-auto">
@@ -282,7 +291,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
               </button>
             </div>
 
-            <GearCatalogBrowser lang={lang} selectedId={newItem.catalogId} onSelect={item => { setNewItem({ ...item, quantity: newItem.quantity ?? 1 }); setError(''); }} />
+            <GearCatalogBrowser lang={lang} selectedId={newItem.catalogId} onSelect={(item, equipment) => { setNewItem({ ...item, quantity: newItem.quantity ?? 1 }); setSelectedEquipment(equipment); setError(''); }} />
 
             <div className="border border-cyan-900 bg-cyan-950/20 rounded p-3 text-xs text-zinc-300 space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold text-cyan-200">{newItem.name ? `${lang === 'ru' ? 'Выбран' : 'Selected'}: ${newItem.name}` : (lang === 'ru' ? 'Выберите предмет' : 'Choose an item')}</p>{newItem.name && <span className="text-amber-300">{gearPrice({ costEb: newItem.costEb ?? 0, billingPeriod: newItem.billingPeriod }, lang)}</span>}</div>
@@ -312,6 +321,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
                   </label>
                   <input
                     aria-label={lang === 'ru' ? 'Категория предмета' : 'Item category'}
+                    disabled={!!selectedEquipment}
                     type="text"
                     value={newItem.category}
                     onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
@@ -354,13 +364,14 @@ export const GearSection: React.FC<GearSectionProps> = ({
             </div>
             <p className="text-[11px] text-zinc-500">{lang === 'ru' ? 'Добавление без покупки не списывает eb. Покупка оплачивается из наличных; подписки — за первый месяц.' : 'Adding owned gear does not charge eb. Purchases use cash; subscriptions charge the first month.'}</p>
             {error && <p role="alert" className="text-xs text-red-300">{error}</p>}
+            {catalog.notice}
 
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowAddModal(false)}
                 className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded"
               >
-                {lang === 'ru' ? 'Отмена' : 'Cancel'}
+                {lang === 'ru' ? 'Закрыть' : 'Close'}
               </button>
               <button
                 onClick={() => handleAddItem(false)}

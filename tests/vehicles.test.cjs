@@ -50,10 +50,31 @@ test('source descriptions, speed modes and old unknown vehicle fields survive sa
   assert.equal(isCharacter({...c,vehicles:[{...c.vehicles[0],sourceUrl:42}]}),false);
 });
 
-test('vehicle add modal buys the selected catalog model and preserves the owned-vehicle path',()=>{
-  let updated,closed=0;const view=mount(VehicleCatalogModal,{character:fresh(),lang:'en',onUpdateCharacter:c=>updated=c,onClose(){closed++;}});
-  const model=DATAPOOL_ALL_VEHICLES.find(v=>v.id==='veh-ground-1');nodes(view.render(),n=>n.type===VehicleCatalogBrowser)[0].props.onSelect(model);button(view.render(),'Buy').props.onClick();assert.equal(updated.cashEb,80000);assert.equal(updated.vehicles[0].catalogId,model.id);assert.equal(updated.vehicles[0].notes,model.descriptionRu);assert.equal(closed,1);
-  view.props.character=updated;button(view.render(),'Add owned vehicle').props.onClick();assert.equal(updated.cashEb,80000);assert.equal(updated.vehicles.length,2);
+test('vehicle modal buys different models cumulatively without closing and retains receipts after a failed purchase',()=>{
+  let updated,closed=0,updates=0;const view=mount(VehicleCatalogModal,{character:fresh(),lang:'en',onUpdateCharacter:c=>{updated=c;updates++;},onClose(){closed++;}});
+  const model=DATAPOOL_ALL_VEHICLES.find(v=>v.id==='veh-ground-1');nodes(view.render(),n=>n.type===VehicleCatalogBrowser)[0].props.onSelect(model);button(view.render(),'Buy').props.onClick();assert.equal(updated.cashEb,80000);assert.equal(updated.vehicles[0].catalogId,model.id);assert.equal(updated.vehicles[0].notes,model.descriptionRu);assert.equal(closed,0);
+  view.props.character=updated;
+  assert.equal(nodes(view.render(),n=>n.props.role==='dialog').length,1);
+  assert.equal(nodes(view.render(),n=>n.type===VehicleCatalogBrowser)[0].props.selectedId,model.id);
+  assert.match(label(nodes(view.render(),n=>n.props.role==='status')[0]),/Total this session\s*:\s*1\b/);
+
+  const bicycle=DATAPOOL_ALL_VEHICLES.find(v=>v.id==='veh-bike-1');nodes(view.render(),n=>n.type===VehicleCatalogBrowser)[0].props.onSelect(bicycle);
+  button(view.render(),'Buy').props.onClick();assert.equal(updated.cashEb,79900);assert.equal(updated.vehicles.length,2);
+  assert.equal(updated.vehicles[0].catalogId,model.id);assert.equal(updated.vehicles[1].catalogId,bicycle.id);assert.equal(closed,0);
+  view.props.character=updated;
+  assert.equal(nodes(view.render(),n=>n.type===VehicleCatalogBrowser)[0].props.selectedId,bicycle.id);
+  assert.match(label(nodes(view.render(),n=>n.props.role==='status')[0]),/Total this session\s*:\s*2\b/);
+  button(view.render(),'Add owned vehicle').props.onClick();assert.equal(updated.cashEb,79900);assert.equal(updated.vehicles.length,3);assert.notEqual(updated.vehicles[1].id,updated.vehicles[2].id);
+  view.props.character=updated;const snapshot=JSON.stringify(updated);
+
+  const expensive=DATAPOOL_ALL_VEHICLES.find(v=>v.costEb>updated.cashEb);assert.ok(expensive);
+  nodes(view.render(),n=>n.type===VehicleCatalogBrowser)[0].props.onSelect(expensive);button(view.render(),'Buy').props.onClick();
+  assert.equal(updates,3);assert.equal(JSON.stringify(updated),snapshot);assert.equal(closed,0);
+  assert.equal(nodes(view.render(),n=>n.props.role==='dialog').length,1);
+  assert.equal(nodes(view.render(),n=>n.type===VehicleCatalogBrowser)[0].props.selectedId,expensive.id);
+  assert.match(label(nodes(view.render(),n=>n.props.role==='status')[0]),/Total this session\s*:\s*3\b/);
+  assert.match(label(view.render()),/Not enough Eurodollars/);
+  button(view.render(),'Close').props.onClick();assert.equal(closed,1);
 });
 
 test('vehicle modal keeps insufficient-funds errors open and garage entry opens the new catalog',()=>{

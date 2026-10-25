@@ -9,6 +9,7 @@ import { DATAPOOL_CYBERWARE } from '../data/datapoolCatalog';
 import { cyberwareCapLoss, cyberwareDefinition, cyberwareHosts, cyberwareSlotLabel, cyberwareWarnings, isCyberwareInstalled, uninstallCyberware } from '../utils/cyberware';
 import { CyberwareInstallModal } from './CyberwareInstallModal';
 import { CyberwareCatalogBrowser } from './CyberwareCatalogBrowser';
+import { useCatalogNotice } from './CatalogNotice';
 import { 
   Cpu, 
   Plus, 
@@ -51,6 +52,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 }) => {
   const t = translations[lang];
   const [showAddModal, setShowAddModal] = useState(false);
+  const catalog = useCatalogNotice(lang);
   const [showTherapyModal, setShowTherapyModal] = useState(false);
 
   const [newItem, setNewItem] = useState<Partial<CyberwareItem>>({
@@ -96,7 +98,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
     setItemToDelete(null);
   };
 
-  const handleAddItem = () => {
+  const handleAddItem = (chooseSlots: boolean) => {
     sfx.playClick();
     const cost = newItem.humanityCost || 0;
     const item: CyberwareItem = cyberwareDefinition({
@@ -116,8 +118,8 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
       cyberware: newCyberware,
     });
 
-    setShowAddModal(false);
-    setInstallId(item.id);
+    catalog.added(item.name);
+    if (chooseSlots) setInstallId(item.id);
   };
 
   const handleApplyPreset = (preset: Partial<CyberwareItem>) => {
@@ -192,6 +194,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
             onClick={() => {
               sfx.playClick();
               setShowAddModal(true);
+              catalog.reset();
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-black font-bold text-xs uppercase tracking-wider rounded transition font-orbitron"
           >
@@ -358,19 +361,21 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
             </details>
 
-            <div className="flex justify-end gap-2 pt-2">
+            {catalog.notice}
+            <div className="flex flex-wrap justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowAddModal(false)}
                 className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded font-semibold"
               >
-                {lang === 'ru' ? 'Отмена' : 'Cancel'}
+                {lang === 'ru' ? 'Закрыть' : 'Close'}
               </button>
               <button
-                onClick={handleAddItem}
+                onClick={() => handleAddItem(true)}
                 className="px-4 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs uppercase rounded font-orbitron"
               >
                 {lang === 'ru' ? 'Добавить и выбрать слоты' : 'Add and choose slots'}
               </button>
+              <button onClick={() => handleAddItem(false)} className="px-3 py-1.5 rounded bg-zinc-800 text-zinc-100 text-xs font-bold">{lang === 'ru' ? 'Добавить в инвентарь' : 'Add to inventory'}</button>
             </div>
           </div>
         </div>

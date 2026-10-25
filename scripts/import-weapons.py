@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / "src/data/datapoolCatalog.ts"
 SOURCE = ROOT / "audit/source/weapons.html"
 SOURCE_URL = "https://alec-leon.github.io/data-pool/equipment/weapons/"
-MARKER = "export const DATAPOOL_WEAPONS: CatalogWeaponItem[] = "
+MARKER = "export const DATAPOOL_BASE_WEAPONS: CatalogWeaponItem[] = "
 
 
 def normalize(value):

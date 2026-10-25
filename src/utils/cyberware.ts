@@ -254,7 +254,7 @@ export function syncCyberwareWeapons(character: Character): Character {
     const upgrades = active.filter(entry => entry.kind === 'upgrade' && entry.installedIn?.some(target => ownsHost(item,target)));
     const template = upgrades.reduce((weapon, upgrade) => ({ ...weapon, ...upgrade.weapon }), item.weapon!);
     const previous = character.weapons.find(weapon => weapon.sourceCyberwareId === item.id) ?? item.weaponState;
-    weapons.push({ ...template, id: `cyberweapon:${item.id}`, sourceCyberwareId: item.id, name: item.name === template.name ? item.name : `${item.name} · ${template.name}`, notes: [template.notes, ...upgrades.map(upgrade => `${upgrade.name}: ${upgrade.description}`)].join('\n'), currentAmmo: Math.min(previous?.currentAmmo ?? template.magCapacity, template.magCapacity), selectedProfile: template.damageProfiles?.length && previous?.selectedProfile !== undefined ? Math.min(previous.selectedProfile, template.damageProfiles.length - 1) : undefined, profileAmmo: previous?.profileAmmo });
+    weapons.push({ ...template, isEquipped: true, id: `cyberweapon:${item.id}`, sourceCyberwareId: item.id, name: item.name === template.name ? item.name : `${item.name} · ${template.name}`, notes: [template.notes, ...upgrades.map(upgrade => `${upgrade.name}: ${upgrade.description}`)].join('\n'), currentAmmo: Math.min(previous?.currentAmmo ?? template.magCapacity, template.magCapacity), selectedProfile: template.damageProfiles?.length && previous?.selectedProfile !== undefined ? Math.min(previous.selectedProfile, template.damageProfiles.length - 1) : undefined, profileAmmo: previous?.profileAmmo });
   }
   return { ...character, cyberware, weapons };
 }

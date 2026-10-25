@@ -5,6 +5,7 @@ import { sfx } from '../utils/audio';
 import { initializeCyberware } from '../utils/rules';
 import { addGearToInventory, gearErrorMessage, gearPrice } from '../utils/gear';
 import { addVehicleToGarage, vehicleErrorMessage, vehicleFromCatalog } from '../utils/vehicles';
+import { stowArmor } from '../utils/backpack';
 import { 
   DATAPOOL_WEAPONS, 
   DATAPOOL_ARMORS, 
@@ -232,13 +233,14 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
 
     sfx.playCritSuccess();
 
-    const updatedChar = { ...character };
+    let updatedChar = { ...character };
     updatedChar.cashEb = Math.max(0, character.cashEb - finalPrice);
 
     if (item.type === 'weapon' && item.weaponData) {
       const newWeap: Weapon = {
         ...item.weaponData,
-        id: 'weap-dp-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        id: 'weap-dp-' + crypto.randomUUID(),
+        catalogId: item.weaponData.id,
         name: item.weaponData.name,
         category: item.weaponData.category,
         damage: item.weaponData.damage,
@@ -253,7 +255,9 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
       updatedChar.weapons = [...updatedChar.weapons, newWeap];
     } else if (item.type === 'armor' && item.armorData) {
       const newArmor: ArmorItem = {
-        id: 'armor-dp-' + Date.now(),
+        ...item.armorData,
+        id: 'armor-dp-' + crypto.randomUUID(),
+        catalogId: item.armorData.id,
         name: item.armorData.name,
         location: item.armorData.location,
         spMax: item.armorData.spMax,
@@ -262,6 +266,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         notes: item.armorData.notes
       };
 
+      updatedChar = stowArmor(updatedChar, newArmor.location, lang);
       if (newArmor.location === 'head') {
         updatedChar.armor = { ...updatedChar.armor, head: newArmor };
       } else if (newArmor.location === 'body') {
@@ -272,7 +277,8 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
     } else if (item.type === 'cyberware' && item.cyberwareData) {
       const newCyber: CyberwareItem = {
         ...item.cyberwareData,
-        id: 'cyber-dp-' + Date.now(),
+        id: 'cyber-dp-' + crypto.randomUUID(),
+        catalogId: item.cyberwareData.id,
         name: item.cyberwareData.name,
         category: item.cyberwareData.category,
         installLocation: item.cyberwareData.installLocation,
@@ -328,9 +334,6 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         : `Purchased: "${item.name}" (-${finalPrice} eb)`
     );
 
-    setTimeout(() => {
-      setPurchaseSuccessMessage(null);
-    }, 2800);
   };
 
   return (
@@ -427,7 +430,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
 
         {/* Purchase Notification Banner */}
         {purchaseSuccessMessage && (
-          <div className="bg-emerald-950 border-b border-emerald-800 px-4 py-2 flex items-center gap-2 text-xs text-emerald-300 animate-fade-in">
+          <div role="status" aria-live="polite" className="bg-emerald-950 border-b border-emerald-800 px-4 py-2 flex items-center gap-2 text-xs text-emerald-300 animate-fade-in">
             <Check size={14} className="text-emerald-400 shrink-0" />
             <span className="font-semibold">{purchaseSuccessMessage}</span>
           </div>

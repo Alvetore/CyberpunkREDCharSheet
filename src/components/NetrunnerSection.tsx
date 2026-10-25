@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCatalogNotice } from './CatalogNotice';
 import { Character, ProgramItem, ProgramCategory } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { PRESET_PROGRAMS } from '../data/initialData';
@@ -42,6 +43,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
   const netActionsPerTurn = interfaceRank >= 10 ? 5 : interfaceRank >= 7 ? 4 : interfaceRank >= 4 ? 3 : 2;
 
   const [showAddProgram, setShowAddProgram] = useState(false);
+  const catalog = useCatalogNotice(lang);
   const [newProg, setNewProg] = useState<Partial<ProgramItem>>({
     name: 'Sword',
     category: 'Attacker',
@@ -93,7 +95,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
   const handleAddProgram = () => {
     sfx.playClick();
     const prog: ProgramItem = {
-      id: 'prog-' + Date.now(),
+      id: 'prog-' + crypto.randomUUID(),
       name: newProg.name || (lang === 'ru' ? 'Программа' : 'Program'),
       category: (newProg.category as ProgramCategory) || 'Booster',
       atkBonus: newProg.atkBonus || 0,
@@ -111,7 +113,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
       ...character,
       programs: [...character.programs, prog]
     });
-    setShowAddProgram(false);
+    catalog.added(prog.name);
   };
 
   return (
@@ -357,6 +359,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
             onClick={() => {
               sfx.playClick();
               setShowAddProgram(true);
+              catalog.reset();
             }}
             className="flex items-center gap-1 px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-black font-bold text-xs uppercase rounded transition font-orbitron"
           >
@@ -576,12 +579,13 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
               />
             </div>
 
+            {catalog.notice}
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowAddProgram(false)}
                 className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded"
               >
-                {lang === 'ru' ? 'Отмена' : 'Cancel'}
+                {lang === 'ru' ? 'Закрыть' : 'Close'}
               </button>
               <button
                 onClick={handleAddProgram}

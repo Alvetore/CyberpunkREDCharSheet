@@ -476,6 +476,12 @@ export const CPR_RANGE_DV_TABLE: RangeDvEntry[] = [
     dvs: [15, 13, 15, 17, 20, 22, null, null]
   },
   {
+    category: 'Thrown Grenade',
+    nameRu: 'Метание гранаты (DEX + Атлетика, до 25 м)',
+    nameEn: 'Thrown Grenade (DEX + Athletics, up to 25m)',
+    dvs: [16, 15, 15, null, null, null, null, null]
+  },
+  {
     category: 'Grenade Launcher',
     nameRu: 'Гранатомёт (Grenade Launcher)',
     nameEn: 'Grenade Launcher',

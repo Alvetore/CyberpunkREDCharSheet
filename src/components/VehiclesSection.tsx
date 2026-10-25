@@ -3,6 +3,8 @@ import { Character, Vehicle, VehicleCategory, StatKey } from '../types/character
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { VehicleCatalogModal } from './VehicleCatalogModal';
+import { useCatalogNotice } from './CatalogNotice';
+import { functionalCyberware } from '../utils/cyberware';
 import { DATAPOOL_VEHICLE_UPGRADES, CatalogVehicleUpgrade } from '../data/datapoolVehicles';
 import { 
   Car, 
@@ -48,6 +50,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
   const [upgradeTargetVehId, setUpgradeTargetVehId] = useState<string | null>(null);
   const [selectedUpgradeId, setSelectedUpgradeId] = useState<string>('');
   const [customUpgradeText, setCustomUpgradeText] = useState<string>('');
+  const catalog = useCatalogNotice(lang);
 
   // Calculate fleet stats
   const totalFleetCost = useMemo(() => {
@@ -116,6 +119,8 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
   // Upgrades management
   const handleAddUpgradeToVehicle = () => {
     if (!upgradeTargetVehId) return;
+    const targetVehicle = vehicles.find(vehicle => vehicle.id === upgradeTargetVehId);
+    if (!targetVehicle) return;
     sfx.playClick();
 
     let upgradeNameToAdd = '';
@@ -139,9 +144,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
     });
 
     onUpdateCharacter({ ...character, vehicles: updated });
-    setUpgradeTargetVehId(null);
-    setSelectedUpgradeId('');
-    setCustomUpgradeText('');
+    catalog.added(`${upgradeNameToAdd} → ${targetVehicle.name}`);
   };
 
   const handleRemoveUpgrade = (vehId: string, upgIdx: number) => {
@@ -193,7 +196,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
     const hasInterfaceUpgrade = veh.upgrades?.some((u) => 
       u.toLowerCase().includes('интерфейс') || u.toLowerCase().includes('interface')
     );
-    const hasInterfacePlugs = character.cyberware.some((c) => 
+    const hasInterfacePlugs = functionalCyberware(character).some((c) =>
       c.name.toLowerCase().includes('штекер') || 
       c.name.toLowerCase().includes('интерфейс') || 
       c.name.toLowerCase().includes('interface plug')
@@ -592,6 +595,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
                       <button
                         onClick={() => {
                           sfx.playClick();
+                          catalog.reset();
                           setUpgradeTargetVehId(vehicle.id);
                           setSelectedUpgradeId(DATAPOOL_VEHICLE_UPGRADES[0]?.id || '');
                         }}
@@ -678,13 +682,14 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
       {/* Upgrade Selector Modal */}
       {upgradeTargetVehId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-zinc-900 border border-amber-800/80 rounded-xl w-full max-w-lg p-5 space-y-4 shadow-2xl">
+          <div role="dialog" aria-modal="true" aria-label={lang === 'ru' ? 'Улучшения транспорта' : 'Vehicle upgrades'} className="bg-zinc-900 border border-amber-800/80 rounded-xl w-full max-w-lg p-5 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <div className="flex items-center gap-2 text-amber-500 font-orbitron font-bold text-sm sm:text-base">
                 <Layers size={18} />
                 <span>{lang === 'ru' ? 'Установить улучшение на транспорт' : 'Install Vehicle Upgrade'}</span>
               </div>
               <button
+                aria-label={lang === 'ru' ? 'Закрыть улучшения транспорта' : 'Close vehicle upgrades'}
                 onClick={() => setUpgradeTargetVehId(null)}
                 className="text-zinc-400 hover:text-white p-1 rounded"
               >
@@ -747,6 +752,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
               )}
             </div>
 
+            {catalog.notice}
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
               <button
                 onClick={() => setUpgradeTargetVehId(null)}

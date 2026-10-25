@@ -14,6 +14,8 @@ import {
 import { sfx } from '../utils/audio';
 import { effectiveStat, martialArtsLevel, selectedWeaponProfile, skillBase, updateWeaponAmmo, weaponPenetration } from '../utils/rules';
 import { cyberwareDefinition, functionalCyberware } from '../utils/cyberware';
+import { useCatalogNotice } from './CatalogNotice';
+import { setWeaponEquipped } from '../utils/backpack';
 import { 
   Crosshair, 
   Plus, 
@@ -77,6 +79,8 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   const t = translations[lang];
   const [combatSubTab, setCombatSubTab] = useState<CombatSubTab>('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const catalog = useCatalogNotice(lang);
+  const equippedWeapons = character.weapons.filter(weapon => weapon.isEquipped !== false);
   const [showRangeMatrix, setShowRangeMatrix] = useState(false);
   const [isGrapplingTarget, setIsGrapplingTarget] = useState(false);
 
@@ -104,8 +108,8 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   const styleData = CPR_MARTIAL_ARTS_STYLES[currentMaStyle] || CPR_MARTIAL_ARTS_STYLES.Karate;
 
   // Counts
-  const rangedWeapons = character.weapons.filter((w) => w.magCapacity > 0 && !w.category.includes('Melee'));
-  const meleeWeapons = character.weapons.filter((w) => w.magCapacity === 0 || w.category.includes('Melee'));
+  const rangedWeapons = equippedWeapons.filter((w) => w.magCapacity > 0 && !w.category.includes('Melee'));
+  const meleeWeapons = equippedWeapons.filter((w) => w.magCapacity === 0 || w.category.includes('Melee'));
 
   const handleFireSingle = (weaponId: string) => {
     sfx.playGunshot();
@@ -148,7 +152,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
     sfx.playClick();
     const isMelee = (newWeapon.category || '').includes('Melee');
     const weapon: Weapon = {
-      id: 'weap-' + Date.now(),
+      id: 'weap-' + crypto.randomUUID(),
       name: newWeapon.name || (lang === 'ru' ? 'Оружие' : 'Weapon'),
       category: (newWeapon.category as WeaponCategory) || 'Heavy Pistol',
       damage: newWeapon.damage || (isMelee ? '2d6' : '3d6'),
@@ -165,7 +169,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
       ...character,
       weapons: [...character.weapons, weapon]
     });
-    setShowAddModal(false);
+    catalog.added(weapon.name);
   };
 
   const handleApplyPreset = (preset: Partial<Weapon>) => {
@@ -309,7 +313,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   };
 
   // Filter weapons based on sub-tab
-  const displayedWeapons = character.weapons.map(selectedWeaponProfile).filter((w) => {
+  const displayedWeapons = equippedWeapons.map(selectedWeaponProfile).filter((w) => {
     if (combatSubTab === 'ranged') return w.magCapacity > 0 && !w.category.includes('Melee');
     if (combatSubTab === 'melee') return w.magCapacity === 0 || w.category.includes('Melee');
     return true;
@@ -362,6 +366,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
             onClick={() => {
               sfx.playClick();
               setShowAddModal(true);
+              catalog.reset();
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded transition font-orbitron min-h-[36px]"
           >
@@ -386,7 +391,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
         >
           <Crosshair size={13} />
           <span>{lang === 'ru' ? 'Все оружие' : 'All Weapons'}</span>
-          <span className="text-[10px] opacity-75">({character.weapons.length})</span>
+          <span className="text-[10px] opacity-75">({equippedWeapons.length})</span>
         </button>
 
         <button
@@ -503,7 +508,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                             onClick={() => {
                               const autofire = row.category.startsWith('Autofire');
                               const category = row.category === 'Autofire (Rifle)' ? 'Assault Rifle' : row.category === 'Autofire (SMG)' ? 'SMG' : row.category.startsWith('Shotgun') ? 'Shotgun' : row.category;
-                              const matchedWeapon = character.weapons.map(selectedWeaponProfile).find(w => (autofire || w.skillId !== 'autofire') && (w.category === category || (category === 'SMG' && w.category === 'Heavy SMG') || (category === 'Bow' && w.category === 'Crossbow')));
+                              const matchedWeapon = equippedWeapons.map(selectedWeaponProfile).find(w => w.attackRequiresRoll !== false && (!w.consumable || w.currentAmmo > 0) && (autofire || w.skillId !== 'autofire') && (w.category === category || (category === 'SMG' && w.category === 'Heavy SMG') || (category === 'Bow' && w.category === 'Crossbow')));
                               if (!matchedWeapon) { alert(lang === 'ru' ? 'Добавьте подходящее оружие в лист.' : 'Add a matching weapon to the sheet.'); return; }
                               onRollWeaponAttack(matchedWeapon, dv, CPR_RANGE_DISTANCES[idx], autofire);
                             }}
@@ -1087,6 +1092,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
             displayedWeapons.map((weapon) => {
               const isMelee = weapon.category.includes('Melee') || ['melee_weapon','martial_arts','brawling'].includes(weapon.skillId || '');
               const halvesSP = weaponPenetration(weapon) === 'half';
+              const isGrenade = weapon.category === 'Thrown Grenade';
               const isOutOfAmmo = !isMelee && weapon.currentAmmo <= 0;
 
               return (
@@ -1116,6 +1122,11 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                         <div className="text-xs text-red-400 font-semibold">{weapon.category}</div>
                       </div>
 
+                      {!weapon.sourceCyberwareId && <button
+                        onClick={() => onUpdateCharacter(setWeaponEquipped(character, weapon.id, false))}
+                        className="text-xs text-cyan-400 hover:text-cyan-200 p-1"
+                        title={lang === 'ru' ? 'Убрать в рюкзак' : 'Store in backpack'}
+                      >{lang === 'ru' ? 'В рюкзак' : 'Stow'}</button>}
                       <button
                         disabled={!!weapon.sourceCyberwareId && character.cyberware.some(item => item.id === weapon.sourceCyberwareId && cyberwareDefinition(item).weapon)}
                         onClick={() => handleDeleteWeapon(weapon.id)}
@@ -1142,7 +1153,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] uppercase text-zinc-500 block">{t.ammo}</span>
+                        <span className="text-[10px] uppercase text-zinc-500 block">{weapon.consumable ? (lang === 'ru' ? 'Осталось' : 'Remaining') : t.ammo}</span>
                         <span className={`font-orbitron font-extrabold text-sm ${isOutOfAmmo ? 'text-red-500 font-black animate-pulse' : 'text-zinc-200'}`}>
                           {isMelee ? (halvesSP ? (lang === 'ru' ? '50% SP' : 'Half SP') : (lang === 'ru' ? 'Полная SP' : 'Full SP')) : `${weapon.currentAmmo} / ${weapon.magCapacity}`}
                         </span>
@@ -1156,16 +1167,12 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                       </div>
                     )}
 
-                    {weapon.notes && (
-                      <div className="text-xs text-zinc-400 mb-2 italic">
-                        {weapon.notes}
-                      </div>
-                    )}
+                    {weapon.notes && (isGrenade ? <details className="text-xs text-zinc-400 mb-2"><summary className="cursor-pointer">{lang === 'ru' ? 'Описание и особый эффект' : 'Description & special effect'}</summary><p className="whitespace-pre-line mt-2 max-h-48 overflow-y-auto">{weapon.notes}</p></details> : <div className="text-xs text-zinc-400 mb-2 italic">{weapon.notes}</div>)}
                   </div>
 
                   {/* Action Buttons */}
                   <div className="space-y-2 pt-2 border-t border-zinc-800">
-                    {!isMelee && (
+                    {!isMelee && !weapon.consumable && (
                       <div className="flex items-center gap-1.5">
                         <button
                           disabled={weapon.currentAmmo <= 0 || weapon.skillId === 'autofire'}
@@ -1194,14 +1201,18 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                       </div>
                     )}
 
+                    {isGrenade && weapon.attackRequiresRoll !== false && <div className="grid grid-cols-3 gap-1" aria-label={lang === 'ru' ? 'Метание гранаты — до 25 м' : 'Throw grenade — up to 25m'}>
+                      {[16, 15, 15].map((dv, index) => <button key={index} disabled={isOutOfAmmo} onClick={() => onRollWeaponAttack(weapon, dv, CPR_RANGE_DISTANCES[index])} className="text-xs p-2 rounded border border-red-900 text-red-300 disabled:opacity-30">{CPR_RANGE_DISTANCES[index]} · DV {dv}</button>)}
+                    </div>}
+                    {weapon.consumable && weapon.attackRequiresRoll === false && <button disabled={isOutOfAmmo} onClick={() => handleFireSingle(weapon.id)} className="w-full p-2 text-xs rounded border border-amber-700 text-amber-300 disabled:opacity-30">{lang === 'ru' ? 'Активировать вручную (расход 1) — см. условия в описании' : 'Activate manually (consume 1) — see conditions in description'}</button>}
                     <div className="grid grid-cols-2 gap-2">
                       <button
-                        disabled={weapon.attackRequiresRoll === false}
+                        disabled={weapon.attackRequiresRoll === false || (!!weapon.consumable && isOutOfAmmo)}
                         onClick={() => weapon.skillId === 'autofire' ? setShowRangeMatrix(true) : onRollWeaponAttack(weapon)}
                         className="py-2.5 sm:py-1.5 min-h-[38px] bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 shadow-sm"
                       >
                         <Crosshair size={14} />
-                        {weapon.attackRequiresRoll === false ? (lang === 'ru' ? 'Эффект без броска — см. описание' : 'Effect without attack roll — see description') : isMelee ? (lang === 'ru' ? 'Атака (DEX)' : 'Attack (DEX)') : t.rollAttack}
+                        {weapon.attackRequiresRoll === false ? (lang === 'ru' ? 'Эффект без броска — см. описание' : 'Effect without attack roll — see description') : isGrenade ? (lang === 'ru' ? 'Бросить (DEX)' : 'Throw (DEX)') : isMelee ? (lang === 'ru' ? 'Атака (DEX)' : 'Attack (DEX)') : t.rollAttack}
                       </button>
 
                       <button
@@ -1346,12 +1357,13 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
               />
             </div>
 
+            {catalog.notice}
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowAddModal(false)}
                 className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold rounded min-h-[36px]"
               >
-                {lang === 'ru' ? 'Отмена' : 'Cancel'}
+                {lang === 'ru' ? 'Закрыть' : 'Close'}
               </button>
               <button
                 onClick={handleAddWeapon}

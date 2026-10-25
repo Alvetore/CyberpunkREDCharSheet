@@ -3,6 +3,7 @@ import { Character, Vehicle, VehicleCategory } from '../types/character';
 import { Language } from '../locales/i18n';
 import { addVehicleToGarage, vehicleErrorMessage, vehicleFromCatalog, VEHICLE_SECTIONS } from '../utils/vehicles';
 import { VehicleCatalogBrowser } from './VehicleCatalogBrowser';
+import { useCatalogNotice } from './CatalogNotice';
 
 interface Props {
   character: Character;
@@ -14,11 +15,13 @@ interface Props {
 export const VehicleCatalogModal: React.FC<Props> = ({ character, lang, onUpdateCharacter, onClose }) => {
   const [vehicle, setVehicle] = useState<Vehicle>({ id: '', name: '', model: '', category: 'Ground', sdpMax: 50, sdpCurrent: 50, armorSp: 0, seats: 4, speedCombat: '20 СКО', speedNarrative: '160 км/ч', costEb: 0, notes: '', nomadRankReq: 0, upgrades: [] });
   const [error, setError] = useState('');
+  const catalog = useCatalogNotice(lang);
   const add = (purchase: boolean) => {
     const result = addVehicleToGarage(character, vehicle, purchase);
     if (!result.character) { setError(vehicleErrorMessage(result.error!, lang)); return; }
     onUpdateCharacter(result.character);
-    onClose();
+    setError('');
+    catalog.added(vehicle.name);
   };
 
   return <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-sm no-print">
@@ -56,8 +59,9 @@ export const VehicleCatalogModal: React.FC<Props> = ({ character, lang, onUpdate
       <div className="flex flex-wrap justify-between gap-2 text-xs text-zinc-300"><span>{lang === 'ru' ? 'Стоимость' : 'Price'}: {vehicle.costEb.toLocaleString(lang)} eb</span><span>{lang === 'ru' ? 'Наличные' : 'Cash'}: {character.cashEb.toLocaleString(lang)} eb</span></div>
       <p className="text-[11px] text-zinc-500">{lang === 'ru' ? 'Уже имеющийся транспорт добавляется без списания eb. Покупка оплачивается из наличных. Ранг Мото относится к доступу через семью Кочевника.' : 'Adding an owned vehicle does not charge eb. Purchases use cash. Moto rank refers to Nomad family access.'}</p>
       {error && <p role="alert" className="text-xs text-red-300">{error}</p>}
+      {catalog.notice}
       <div className="flex flex-wrap justify-end gap-2 pt-2">
-        <button onClick={onClose} className="px-3 py-2 rounded bg-zinc-800 text-zinc-300 text-xs">{lang === 'ru' ? 'Отмена' : 'Cancel'}</button>
+        <button onClick={onClose} className="px-3 py-2 rounded bg-zinc-800 text-zinc-300 text-xs">{lang === 'ru' ? 'Закрыть' : 'Close'}</button>
         <button onClick={() => add(false)} className="px-3 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs">{lang === 'ru' ? 'Добавить без покупки' : 'Add owned vehicle'}</button>
         <button onClick={() => add(true)} className="px-4 py-2 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs">{lang === 'ru' ? 'Купить' : 'Buy'}</button>
       </div>
