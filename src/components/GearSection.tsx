@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Character, GearItem } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
+import { GearCatalogBrowser } from './GearCatalogBrowser';
+import { addGearToInventory, gearErrorMessage, gearPrice } from '../utils/gear';
 import { 
   Package, 
   Coins, 
@@ -47,30 +49,31 @@ export const GearSection: React.FC<GearSectionProps> = ({
 }) => {
   const t = translations[lang];
   const [showAddModal, setShowAddModal] = useState(false);
+  const [error, setError] = useState('');
 
   const [newItem, setNewItem] = useState<Partial<GearItem>>({
-    name: lang === 'ru' ? 'Инструменты техника' : 'Tech Tool Kit',
-    category: 'Tools',
+    name: '',
+    category: 'Gear',
     quantity: 1,
-    costEb: 100,
+    costEb: 0,
     notes: ''
   });
 
-  const handleAddItem = () => {
+  const handleAddItem = (purchase = false) => {
     sfx.playClick();
     const item: GearItem = {
-      id: 'gear-' + Date.now(),
-      name: newItem.name || (lang === 'ru' ? 'Предмет' : 'Item'),
+      ...newItem,
+      id: '',
+      name: newItem.name ?? '',
       category: newItem.category || 'Gear',
-      quantity: newItem.quantity || 1,
-      costEb: newItem.costEb || 0,
+      quantity: newItem.quantity ?? 1,
+      costEb: newItem.costEb ?? 0,
       notes: newItem.notes || ''
     };
 
-    onUpdateCharacter({
-      ...character,
-      gear: [...character.gear, item]
-    });
+    const result = addGearToInventory(character, item, item.quantity, purchase);
+    if (!result.character) { setError(gearErrorMessage(result.error!, lang)); return; }
+    onUpdateCharacter(result.character);
     setShowAddModal(false);
   };
 
@@ -200,7 +203,8 @@ export const GearSection: React.FC<GearSectionProps> = ({
               <button
                 onClick={() => {
                   sfx.playClick();
-                  onOpenShop('gear');
+                  setShowAddModal(true);
+                  setError('');
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-950/60 hover:bg-yellow-600 border border-yellow-700/80 text-yellow-300 hover:text-black font-bold text-xs uppercase tracking-wider rounded transition font-orbitron"
                 title={lang === 'ru' ? "Купить снаряжение из каталога DataPool" : "Buy gear from DataPool catalog"}
@@ -214,6 +218,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
               onClick={() => {
                 sfx.playClick();
                 setShowAddModal(true);
+                setError('');
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition"
             >
@@ -260,9 +265,9 @@ export const GearSection: React.FC<GearSectionProps> = ({
                     </div>
                   </td>
                   <td className="py-2 px-2 text-right font-mono font-bold text-emerald-400">
-                    {item.costEb} eb
+                    {gearPrice(item, lang)}
                   </td>
-                  <td className="py-2 px-2 text-zinc-400 italic">{item.notes}</td>
+                  <td className="py-2 px-2 text-zinc-400 max-w-md">{item.notes.length > 160 ? <details><summary className="cursor-pointer">{item.notes.slice(0,100)}…</summary><p className="whitespace-pre-line mt-2">{item.notes}</p></details> : item.notes}</td>
                   <td className="py-2 px-2 text-right">
                     <button
                       onClick={() => handleDeleteItem(item.id)}
@@ -281,12 +286,13 @@ export const GearSection: React.FC<GearSectionProps> = ({
       {/* Add Gear Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
-          <div className="bg-zinc-900 border-2 border-red-600 w-full max-w-md rounded-lg shadow-2xl p-4 space-y-4 max-h-[92dvh] overflow-y-auto">
+          <div role="dialog" aria-modal="true" aria-label={lang === 'ru' ? 'Каталог снаряжения' : 'Gear catalog'} className="bg-zinc-900 border-2 border-cyan-500 w-full max-w-4xl rounded-lg shadow-2xl p-4 sm:p-5 space-y-4 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-              <h3 className="font-orbitron font-bold text-red-500 text-sm uppercase">
-                {t.addGear}
+              <h3 className="font-orbitron font-bold text-cyan-400 text-sm uppercase">
+                {lang === 'ru' ? 'Каталог снаряжения' : 'Gear catalog'}
               </h3>
               <button
+                aria-label={lang === 'ru' ? 'Закрыть каталог' : 'Close catalog'}
                 onClick={() => setShowAddModal(false)}
                 className="text-zinc-400 hover:text-white"
               >
@@ -294,12 +300,22 @@ export const GearSection: React.FC<GearSectionProps> = ({
               </button>
             </div>
 
-            <div className="space-y-3">
+            <GearCatalogBrowser lang={lang} selectedId={newItem.catalogId} onSelect={item => { setNewItem({ ...item, quantity: newItem.quantity ?? 1 }); setError(''); }} />
+
+            <div className="border border-cyan-900 bg-cyan-950/20 rounded p-3 text-xs text-zinc-300 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold text-cyan-200">{newItem.name ? `${lang === 'ru' ? 'Выбран' : 'Selected'}: ${newItem.name}` : (lang === 'ru' ? 'Выберите предмет' : 'Choose an item')}</p>{newItem.name && <span className="text-amber-300">{gearPrice({ costEb: newItem.costEb ?? 0, billingPeriod: newItem.billingPeriod }, lang)}</span>}</div>
+              <p className="whitespace-pre-line max-h-24 overflow-y-auto">{newItem.notes || (lang === 'ru' ? 'Выберите карточку из каталога или заполните свой предмет ниже.' : 'Choose a catalog card or enter a custom item below.')}</p>
+              {newItem.sourceUrl && <a href={newItem.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-block text-cyan-400 underline">Data Pool ↗</a>}
+            </div>
+
+            <details className="space-y-3">
+              <summary className="text-xs text-zinc-400 cursor-pointer">{lang === 'ru' ? 'Изменить параметры / свой предмет' : 'Edit parameters / custom item'}</summary>
               <div>
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
                   {t.itemName}
                 </label>
                 <input
+                  aria-label={lang === 'ru' ? 'Название предмета' : 'Item name'}
                   type="text"
                   value={newItem.name}
                   onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
@@ -313,6 +329,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
                     {lang === 'ru' ? 'Категория' : 'Category'}
                   </label>
                   <input
+                    aria-label={lang === 'ru' ? 'Категория предмета' : 'Item category'}
                     type="text"
                     value={newItem.category}
                     onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
@@ -325,9 +342,11 @@ export const GearSection: React.FC<GearSectionProps> = ({
                     {t.cost} (eb)
                   </label>
                   <input
+                    aria-label={lang === 'ru' ? 'Цена предмета' : 'Item price'}
                     type="number"
+                    min="0"
                     value={newItem.costEb}
-                    onChange={(e) => setNewItem({ ...newItem, costEb: parseInt(e.target.value, 10) || 0 })}
+                    onChange={(e) => setNewItem({ ...newItem, costEb: Number(e.target.value), priceLabel: undefined })}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100"
                   />
                 </div>
@@ -337,14 +356,22 @@ export const GearSection: React.FC<GearSectionProps> = ({
                 <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
                   {t.notes}
                 </label>
-                <input
-                  type="text"
+                <textarea
+                  aria-label={lang === 'ru' ? 'Описание предмета' : 'Item description'}
+                  rows={4}
                   value={newItem.notes}
                   onChange={(e) => setNewItem({ ...newItem, notes: e.target.value })}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100"
                 />
               </div>
+            </details>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-300">
+              <label>{lang === 'ru' ? 'Количество' : 'Quantity'} <input aria-label={lang === 'ru' ? 'Количество предметов' : 'Item quantity'} type="number" min="1" max="999" step="1" value={newItem.quantity ?? 1} onChange={event => { setNewItem({ ...newItem, quantity: Number(event.target.value) }); setError(''); }} className="ml-2 w-20 bg-zinc-950 border border-zinc-700 p-2 rounded" /></label>
+              <span>{lang === 'ru' ? 'Итого' : 'Total'}: {((newItem.costEb ?? 0) * (newItem.quantity ?? 1)).toLocaleString(lang)} eb{newItem.billingPeriod === 'monthly' ? (lang === 'ru' ? ' за первый месяц' : ' for the first month') : ''} · {lang === 'ru' ? 'Наличные' : 'Cash'}: {character.cashEb.toLocaleString(lang)} eb</span>
             </div>
+            <p className="text-[11px] text-zinc-500">{lang === 'ru' ? 'Добавление без покупки не списывает eb. Покупка оплачивается из наличных; подписки — за первый месяц.' : 'Adding owned gear does not charge eb. Purchases use cash; subscriptions charge the first month.'}</p>
+            {error && <p role="alert" className="text-xs text-red-300">{error}</p>}
 
             <div className="flex justify-end gap-2 pt-2">
               <button
@@ -354,11 +381,12 @@ export const GearSection: React.FC<GearSectionProps> = ({
                 {lang === 'ru' ? 'Отмена' : 'Cancel'}
               </button>
               <button
-                onClick={handleAddItem}
-                className="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase rounded"
+                onClick={() => handleAddItem(false)}
+                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs rounded"
               >
-                {lang === 'ru' ? 'Добавить' : 'Add'}
+                {lang === 'ru' ? 'Добавить без покупки' : 'Add owned gear'}
               </button>
+              <button onClick={() => handleAddItem(true)} className="px-4 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs rounded">{lang === 'ru' ? 'Купить' : 'Buy'}</button>
             </div>
           </div>
         </div>

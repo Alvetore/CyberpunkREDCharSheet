@@ -11,6 +11,7 @@ const { calculateHumanityStats } = load('src/utils/roleUtils.ts');
 const { DataPoolShopModal } = load('src/components/DataPoolShopModal.tsx');
 const { CyberwareInstallModal } = load('src/components/CyberwareInstallModal.tsx');
 const { CyberwareCatalogBrowser } = load('src/components/CyberwareCatalogBrowser.tsx');
+const { CatalogBrowser } = load('src/components/CatalogBrowser.tsx');
 const { CyberwareSection } = load('src/components/CyberwareSection.tsx');
 let serial=0;
 const fresh=()=>({...createEmptyCharacter('Chrome'),cyberware:[],weapons:[],humanityCurrent:80,stats:{...createEmptyCharacter('Stats').stats,EMP:8}});
@@ -25,7 +26,7 @@ beforeEach(()=>{
 });
 
 test('sectioned cyberware catalog keeps all 173 choices reachable and combines section and search filters',()=>{
-  const view=mount(CyberwareCatalogBrowser,{lang:'en',onSelect(){}});
+  const view=mount(CatalogBrowser,CyberwareCatalogBrowser({lang:'en',onSelect(){}}).props);
   const cards=tree=>nodes(tree,n=>n.type==='button'&&n.props['aria-label']?.startsWith('Select:'));
   assert.equal(cards(view.render()).length,173);
   button(view.render(),'Cyberlegs & options').props.onClick();
@@ -43,7 +44,7 @@ test('choosing a catalog card preserves weapon and slot metadata through the act
   const parent=mount(CyberwareSection,{character:c,lang:'en',onUpdateCharacter:next=>updated=next});
   button(parent.render(),'Install Cyberware').props.onClick();
   const browser=nodes(parent.render(),n=>n.type===CyberwareCatalogBrowser)[0];assert.ok(browser);
-  const view=mount(CyberwareCatalogBrowser,browser.props);
+  const view=mount(CatalogBrowser,CyberwareCatalogBrowser(browser.props).props);
   button(view.render(),'Cyberarms & options').props.onClick();
   nodes(view.render(),n=>n.type==='button'&&n.props['aria-label']==='Select: Выкидной гранатомёт')[0].props.onClick();
   button(parent.render(),'Add and choose slots').props.onClick();

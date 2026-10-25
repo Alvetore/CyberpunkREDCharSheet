@@ -254,6 +254,10 @@ export interface GearItem {
   quantity: number;
   costEb: number;
   notes: string;
+  catalogId?: string;
+  sourceUrl?: string;
+  priceLabel?: string;
+  billingPeriod?: 'monthly';
 }
 
 export type VehicleCategory = 'Ground' | 'Sea' | 'Air' | 'Bicycle';

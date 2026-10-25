@@ -3,6 +3,7 @@ import { Character, Weapon, ArmorItem, CyberwareItem, GearItem, Vehicle } from '
 import { Language } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { initializeCyberware } from '../utils/rules';
+import { addGearToInventory, gearErrorMessage, gearPrice } from '../utils/gear';
 import { 
   DATAPOOL_WEAPONS, 
   DATAPOOL_ARMORS, 
@@ -10,8 +11,10 @@ import {
   DATAPOOL_GEAR,
   CatalogWeaponItem,
   CatalogArmorItem,
-  CatalogCyberwareItem
+  CatalogCyberwareItem,
+  CatalogGearItem
 } from '../data/datapoolCatalog';
+import { GEAR_SECTIONS } from '../data/gearCatalog';
 import {
   DATAPOOL_ALL_VEHICLES,
   DATAPOOL_VEHICLE_UPGRADES,
@@ -60,7 +63,7 @@ interface UnifiedShopItem {
   weaponData?: CatalogWeaponItem;
   armorData?: CatalogArmorItem;
   cyberwareData?: CatalogCyberwareItem;
-  gearData?: GearItem;
+  gearData?: CatalogGearItem;
   vehicleData?: CatalogVehicleItem;
   vehicleUpgradeData?: CatalogVehicleUpgrade;
 }
@@ -76,6 +79,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
   const [activeTab, setActiveTab] = useState<ShopTab>(initialCategory);
   const [vehicleSubFilter, setVehicleSubFilter] = useState<'all' | 'Ground' | 'Sea' | 'Air' | 'Bicycle' | 'upgrades'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [gearSubFilter, setGearSubFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'default' | 'price_asc' | 'price_desc'>('default');
   const [isFreeMode, setIsFreeMode] = useState(false);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
@@ -134,7 +138,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         originalId: g.id,
         name: g.name,
         type: 'gear',
-        categoryLabel: g.category === 'Consumable' ? (lang === 'ru' ? 'Расходник' : 'Consumable') : (lang === 'ru' ? 'Снаряжение' : 'Gear'),
+        categoryLabel: GEAR_SECTIONS.find(section => section.id === g.section)?.[lang] ?? g.category,
         costEb: g.costEb,
         description: g.notes,
         gearData: g
@@ -183,6 +187,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
       if (activeTab === 'armor' && item.type !== 'armor') return false;
       if (activeTab === 'cyberware' && item.type !== 'cyberware') return false;
       if (activeTab === 'gear' && item.type !== 'gear') return false;
+      if (activeTab === 'gear' && gearSubFilter !== 'all' && item.gearData?.section !== gearSubFilter) return false;
       if (activeTab === 'vehicles') {
         if (item.type !== 'vehicle' && item.type !== 'vehicle_upgrade') return false;
         if (vehicleSubFilter === 'upgrades' && item.type !== 'vehicle_upgrade') return false;
@@ -206,7 +211,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
       if (sortBy === 'price_desc') return b.costEb - a.costEb;
       return 0;
     });
-  }, [allItems, activeTab, vehicleSubFilter, searchQuery, sortBy]);
+  }, [allItems, activeTab, vehicleSubFilter, gearSubFilter, searchQuery, sortBy]);
 
   if (!isOpen) return null;
 
@@ -280,25 +285,10 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
       // Purchase creates inventory. Installation allocates slots and deducts HL separately.
     } else if (item.type === 'gear' && item.gearData) {
       // Check if gear with same name exists
-      const existingIdx = updatedChar.gear.findIndex((g) => g.name.toLowerCase() === item.name.toLowerCase());
-      if (existingIdx >= 0) {
-        const copyGear = [...updatedChar.gear];
-        copyGear[existingIdx] = {
-          ...copyGear[existingIdx],
-          quantity: copyGear[existingIdx].quantity + 1
-        };
-        updatedChar.gear = copyGear;
-      } else {
-        const newGear: GearItem = {
-          id: 'gear-dp-' + Date.now(),
-          name: item.gearData.name,
-          category: item.gearData.category,
-          quantity: 1,
-          costEb: item.gearData.costEb,
-          notes: item.gearData.notes
-        };
-        updatedChar.gear = [...updatedChar.gear, newGear];
-      }
+      const result = addGearToInventory(character, item.gearData, 1, !isFreeMode);
+      if (!result.character) { alert(gearErrorMessage(result.error!, lang)); return; }
+      updatedChar.gear = result.character.gear;
+      updatedChar.cashEb = result.character.cashEb;
     } else if (item.type === 'vehicle' && item.vehicleData) {
       const newVeh: Vehicle = {
         id: 'veh-dp-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
@@ -588,6 +578,10 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
             </button>
           </div>
 
+          {activeTab === 'gear' && <nav aria-label={lang === 'ru' ? 'Разделы снаряжения' : 'Gear sections'} className="flex flex-wrap gap-1.5">
+            {[{ id: 'all', ru: 'Все разделы', en: 'All sections' }, ...GEAR_SECTIONS].map(section => <button key={section.id} aria-pressed={gearSubFilter === section.id} onClick={() => setGearSubFilter(section.id)} className={`px-2.5 py-1.5 rounded text-[11px] border ${gearSubFilter === section.id ? 'bg-cyan-950 border-cyan-600 text-cyan-200' : 'bg-zinc-950 border-zinc-800 text-zinc-400'}`}>{section[lang]}</button>)}
+          </nav>}
+
           {/* Sub-filters for Vehicles */}
           {activeTab === 'vehicles' && (
             <div className="flex items-center gap-1.5 overflow-x-auto touch-pan-x scrollbar-none pt-1">
@@ -664,7 +658,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                                 : 'bg-red-950 text-red-400 border border-red-800/80'
                             }`}
                           >
-                            {isFreeMode ? (lang === 'ru' ? '0 eb (ГМ)' : '0 eb (GM)') : `${item.costEb} eb`}
+                            {isFreeMode ? (lang === 'ru' ? '0 eb (ГМ)' : '0 eb (GM)') : item.gearData ? gearPrice(item.gearData, lang) : `${item.costEb} eb`}
                           </span>
                         </div>
                       </div>
