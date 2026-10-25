@@ -1,6 +1,18 @@
 import { Character, StatKey } from '../types/character';
 import { installedCyberware, isExternalCyberware, cyberwareCapLoss, cyberwareHumanityCap } from './cyberware';
 
+/** roleRank owns the active role's rank; retain legacy aliases for JSON compatibility. */
+export function setRoleRank(character:Character, value:number):Character {
+  const rank=Math.max(1,Math.min(10,Number.isFinite(value)?Math.trunc(value):character.roleRank));
+  return { ...character,roleRank:rank,roleAbilities:{
+    ...character.roleAbilities,
+    generic:{...character.roleAbilities.generic,rank},
+    ...(character.role==='Netrunner'?{netrunner:{...character.roleAbilities.netrunner,interfaceRank:rank}}:{}),
+    ...(character.role==='Tech'?{tech:{...character.roleAbilities.tech,makerRank:rank}}:{}),
+    ...(character.role==='Medtech'?{medtech:{...character.roleAbilities.medtech,medicineRank:rank}}:{}),
+  } };
+}
+
 export interface RoleSkillBonusInfo {
   bonus: number;
   badgeRu: string;

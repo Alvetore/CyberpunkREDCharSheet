@@ -881,7 +881,7 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
       },
       generic: {
         rank: 4,
-        details: 'Способность роли ранга 4.'
+        details: ''
       }
     },
 

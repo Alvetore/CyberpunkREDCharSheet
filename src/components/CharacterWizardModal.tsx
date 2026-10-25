@@ -384,7 +384,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
         netrunner: { interfaceRank: role === 'Netrunner' ? 4 : 0 },
         tech: { makerRank: 4, fieldExpertise: 2, upgrade: 2, fabrication: 2, invention: 2 },
         medtech: { medicineRank: 4, surgery: 2, medicalTech: 1, pharmaceuticals: 1, speedhealDoses: 2, cryopumpDoses: 1 },
-        generic: { rank: 4, details: lang === 'ru' ? `Способность роли ${roleName(role,lang)} ранга 4.` : `Role ability for ${role} at rank 4.` }
+        generic: { rank: 4, details: '' }
       },
       cashEb: startingCash,
       bankEb: 0,

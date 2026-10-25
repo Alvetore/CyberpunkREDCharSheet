@@ -1,8 +1,9 @@
 import React from 'react';
 import { Character } from '../types/character';
-import { roleName } from '../locales/roles';
+import { roleAbilityNotes, roleName } from '../locales/roles';
 import { effectiveStat, skillBase, interfaceRank } from '../utils/rules';
 import { RoleActions } from './RoleActions';
+import { setRoleRank } from '../utils/roleUtils';
 import type { RollResult } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
@@ -71,7 +72,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
     sfx.playClick();
     const current = character.roleAbilities.tech[field];
     const tech = character.roleAbilities.tech;
-    const makerRank = Math.min(rank, tech.makerRank);
+    const makerRank = rank;
     const spent = tech.fieldExpertise + tech.upgrade + tech.fabrication + tech.invention - current;
     const newVal = delta < 0 ? Math.max(0, current + delta) : Math.max(current, Math.min(makerRank, 2 * makerRank - spent, current + delta));
 
@@ -275,6 +276,9 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
       {role === 'Tech' && (
         <div className="space-y-3">
           <div className="text-xs text-yellow-400 font-semibold">{t.techMaker}</div>
+          <p className="text-xs text-zinc-300">{lang === 'ru'
+            ? `Распределено ${techPoints.reduce((sum,value)=>sum+value,0)} / ${2*rank}. Свободно: ${Math.max(0,2*rank-techPoints.reduce((sum,value)=>sum+value,0))}. Каждая специализация — не выше ${rank}. Новые очки распределяются вручную.`
+            : `Allocated ${techPoints.reduce((sum,value)=>sum+value,0)} / ${2*rank}. Unspent: ${Math.max(0,2*rank-techPoints.reduce((sum,value)=>sum+value,0))}. Each specialty is capped at ${rank}. Allocate new points manually.`}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <span className="text-xs text-zinc-200 font-bold">{t.fieldExpertise}</span>
@@ -316,6 +320,9 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
       {role === 'Medtech' && (
         <div className="space-y-3">
           <div className="text-xs text-yellow-400 font-semibold">{t.medtechMedicine}</div>
+          <p className="text-xs text-zinc-300">{lang === 'ru'
+            ? `Распределено ${medtechPoints} / ${rank}. Свободно: ${Math.max(0,rank-medtechPoints)}. Каждая специализация — не выше 5. Новые очки распределяются вручную.`
+            : `Allocated ${medtechPoints} / ${rank}. Unspent: ${Math.max(0,rank-medtechPoints)}. Each specialty is capped at 5. Allocate new points manually.`}</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
               <span className="text-xs text-zinc-200 font-bold">{t.surgery} ({lang === 'ru' ? 'очков; ранг навыка ×2' : 'points; skill rank ×2'})</span>
@@ -383,7 +390,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
               <button
                 onClick={() => {
                   sfx.playClick();
-                  onUpdateCharacter({ ...character, roleRank: Math.max(1, rank - 1) });
+                  onUpdateCharacter(setRoleRank(character,rank-1));
                 }}
                 disabled={rank <= 1}
                 className="w-6 h-6 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 rounded text-xs text-zinc-200 font-bold flex items-center justify-center transition"
@@ -396,7 +403,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
               <button
                 onClick={() => {
                   sfx.playClick();
-                  onUpdateCharacter({ ...character, roleRank: Math.min(10, rank + 1) });
+                  onUpdateCharacter(setRoleRank(character,rank+1));
                 }}
                 disabled={rank >= 10}
                 className="w-6 h-6 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 rounded text-xs text-zinc-200 font-bold flex items-center justify-center transition"
@@ -485,7 +492,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
             <input
               type="text"
               placeholder={lang === 'ru' ? 'например: Клан Альдекальдо, Стая Бейкера / Внедорожник с турелью' : 'e.g. Aldecaldos Clan, Baker Pack / Upgraded Nomad Cruiser'}
-              value={character.roleAbilities.generic.details}
+              value={roleAbilityNotes(character.roleAbilities.generic.details)}
               onChange={(e) =>
                 onUpdateCharacter({
                   ...character,
@@ -508,12 +515,15 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
       {/* Generic Role Description & Notes */}
       {role !== 'Solo' && role !== 'Tech' && role !== 'Medtech' && role !== 'Netrunner' && role !== 'Nomad' && (
         <div className="space-y-2">
-          <label className="text-xs text-zinc-400 block">
-            {lang === 'ru' ? `Детали способности роли (${roleName(role,lang)}):` : `Role Ability Details (${role}):`}
+          <label htmlFor="role-ability-notes" className="text-xs text-zinc-400 block">
+            {lang === 'ru' ? 'Заметки по способности роли' : 'Role ability notes'}
           </label>
-          <input
-            type="text"
-            value={character.roleAbilities.generic.details}
+          <p className="text-xs text-zinc-500">{lang === 'ru' ? 'Ваши личные записи. Правила и доступные возможности показаны выше и зависят от текущего ранга роли.' : 'Your personal notes. Rules and available features are shown above and follow the current role rank.'}</p>
+          <textarea
+            id="role-ability-notes"
+            rows={3}
+            placeholder={lang === 'ru' ? 'Контакты, договорённости, решения мастера…' : 'Contacts, agreements, GM rulings…'}
+            value={roleAbilityNotes(character.roleAbilities.generic.details)}
             onChange={(e) =>
               onUpdateCharacter({
                 ...character,

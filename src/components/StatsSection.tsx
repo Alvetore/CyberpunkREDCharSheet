@@ -3,7 +3,7 @@ import { Character, StatKey, RoleType, RollResult } from '../types/character';
 import { roleName } from '../locales/roles';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
-import { calculateHumanityStats } from '../utils/roleUtils';
+import { calculateHumanityStats, setRoleRank } from '../utils/roleUtils';
 import { TherapyModal } from './TherapyModal';
 import { effectiveStat, initiativeBase, maxHP } from '../utils/rules';
 import { CPR_SKILLS } from '../data/initialData';
@@ -142,7 +142,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
     sfx.playClick();
     if (newRole === character.role) return;
 
-    onUpdateCharacter({ ...character, role: newRole });
+    onUpdateCharacter(setRoleRank({ ...character, role: newRole },character.roleRank));
   };
 
   const hpPercent = Math.max(0, Math.min(100, Math.round((character.hpCurrent / hpMax) * 100)));
@@ -220,7 +220,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                 min="1"
                 max="10"
                 value={character.roleRank}
-                onChange={(e) => { const rank = Math.max(1, Math.min(10, parseInt(e.target.value, 10) || 1)); onUpdateCharacter({ ...character, roleRank: rank, roleAbilities: { ...character.roleAbilities, netrunner: character.role === 'Netrunner' ? { interfaceRank: rank } : character.roleAbilities.netrunner, tech: character.role === 'Tech' ? { ...character.roleAbilities.tech, makerRank: rank } : character.roleAbilities.tech, medtech: character.role === 'Medtech' ? { ...character.roleAbilities.medtech, medicineRank: rank } : character.roleAbilities.medtech } }); }}
+                onChange={(e) => onUpdateCharacter(setRoleRank(character,Number(e.target.value)||1))}
                 className="w-full bg-zinc-950 border border-zinc-800 focus:border-red-500 rounded px-2.5 py-1.5 text-zinc-100 font-bold text-sm text-center focus:outline-none"
               />
             </div>

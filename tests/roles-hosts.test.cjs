@@ -17,6 +17,8 @@ const {CYBERWARE_CATALOG}=load('src/data/cyberwareCatalog.ts');
 const chrome=load('src/utils/cyberware.ts'), gear=load('src/utils/gear.ts'), wearable=load('src/utils/gearCyberware.ts');
 const rules=load('src/utils/rules.ts'), roles=load('src/utils/roleAbilities.ts'), dice=load('src/utils/dice.ts');
 const storage=load('src/utils/storage.ts'), {isCharacter}=load('src/utils/characterValidation.ts');
+const {setRoleRank}=load('src/utils/roleUtils.ts');
+const {roleAbilityNotes}=load('src/locales/roles.ts');
 const noop=()=>{};
 beforeEach(()=>{const data=new Map();global.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)};});
 const fresh=()=>({...createEmptyCharacter('Test'),gear:[],cyberware:[],weapons:[],humanityCurrent:70,stats:{...createEmptyCharacter().stats,EMP:7}});
@@ -135,4 +137,48 @@ test('smart glove fingers need body Interface Plugs and fingerless gloves preser
   assert.ok(finger);c={...c,cyberware:[{...finger,id:'finger',isInstalled:false}]};c=install(c,'finger',[`${glove.id}:gear:finger`]);assert.equal(chrome.functionalCyberware(c).length,0);assert.equal(c.humanityCurrent,70);
   c=implant(c,12,'link');c=install(c,'link',['body:neural']);c=implant(c,16,'plugs');c=install(c,'plugs',['link:neural']);assert.ok(chrome.functionalCyberware(c).some(x=>x.id==='finger'));
   let d=implant(fresh(),96,'arm');d=install(d,'arm',['body:left-arm']);d=implant(d,113,'claws');d=install(d,'claws',['arm:arm']);d=own(d,84);d=wearable.wearCyberwareGear(d,d.gear[0].id,'left-arm');assert.ok(chrome.functionalCyberware(d).some(x=>x.id==='claws'));
+});
+
+test('role notes hide generated boilerplate, retain real text and no longer pretend to be a rules description',()=>{
+  const c={...fresh(),role:'Fixer'};let updated;
+  for(const details of ['Способность роли ранга 4.','Способность роли Fixer ранга 4.','Способность роли Фиксер ранга 4.','Role ability for Fixer at rank 4.']) {
+    c.roleAbilities.generic.details=details;
+    const tree=mount(RoleSection,{character:c,lang:'ru',onUpdateCharacter:next=>updated=next}).render();
+    const input=nodes(tree,n=>n.props.id==='role-ability-notes')[0];assert.equal(input.type,'textarea');assert.equal(input.props.value,'');
+    assert.match(label(tree),/Заметки по способности роли/);assert.doesNotMatch(label(tree),/Детали способности роли/);
+    assert.equal(c.roleAbilities.generic.details,details);assert.ok(storage.saveCharactersToStorage([c]));assert.equal(storage.loadStoredCharacters()[0].roleAbilities.generic.details,details);
+  }
+  c.roleAbilities.generic.details='Способность роли ранга 4.\nМой контакт: Джуди';
+  assert.equal(roleAbilityNotes(c.roleAbilities.generic.details),c.roleAbilities.generic.details);
+  const view=mount(RoleSection,{character:c,lang:'en',onUpdateCharacter:next=>updated=next});
+  nodes(view.render(),n=>n.props.id==='role-ability-notes')[0].props.onChange({target:{value:'Contact: Judy\nAgreed 10% discount'}});
+  const ranked=setRoleRank(updated,7);assert.equal(ranked.roleAbilities.generic.details,'Contact: Judy\nAgreed 10% discount');
+  assert.ok(storage.saveCharactersToStorage([ranked]));assert.equal(storage.loadStoredCharacters()[0].roleAbilities.generic.details,ranked.roleAbilities.generic.details);
+  assert.equal(createEmptyCharacter().roleAbilities.generic.details,'');
+});
+
+test('current role rank overrides stale Maker rank in specialization controls',()=>{
+  const c={...fresh(),role:'Tech',roleRank:6};c.roleAbilities.tech={makerRank:4,fieldExpertise:4,upgrade:4,fabrication:0,invention:0};let updated;
+  const view=mount(RoleSection,{character:c,lang:'en',onUpdateCharacter:next=>updated=next});
+  assert.match(label(view.render()),/Allocated 8 \/ 12\. Unspent: 4/);
+  nodes(view.render(),n=>n.type==='button'&&label(n)==='+')[0].props.onClick();assert.equal(updated.roleAbilities.tech.fieldExpertise,5);
+  const lowered=setRoleRank(updated,3);assert.equal(lowered.roleAbilities.tech.fieldExpertise,5);view.props.character=lowered;
+  assert.match(label(view.render()),/Allocation exceeds the current rank/);
+  nodes(view.render(),n=>n.type==='button'&&label(n)==='+')[0].props.onClick();assert.equal(updated.roleAbilities.tech.fieldExpertise,5);
+});
+
+test('rank editing and role switching synchronize legacy aliases without losing allocations or unknown metadata',()=>{
+  let updated;const c=fresh();c.roleRank=7;c.roleAbilities.tech.custom={preserve:[0,false,null]};c.roleAbilities.generic.details='My notes';
+  const view=mount(StatsSection,{character:c,lang:'en',onUpdateCharacter:next=>updated=next});
+  nodes(view.render(),n=>n.type==='select'&&n.props.value==='Solo')[0].props.onChange({target:{value:'Tech'}});
+  assert.equal(updated.roleRank,7);assert.equal(updated.roleAbilities.tech.makerRank,7);assert.equal(updated.roleAbilities.generic.rank,7);assert.deepEqual(updated.roleAbilities.tech.custom,c.roleAbilities.tech.custom);
+  view.props.character=updated;nodes(view.render(),n=>n.type==='input'&&n.props.min==='1'&&n.props.max==='10')[0].props.onChange({target:{value:'8'}});
+  assert.equal(updated.roleRank,8);assert.equal(updated.roleAbilities.tech.makerRank,8);assert.equal(updated.roleAbilities.tech.fieldExpertise,c.roleAbilities.tech.fieldExpertise);
+  for(const role of Object.keys(ROLE_NAMES_RU)) {
+    const character=setRoleRank({...fresh(),role},9);assert.equal(character.roleRank,9);assert.equal(character.roleAbilities.generic.rank,9);assert.ok(isCharacter(character));
+    if(role==='Netrunner') assert.equal(character.roleAbilities.netrunner.interfaceRank,9);
+    if(role==='Medtech') assert.equal(character.roleAbilities.medtech.medicineRank,9);
+    if(role==='Fixer') assert.equal(rules.skillBase(character,'trading'),character.stats.COOL+character.skills.find(s=>s.id==='trading').level+9);
+  }
+  assert.equal(setRoleRank(c,99).roleRank,10);assert.equal(setRoleRank(c,-1).roleRank,1);
 });
