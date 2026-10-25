@@ -178,13 +178,13 @@ test('Tech starts with two specialty ranks per Maker rank',()=>{
   assert.equal(Object.values(specialties).reduce((a,b)=>a+b,0),makerRank*2);
 });
 test('only rezzed installed boosters apply and NET checks include wounds', () => {
-  const c=fresh();c.role='Netrunner';c.hpCurrent=0;
+  const c=createEmptyCharacter('NET','Netrunner');c.hpCurrent=0;
   const seeya=c.programs.find(p=>p.name==='SeeYa');seeya.isInstalled=true;seeya.isActive=true;
   assert.equal(rules.netActionBase(c,'Pathfinder'),2);seeya.isActive=false;
   assert.equal(rules.netActionBase(c,'Pathfinder'),0);
 });
 test('Black ICE uses two slots shared with hardware',()=>{
-  const c=fresh();c.programs=PRESET_PROGRAMS.map(p=>({...p,isInstalled:p.category==='Black ICE'}));
+  const c=createEmptyCharacter('NET','Netrunner');c.programs=PRESET_PROGRAMS.map(p=>({...p,isInstalled:p.category==='Black ICE'}));
   assert.equal(rules.usedDeckSlots(c),c.cyberdeck.hardwareSlotsUsed+2);
 });
 test('range DV covers SMG autofire through 100m',()=>assert.equal(CPR_RANGE_DV_TABLE.find(row=>row.category==='Autofire (SMG)').dvs[4],30));
@@ -321,7 +321,7 @@ test('buying a catalog weapon preserves profiles, quality and explicit exception
   const bought=updated.weapons.at(-1);assert.deepEqual(bought.damageProfiles,weapon.damageProfiles);assert.equal(bought.quality,weapon.quality);assert.equal(bought.armorPenetration,weapon.armorPenetration);
 });
 test('Attacker activation and attack use a single NET action',()=>{
-  const c=fresh();c.programs=[{...PRESET_PROGRAMS.find(p=>p.name==='Sword'),isInstalled:true,isActive:false}];storage.saveCharactersToStorage([c]);
+  const c=createEmptyCharacter('NET','Netrunner');c.programs=[{...PRESET_PROGRAMS.find(p=>p.name==='Sword'),isInstalled:true,isActive:false}];storage.saveCharactersToStorage([c]);
   const view=mount(App,{});
   nodes(view.render(),n=>n.type===SectionNav)[0].props.onChangeTab('netrunner');
   nodes(view.render(),n=>n.type===NetrunnerSection)[0].props.onRollProgramAttack(c.programs[0]);

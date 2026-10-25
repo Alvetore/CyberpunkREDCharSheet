@@ -59,10 +59,14 @@ export function weaponAttackBase(character: Character, weapon: Weapon): number {
   const skill = character.skills.find(item => item.id === weapon.skillId);
   const key = skill?.stat ?? (weapon.category.includes('Melee') ? 'DEX' : 'REF');
   let base = skill ? skillBase(character, skill.id) : effectiveStat(character, key) + woundPenalty(character) + injuryActionPenalty(character);
-  if (character.role === 'Solo') base += Math.floor(character.roleAbilities.solo.precisionAttack / 3);
+  base += soloPrecisionBonus(character);
   if (weapon.quality === 'Excellent') base += 1;
   if (!weapon.category.includes('Melee') && !['brawling', 'martial_arts'].includes(weapon.skillId || '') && character.criticalInjuries.some(item => item.isActive && item.location === 'head' && [2, 4].includes(item.rollNumber))) base -= 4;
   return base;
+}
+
+export function soloPrecisionBonus(character:Character):number {
+  return character.role === 'Solo' ? Math.floor(character.roleAbilities.solo.precisionAttack / 3) : 0;
 }
 
 export function selectedWeaponProfile(weapon: Weapon): Weapon {
@@ -105,15 +109,21 @@ export function effectiveSP(character: Character, location: 'head' | 'body'): nu
 
 export function programSlots(program: ProgramItem): number { return program.category === 'Black ICE' ? 2 : 1; }
 export function usedDeckSlots(character: Character): number {
+  if (character.cyberdeck.isOwned === false) return 0;
   return character.cyberdeck.hardwareSlotsUsed + character.programs.filter(item => item.isInstalled).reduce((sum, item) => sum + programSlots(item), 0);
 }
 export function deckCapacity(character: Character): number {
+  if (character.cyberdeck.isOwned === false) return 0;
   return character.cyberdeck.slotsMax ?? character.cyberdeck.programSlotsMax + character.cyberdeck.hardwareSlotsMax;
 }
 export function netActionBase(character: Character, action: string, bonus = 0): number {
   const program = /pathfinder|следопыт/i.test(action) ? 'SeeYa' : /cloak|плащ/i.test(action) ? 'Eraser' : /backdoor|взлом/i.test(action) ? 'Worm' : '';
   const booster = character.programs.some(item => item.name === program && item.isInstalled && item.isActive && item.rezCurrent > 0) ? 2 : 0;
-  return character.roleAbilities.netrunner.interfaceRank + bonus + booster + woundPenalty(character) + injuryActionPenalty(character);
+  return interfaceRank(character) + bonus + booster + woundPenalty(character) + injuryActionPenalty(character);
+}
+
+export function interfaceRank(character: Character): number {
+  return character.role === 'Netrunner' ? character.roleRank : 0;
 }
 
 export function rollNewInjury(injuries: CriticalInjury[], location: 'head' | 'body', die: () => number): CriticalInjury | undefined {

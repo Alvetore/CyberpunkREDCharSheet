@@ -1,5 +1,6 @@
 import { Character, CYBERWARE_SLOT_TYPES } from '../types/character';
 import { createEmptyCharacter } from '../data/initialData';
+import { gearCyberwareDevice } from './gearCyberware';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
 const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
@@ -61,6 +62,7 @@ export function isCharacter(value: unknown): value is Character {
   const { avatarUrl: _avatar, reputation: _reputation, ...required } = template;
   for (const key of ['vehicles','spareArmor','martialArtsStyle','legacyMartialArtsStyle','martialArtsLevels','automaticCyberwareEffects','soloSpotWeaknessUsed','soloDamageDeflectionUsed']) delete (required as unknown as Record<string, unknown>)[key];
   delete required.cyberdeck.slotsMax;
+  delete required.cyberdeck.isOwned;
   // Lists have explicit element templates even when the starting character has none.
   const listTemplates = {
     weapons: { id:'', name:'', category:'', damage:'', standardRof:0, magCapacity:0, currentAmmo:0, ammoType:'', concealable:false, notes:'' },
@@ -75,13 +77,21 @@ export function isCharacter(value: unknown): value is Character {
   }
   if (!matches(value, required)) return false;
   const character = value as unknown as Character;
+  if (!optionalFields(character.roleAbilities.solo as unknown as Record<string,unknown>, {fumbleRecovery:n=>n===0||n===4})) return false;
+  if (!optionalFields(character.roleAbilities as unknown as Record<string,unknown>, {
+    exec:exec => isRecord(exec) && Array.isArray(exec.members) && exec.members.length<=30 && new Set(exec.members.map(m=>isRecord(m)?m.id:undefined)).size===exec.members.length && exec.members.every(m=>isRecord(m)&&text(m.id)&&text(m.name)&&text(m.specialty)&&finite(m.loyalty)&&Number.isInteger(m.loyalty)),
+    medtechKnownPharmaceuticals:items=>Array.isArray(items)&&items.length<=5&&new Set(items).size===items.length&&items.every(item=>['Antibiotic','Rapidetox','Speedheal','Stim','Surge'].includes(item)),
+  })) return false;
   if (value.reputation !== undefined && (!Number.isInteger(value.reputation) || (value.reputation as number) < 0 || (value.reputation as number) > 10)) return false;
   const relationships = (entries: unknown) => Array.isArray(entries) && entries.length <= 100 && entries.every(text);
   if (!optionalFields(character.lifepath as unknown as Record<string,unknown>, {
     friendEntries:relationships,loveAffairEntries:relationships,
     enemyEntries:entries => Array.isArray(entries) && entries.length <= 100 && entries.every(row => isRecord(row) && ['who','why','resources','response'].every(key => text(row[key]))),
   })) return false;
-  if (!character.gear.every(item => optionalFields(item as unknown as Record<string,unknown>, { catalogId:text,sourceUrl:text,priceLabel:text,billingPeriod:period => period === 'monthly' }))) return false;
+  if (!character.gear.every(item => optionalFields(item as unknown as Record<string,unknown>, { catalogId:text,sourceUrl:text,priceLabel:text,billingPeriod:period => period === 'monthly', wornOn:site => ['eyes','ears','left-arm','right-arm'].includes(site as string) }))) return false;
+  if (!optionalFields(character.cyberdeck as unknown as Record<string,unknown>, { isOwned:boolean })) return false;
+  const wornDevices=character.gear.filter(item=>item.wornOn&&gearCyberwareDevice(item));
+  if (new Set(wornDevices.map(item=>item.wornOn)).size!==wornDevices.length || wornDevices.some(item=>item.quantity!==1||!(gearCyberwareDevice(item)!.sites as readonly string[]).includes(item.wornOn!))) return false;
   if (character.cyberware.some(item => !item.id) || character.weapons.some(item => !item.id) || new Set(character.cyberware.map(item => item.id)).size !== character.cyberware.length || new Set(character.weapons.map(item => item.id)).size !== character.weapons.length) return false;
   const roles = ['Solo','Netrunner','Tech','Medtech','Rockerboy','Media','Lawman','Exec','Fixer','Nomad'];
   if (!character.id || !character.name.trim() || !roles.includes(character.role)) return false;

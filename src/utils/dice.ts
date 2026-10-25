@@ -11,6 +11,7 @@ export function rollD6(): number {
 }
 
 export interface RollCheckOptions {
+  ignoreCriticalFailure?: boolean;
   title: string;
   type?: RollResult['type'];
   baseVal: number; // Stat + Skill
@@ -49,7 +50,7 @@ export function executeCyberpunkCheck(options: RollCheckOptions): RollResult {
         // ignore if confetti unavailable
       }
     }, 150);
-  } else if (firstDie === 1) {
+  } else if (firstDie === 1 && !options.ignoreCriticalFailure) {
     isCritFail = true;
     const penaltyDie = rollD10();
     critFailD10 = penaltyDie;

@@ -456,7 +456,7 @@ export const CPR_ROLE_PACKAGES: Record<RoleType, RolePackage> = {
 
   Exec: {
     role: 'Exec',
-    nameRu: 'Корпорат',
+    nameRu: 'Менеджер',
     descRu: 'Менеджер высшего звена мегакорпорации, защищенный корпоративным бюджетом.',
     statTable: [
       { rollRange: '1', stats: { INT: 8, REF: 5, DEX: 5, TECH: 3, COOL: 8, WILL: 6, LUCK: 6, MOVE: 5, BODY: 5, EMP: 7 } },

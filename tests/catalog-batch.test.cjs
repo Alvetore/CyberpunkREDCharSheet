@@ -83,7 +83,7 @@ test('confirming or cancelling installation returns to the still-selected cyberw
 });
 
 test('program modal cumulatively adds different programs and refuses a third at capacity without losing selections or receipts', () => {
-  const c = fresh(); c.cyberdeck = { ...c.cyberdeck, slotsMax: 2, hardwareSlotsUsed: 0 };
+  const c = fresh(); c.cyberdeck = { ...c.cyberdeck, isOwned: true, slotsMax: 2, hardwareSlotsUsed: 0 };
   let updated, updates = 0;
   const view = mount(NetrunnerSection, { character: c, lang: 'en', onUpdateCharacter: next => { updated = next; updates++; }, onRollInterfaceAction: noop, onRollProgramAttack: noop });
   button(view.render(), 'Add Program').props.onClick();

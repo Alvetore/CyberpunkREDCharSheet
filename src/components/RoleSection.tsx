@@ -1,5 +1,9 @@
 import React from 'react';
 import { Character } from '../types/character';
+import { roleName } from '../locales/roles';
+import { effectiveStat, skillBase, interfaceRank } from '../utils/rules';
+import { RoleActions } from './RoleActions';
+import type { RollResult } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { 
@@ -23,12 +27,14 @@ interface RoleSectionProps {
   character: Character;
   onUpdateCharacter: (char: Character) => void;
   lang: Language;
+  onRollResult?: (result:RollResult) => void;
 }
 
 export const RoleSection: React.FC<RoleSectionProps> = ({
   character,
   onUpdateCharacter,
-  lang
+  lang,
+  onRollResult
 }) => {
   const t = translations[lang];
   const role = character.role;
@@ -40,7 +46,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
     delta: number
   ) => {
     sfx.playClick();
-    const current = character.roleAbilities.solo[field];
+    const current = character.roleAbilities.solo[field] ?? 0;
     const totalSpent =
       Object.values(character.roleAbilities.solo).reduce((a, b) => a + b, 0) - current;
     const newVal = delta < 0 ? Math.max(0, current + delta) : Math.max(current, Math.min(rank - totalSpent, current + delta));
@@ -91,7 +97,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
     const medicine = character.roleAbilities.medtech;
     const specialties = ['surgery','medicalTech','pharmaceuticals'];
     const spent = medicine.surgery + medicine.medicalTech + medicine.pharmaceuticals - current;
-    const newVal = specialties.includes(field) ? (delta < 0 ? Math.max(0, current + delta) : Math.max(current, Math.min(rank - spent, current + delta))) : Math.max(0, current + delta);
+    const newVal = specialties.includes(field) ? (delta < 0 ? Math.max(0, current + delta) : Math.max(current, Math.min(5, rank - spent, current + delta))) : Math.max(0, current + delta);
 
     onUpdateCharacter({
       ...character,
@@ -108,7 +114,7 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
   const soloPointsAllocated = Object.values(character.roleAbilities.solo).reduce((a, b) => a + b, 0);
   const techPoints = ['fieldExpertise','upgrade','fabrication','invention'].map(key => character.roleAbilities.tech[key as 'fieldExpertise']);
   const medtechPoints = character.roleAbilities.medtech.surgery + character.roleAbilities.medtech.medicalTech + character.roleAbilities.medtech.pharmaceuticals;
-  const invalidAllocation = role === 'Solo' ? soloPointsAllocated > rank : role === 'Tech' ? techPoints.some(value => value > rank) || techPoints.reduce((sum, value) => sum + value, 0) > 2 * rank : role === 'Medtech' ? medtechPoints > rank : false;
+  const invalidAllocation = role === 'Solo' ? soloPointsAllocated > rank : role === 'Tech' ? techPoints.some(value => value > rank) || techPoints.reduce((sum, value) => sum + value, 0) > 2 * rank : role === 'Medtech' ? medtechPoints > rank || ['surgery','medicalTech','pharmaceuticals'].some(key=>character.roleAbilities.medtech[key as 'surgery']>5) : false;
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 shadow-md space-y-3">
@@ -117,12 +123,13 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
         <div className="flex items-center gap-2">
           <Award size={18} className="text-red-500" />
           <h2 className="font-orbitron font-bold text-sm text-red-500 uppercase tracking-wider">
-            {t.roleAbilityTitle}: {role} ({lang === 'ru' ? 'Ранг' : 'Rank'} {rank})
+            {t.roleAbilityTitle}: {roleName(role,lang)} ({lang === 'ru' ? 'Ранг' : 'Rank'} {rank})
           </h2>
         </div>
       </div>
 
       {role === 'Solo' && <button type="button" onClick={() => onUpdateCharacter({ ...character, soloSpotWeaknessUsed: false, soloDamageDeflectionUsed: false })} className="text-xs text-amber-300 underline">{lang === 'ru' ? 'Новый ход: восстановить Spot Weakness / Damage Deflection' : 'New turn: reset Spot Weakness / Damage Deflection'}</button>}
+      {role === 'Solo' && <label className="block text-xs text-amber-300"><input type="checkbox" checked={(character.roleAbilities.solo.fumbleRecovery ?? 0) >= 4} disabled={!character.roleAbilities.solo.fumbleRecovery && rank-soloPointsAllocated<4} onChange={event=>onUpdateCharacter({...character,roleAbilities:{...character.roleAbilities,solo:{...character.roleAbilities.solo,fumbleRecovery:event.target.checked?4:0}}})} /> {lang === 'ru' ? 'Восстановление после осечки (4 очка): натуральная 1 в атаке считается 1 без дополнительного штрафного d10.' : 'Fumble Recovery (4 points): natural 1 on attacks counts as 1 without a penalty d10.'}</label>}
       {/* SOLO: Combat Awareness */}
       {role === 'Solo' && (
         <div className="space-y-3">
@@ -343,9 +350,9 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
         <div className="p-3 bg-zinc-950 border border-cyan-800/60 rounded text-xs text-cyan-300 flex items-center justify-between">
           <span>
             {lang === 'ru' ? (
-              <>Интерфейс: Ранг {character.roleAbilities.netrunner.interfaceRank}. Управление кибердекой и сетевые действия доступны во вкладке <strong>&quot;Нетраннинг&quot;</strong>.</>
+              <>Интерфейс: Ранг {interfaceRank(character)}. Управление кибердекой и сетевые действия доступны во вкладке <strong>&quot;Нетраннинг&quot;</strong>.</>
             ) : (
-              <>Interface: Rank {character.roleAbilities.netrunner.interfaceRank}. Cyberdeck management and Net actions are located in the <strong>&quot;Netrunning&quot;</strong> tab.</>
+              <>Interface: Rank {interfaceRank(character)}. Cyberdeck management and Net actions are located in the <strong>&quot;Netrunning&quot;</strong> tab.</>
             )}
           </span>
         </div>
@@ -416,8 +423,8 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
               ].map((item) => {
                 const sk = character.skills.find((s) => s.id === item.id);
                 const lvl = sk ? sk.level : 0;
-                const statVal = character.stats[item.stat as keyof typeof character.stats] || 0;
-                const totalBase = statVal + lvl + rank;
+                const statVal = effectiveStat(character,item.stat as keyof typeof character.stats);
+                const totalBase = skillBase(character,item.id);
                 const ItemIcon = item.icon;
                 return (
                   <div key={item.id} className="bg-zinc-950 border border-zinc-800 rounded p-2.5 flex items-center justify-between">
@@ -497,11 +504,12 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
         </div>
       )}
 
+      <RoleActions character={character} lang={lang} onUpdateCharacter={onUpdateCharacter} onRollResult={onRollResult} />
       {/* Generic Role Description & Notes */}
       {role !== 'Solo' && role !== 'Tech' && role !== 'Medtech' && role !== 'Netrunner' && role !== 'Nomad' && (
         <div className="space-y-2">
           <label className="text-xs text-zinc-400 block">
-            {lang === 'ru' ? `Детали способности роли (${role}):` : `Role Ability Details (${role}):`}
+            {lang === 'ru' ? `Детали способности роли (${roleName(role,lang)}):` : `Role Ability Details (${role}):`}
           </label>
           <input
             type="text"

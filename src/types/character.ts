@@ -210,6 +210,7 @@ export interface ProgramItem {
 }
 
 export interface Cyberdeck {
+  isOwned?: boolean;
   slotsMax?: number;
   name: string;
   hardwareSlotsMax: number;
@@ -277,6 +278,7 @@ export interface GearItem {
   sourceUrl?: string;
   priceLabel?: string;
   billingPeriod?: 'monthly';
+  wornOn?: 'eyes' | 'ears' | 'left-arm' | 'right-arm';
 }
 
 export type VehicleCategory = 'Ground' | 'Sea' | 'Air' | 'Bicycle';
@@ -303,6 +305,7 @@ export interface Vehicle {
 }
 
 export interface SoloAbility {
+  fumbleRecovery?: number;
   threatDetection: number;
   initiativeReaction: number;
   precisionAttack: number;
@@ -342,6 +345,8 @@ export interface RoleAbilities {
   tech: TechAbility;
   medtech: MedtechAbility;
   generic: GenericRoleAbility;
+  exec?: { members: { id:string; name:string; specialty:string; loyalty:number }[] };
+  medtechKnownPharmaceuticals?: string[];
 }
 
 export interface Character {

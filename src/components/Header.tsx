@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Character } from '../types/character';
+import { roleName } from '../locales/roles';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { 
@@ -249,7 +250,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {characters.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.handle ? `${c.handle} (${c.name}) — ${c.role} (Ранг ${c.roleRank})` : `${c.name} — ${c.role} (Ранг ${c.roleRank})`}
+                  {c.handle ? `${c.handle} (${c.name}) — ${roleName(c.role,lang)} (${lang === 'ru' ? 'Ранг' : 'Rank'} ${c.roleRank})` : `${c.name} — ${roleName(c.role,lang)} (${lang === 'ru' ? 'Ранг' : 'Rank'} ${c.roleRank})`}
                 </option>
               ))}
             </select>

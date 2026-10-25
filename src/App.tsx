@@ -272,6 +272,7 @@ export const App: React.FC = () => {
         ? `Атака (${attackStat}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : weaponPenetration(weapon) === 'half' ? ' [50% SP]' : ''}`
         : `Attack (${attackStat}): ${weapon.name}${rangeStr ? ` (${rangeStr})` : weaponPenetration(weapon) === 'half' ? ' [Half SP]' : ''}`,
       type: 'attack',
+      ignoreCriticalFailure: activeChar.role === 'Solo' && (activeChar.roleAbilities.solo.fumbleRecovery ?? 0) >= 4,
       baseVal,
       targetDv,
       lang
@@ -318,10 +319,11 @@ export const App: React.FC = () => {
     } catch (error) { alert(error instanceof Error ? error.message : String(error)); }
   };
 
-  const handleRollCustomCheck = (title: string, baseVal: number, targetDv?: number, modifiers?: { name: string; val: number }[]) => {
+  const handleRollCustomCheck = (title: string, baseVal: number, targetDv?: number, modifiers?: { name: string; val: number }[], isAttack=false) => {
     const result = executeCyberpunkCheck({
       title,
-      type: 'attack',
+      type: isAttack ? 'attack' : 'custom',
+      ignoreCriticalFailure: isAttack && activeChar.role === 'Solo' && (activeChar.roleAbilities.solo.fumbleRecovery ?? 0) >= 4,
       baseVal,
       targetDv,
       modifiers,
@@ -340,6 +342,7 @@ export const App: React.FC = () => {
   };
 
   const handleRollInterfaceAction = (actionName: string, dv?: number, bonus = 0) => {
+    if (activeChar.role !== 'Netrunner' || activeChar.cyberdeck.isOwned === false) return;
     const baseVal = netActionBase(activeChar, actionName, bonus);
 
     const result = executeCyberpunkCheck({
@@ -353,6 +356,7 @@ export const App: React.FC = () => {
   };
 
   const handleRollProgramAttack = (prog: ProgramItem) => {
+    if (activeChar.role !== 'Netrunner' || activeChar.cyberdeck.isOwned === false) return;
     if (!prog.isInstalled || (prog.category !== 'Attacker' && !prog.isActive)) return;
     const baseVal = prog.category === 'Black ICE' ? prog.atkBonus : netActionBase(activeChar, prog.name, prog.atkBonus);
 
@@ -429,6 +433,7 @@ export const App: React.FC = () => {
               <RoleSection
                 character={activeChar}
                 onUpdateCharacter={handleUpdateActiveCharacter}
+                onRollResult={addRollResult}
                 lang={lang}
               />
               <WeaponsSection

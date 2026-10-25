@@ -6,7 +6,7 @@ import { calculateHumanityStats } from '../utils/roleUtils';
 import { initializeCyberware } from '../utils/rules';
 import { TherapyModal } from './TherapyModal';
 import { DATAPOOL_CYBERWARE } from '../data/datapoolCatalog';
-import { cyberwareCapLoss, cyberwareDefinition, cyberwareHosts, cyberwareSlotLabel, cyberwareWarnings, isCyberwareInstalled, uninstallCyberware } from '../utils/cyberware';
+import { isExternalCyberware, cyberwareCapLoss, cyberwareDefinition, cyberwareHosts, cyberwareSlotLabel, cyberwareWarnings, isCyberwareInstalled, uninstallCyberware } from '../utils/cyberware';
 import { CyberwareInstallModal } from './CyberwareInstallModal';
 import { CyberwareCatalogBrowser } from './CyberwareCatalogBrowser';
 import { useCatalogNotice } from './CatalogNotice';
@@ -77,7 +77,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
     sfx.playClick();
     const uninstalled = uninstallCyberware(character, itemToDelete.id);
     const updated = uninstalled.cyberware.filter((c) => c.id !== itemToDelete.id);
-    const cost = isCyberwareInstalled(character, itemToDelete) ? itemToDelete.humanityLoss ?? itemToDelete.humanityCost : 0;
+    const cost = isCyberwareInstalled(character, itemToDelete) && !isExternalCyberware(character,itemToDelete) ? itemToDelete.humanityLoss ?? itemToDelete.humanityCost : 0;
     const nextStats = calculateHumanityStats({ ...uninstalled, cyberware: updated });
 
     let newHumanity: number;
@@ -232,7 +232,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
                 <div className="flex items-center gap-2">
                   <span className="font-orbitron font-bold text-xs text-red-400 bg-zinc-950 px-2 py-0.5 rounded border border-red-950">
-                    {item.humanityCostKnown === false ? 'HL —' : `-${item.humanityCost} HL`}
+                    {isExternalCyberware(character,item) ? (lang === 'ru' ? 'Вне тела · HL 0' : 'External · HL 0') : item.humanityCostKnown === false ? 'HL —' : `-${item.humanityCost} HL`}
                   </span>
                   <button
                     onClick={() => {
@@ -443,7 +443,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                       {lang === 'ru' ? 'Полный возврат' : 'Full Refund'}
                     </span>
                     <span className="font-mono font-bold text-xs text-emerald-400">
-                      +{isCyberwareInstalled(character,itemToDelete) ? itemToDelete.humanityLoss ?? itemToDelete.humanityCost : 0} HL
+                      +{isCyberwareInstalled(character,itemToDelete) && !isExternalCyberware(character,itemToDelete) ? itemToDelete.humanityLoss ?? itemToDelete.humanityCost : 0} HL
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-400 mt-0.5 leading-tight">
@@ -468,7 +468,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                       {lang === 'ru' ? 'По правилам Cyberpunk RED' : 'Official CPR Rules'}
                     </span>
                     <span className="font-mono font-bold text-xs text-cyan-400">
-                      +{isCyberwareInstalled(character,itemToDelete) ? cyberwareCapLoss(itemToDelete) : 0} {lang === 'ru' ? 'к порогу' : 'cap'}
+                      +{isCyberwareInstalled(character,itemToDelete) ? cyberwareCapLoss(itemToDelete,character) : 0} {lang === 'ru' ? 'к порогу' : 'cap'}
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-400 mt-0.5 leading-tight">

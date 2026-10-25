@@ -1,5 +1,6 @@
 import { Character, CyberwareItem, CyberwareSlotType, Weapon } from '../types/character';
 import { DATAPOOL_CYBERWARE } from '../data/datapoolCatalog';
+import { gearCyberwareDevice, gearCyberwareHosts, gearForCyberwareHost } from './gearCyberware';
 
 export interface CyberwareHost {
   id: string;
@@ -8,6 +9,7 @@ export interface CyberwareHost {
   capacity: number;
   used: number;
   ownerId?: string;
+  gearId?: string;
 }
 
 const BODY_HOSTS: CyberwareHost[] = [
@@ -73,6 +75,8 @@ export function isCyberwareInstalled(character: Character, item: CyberwareItem, 
   return item.installedIn.every((target,index) => {
     const body = BODY_HOSTS.find(host => host.id === target);
     if (body) return mounts[index].allowedHosts.includes(body.type);
+    const gearHost = gearCyberwareHosts(character).find(host => host.id === target);
+    if (gearHost) return mounts[index].allowedHosts.includes(gearHost.type);
     const parent = character.cyberware.find(candidate => ownsHost(candidate,target));
     const pool = parent && cyberwareDefinition(parent).installRule?.provides?.find(pool => target === `${parent.id}:${pool.key ?? pool.type}`);
     return !!parent && !!pool && mounts[index].allowedHosts.includes(pool.type) && isCyberwareInstalled(character, parent, visited);
@@ -86,12 +90,46 @@ export function installedCyberware(character: Character): CyberwareItem[] {
 export function pairedCyberwareReady(character: Character, item: CyberwareItem): boolean {
   const definition = cyberwareDefinition(item);
   if (!definition.installRule?.paired) return true;
+  const gear = gearForCyberwareHost(character, item.installedIn?.[0]);
+  const device = gear && gearCyberwareDevice(gear);
+  if (device && 'paired' in device && device.paired) return true;
   if (!item.installedIn?.length) return item.isInstalled === undefined;
-  return installedCyberware(character).some(other => other.id !== item.id && (definition.catalogId ? other.catalogId === definition.catalogId : other.name === definition.name) && other.installedIn?.[0] && other.installedIn[0] !== item.installedIn![0]);
+  return installedCyberware(character).some(other => other.id !== item.id && !isExternalCyberware(character,other) && !isExternalCyberware(character,item) && (definition.catalogId ? other.catalogId === definition.catalogId : other.name === definition.name) && other.installedIn?.[0] && other.installedIn[0] !== item.installedIn![0]);
 }
 
 export function functionalCyberware(character: Character): CyberwareItem[] {
-  return installedCyberware(character).filter(item => pairedCyberwareReady(character, item));
+  const available = (item: CyberwareItem, seen = new Set<string>(), original = item): boolean => {
+    if (seen.has(item.id)) return false;
+    const visited = new Set(seen).add(item.id);
+    return (item.installedIn ?? []).every(target => {
+      const gear = gearForCyberwareHost(character,target);
+      if (gear) {
+        const device = gearCyberwareDevice(gear)!;
+        if (!gear.wornOn || !(device.sites as readonly string[]).includes(gear.wornOn)) return false;
+        if ('needsPlugs' in device && device.needsPlugs && !installedCyberware(character).some(entry => providesPrerequisite(entry,'cat-cyber-16') && !isExternalCyberware(character,entry))) return false;
+        return true;
+      }
+      const parent = character.cyberware.find(parent => ownsHost(parent,target));
+      if (parent && !available(parent,visited,original)) return false;
+      const side = target.match(/^body:(left|right)-arm$/)?.[1];
+      if (!side) return true;
+      const glove = character.gear.find(gear => gear.quantity > 0 && gear.wornOn === `${side}-arm` && gearCyberwareDevice(gear));
+      if (!glove) return true;
+      const device = gearCyberwareDevice(glove)!;
+      // The fingerless CyberDude leaves finger implants usable.
+      const definition = cyberwareDefinition(original);
+      return 'fingerless' in device && !!device.fingerless && (definition.installRule?.allowedHosts.includes('finger') || ['cat-cyber-113','cat-cyber-114','cat-cyber-116','cat-cyber-134'].includes(definition.catalogId ?? ''));
+    });
+  };
+  return installedCyberware(character).filter(item => pairedCyberwareReady(character, item) && available(item));
+}
+
+export function isExternalCyberware(character: Character, item: CyberwareItem, seen = new Set<string>()): boolean {
+  if (seen.has(item.id)) return false;
+  const target = item.installedIn?.[0];
+  if (gearForCyberwareHost(character,target)) return true;
+  const parent = character.cyberware.find(parent => !!target && ownsHost(parent,target));
+  return !!parent && isExternalCyberware(character,parent,new Set(seen).add(item.id));
 }
 
 export function cyberwareBody(character: Character): number {
@@ -105,13 +143,14 @@ export function cyberwareBody(character: Character): number {
   return body;
 }
 
-export function cyberwareCapLoss(item: CyberwareItem): number {
+export function cyberwareCapLoss(item: CyberwareItem, character?: Character): number {
+  if (character && isExternalCyberware(character,item)) return 0;
   const definition = cyberwareDefinition(item);
   return definition.humanityCost <= 0 || definition.kind === 'upgrade' ? 0 : definition.borgware || definition.category === 'Borgware' ? 4 : 2;
 }
 
 export function cyberwareHumanityCap(character: Character): number {
-  return Math.max(0, (character.humanityMaxManual ?? character.stats.EMP * 10) - installedCyberware(character).reduce((sum, item) => sum + cyberwareCapLoss(item), 0));
+  return Math.max(0, (character.humanityMaxManual ?? character.stats.EMP * 10) - installedCyberware(character).reduce((sum, item) => sum + cyberwareCapLoss(item,character), 0));
 }
 
 export function initializeCyberware<T extends CyberwareItem>(item: T): T {
@@ -121,7 +160,7 @@ export function initializeCyberware<T extends CyberwareItem>(item: T): T {
 }
 
 export function cyberwareHosts(character: Character, excludeItemId?: string): CyberwareHost[] {
-  const hosts = BODY_HOSTS.map(host => ({ ...host }));
+  const hosts: CyberwareHost[] = [...BODY_HOSTS.map(host => ({ ...host })), ...gearCyberwareHosts(character)];
   for (const item of installedCyberware(character)) {
     for (const pool of item.installRule?.provides ?? []) {
       hosts.push({ id: `${item.id}:${pool.key ?? pool.type}`, name: `${item.name} · ${pool.key ?? pool.type}`, type: pool.type, capacity: pool.capacity, used: 0, ownerId: item.id });
@@ -207,8 +246,9 @@ export function installCyberware(character: Character, id: string, targets: stri
     definition = { ...definition, weapon: { ...template, concealable: true }, embeddedWeaponId: originalId };
     weapons = [...weapons.filter(weapon => weapon.id !== originalId), { ...embedded, id: `cyberweapon:${item.id}`, sourceCyberwareId: item.id, currentAmmo }];
   }
-  const loss = alreadyInstalled || (definition.installRule?.repeatHumanityFree && item.hasBeenInstalled) ? 0 : item.humanityLoss ?? item.humanityCost;
-  const installed = initializeCyberware({ ...definition, isInstalled: true, installedIn: targets, hasBeenInstalled: true });
+  const external = isExternalCyberware(character,{...definition,installedIn:targets});
+  const loss = external || (alreadyInstalled && !isExternalCyberware(character,item)) || (definition.installRule?.repeatHumanityFree && item.hasBeenInstalled) ? 0 : item.humanityLoss ?? item.humanityCost;
+  const installed = initializeCyberware({ ...definition, isInstalled: true, installedIn: targets, hasBeenInstalled: item.hasBeenInstalled || !external });
   let updated = { ...character, weapons, cyberware: character.cyberware.map(entry => entry.id === id ? installed : entry) };
   updated = { ...updated, humanityCurrent: Math.min(cyberwareHumanityCap(updated), character.humanityCurrent - loss) };
   return { character: syncCyberwareWeapons(updated) };

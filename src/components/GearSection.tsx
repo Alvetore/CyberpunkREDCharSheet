@@ -4,6 +4,7 @@ import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { GearCatalogBrowser } from './GearCatalogBrowser';
 import { AMMUNITION_CATALOG } from '../data/ammunitionCatalog';
+import { gearCyberwareDevice, wearCyberwareGear } from '../utils/gearCyberware';
 import { useCatalogNotice } from './CatalogNotice';
 import { addEquipmentToBackpack, BackpackEquipment, backpackCyberware } from '../utils/backpack';
 import { BackpackEquipmentSection } from './BackpackEquipmentSection';
@@ -93,9 +94,15 @@ export const GearSection: React.FC<GearSectionProps> = ({
 
   const handleAdjustQuantity = (itemId: string, delta: number) => {
     sfx.playClick();
+    const item = character.gear.find(item=>item.id===itemId);
+    if (item && gearCyberwareDevice(item) && item.quantity>=1 && delta>0) {
+      const result=addGearToInventory(character,item,1,false);
+      if (result.character) onUpdateCharacter(result.character);
+      return;
+    }
     const updated = character.gear.map((g) => {
       if (g.id === itemId) {
-        return { ...g, quantity: Math.max(0, g.quantity + delta) };
+        return { ...g, quantity: Math.max(0, g.quantity + delta), wornOn:g.quantity+delta<=0 ? undefined : g.wornOn };
       }
       return g;
     });
@@ -237,7 +244,15 @@ export const GearSection: React.FC<GearSectionProps> = ({
             <tbody>
               {character.gear.map((item) => (
                 <tr key={item.id} className="border-b border-zinc-800/60 hover:bg-zinc-800/30">
-                  <td className="py-2 px-2 font-semibold text-zinc-200">{item.name}</td>
+                  <td className="py-2 px-2 font-semibold text-zinc-200">{item.name}
+                    {gearCyberwareDevice(item) && <label className="block text-xs text-cyan-300 mt-2">{lang === 'ru' ? 'Ношение (надеть/снять — действие)' : 'Wear (equip/remove: Action)'}
+                      <select aria-label={`${lang === 'ru' ? 'Ношение' : 'Wear'}: ${item.name}`} value={item.wornOn ?? ''} onChange={event => onUpdateCharacter(wearCyberwareGear(character,item.id,event.target.value as GearItem['wornOn'] || undefined))} className="block p-1 mt-1 bg-zinc-950 border border-cyan-900 rounded">
+                        <option value="">{lang === 'ru' ? 'В рюкзаке' : 'Stored'}</option>
+                        {gearCyberwareDevice(item)!.sites.map(site => <option key={site} value={site}>{lang === 'ru' ? ({eyes:'На глазах',ears:'На ушах','left-arm':'Левая рука','right-arm':'Правая рука'}[site]) : site}</option>)}
+                      </select>
+                      <span className="text-zinc-400">{lang === 'ru' ? 'Слоты доступны в разделе имплантов. Опции внешнего устройства не снижают Humanity.' : 'Mount options in Cyberware. External device options cause no Humanity loss.'}</span>
+                    </label>}
+                  </td>
                   <td className="py-2 px-2 text-zinc-400">{item.category === 'Ammunition' && lang === 'ru' ? 'Боеприпасы' : item.category}</td>
                   <td className="py-2 px-2 text-center">
                     <div className="inline-flex items-center gap-1.5 bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">

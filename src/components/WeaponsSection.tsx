@@ -12,7 +12,7 @@ import {
   MartialArtsMove
 } from '../data/meleeRules';
 import { sfx } from '../utils/audio';
-import { effectiveStat, martialArtsLevel, selectedWeaponProfile, skillBase, updateWeaponAmmo, weaponPenetration } from '../utils/rules';
+import { effectiveStat, martialArtsLevel, selectedWeaponProfile, skillBase, soloPrecisionBonus, updateWeaponAmmo, weaponPenetration } from '../utils/rules';
 import { cyberwareDefinition, functionalCyberware } from '../utils/cyberware';
 import { useCatalogNotice } from './CatalogNotice';
 import { setWeaponEquipped } from '../utils/backpack';
@@ -42,7 +42,7 @@ interface WeaponsSectionProps {
   onUpdateCharacter: (char: Character) => void;
   onRollWeaponAttack: (weapon: Weapon, targetDv?: number, rangeStr?: string, autofire?: boolean) => void;
   onRollWeaponDamage: (weapon: Weapon) => void;
-  onRollCustomCheck?: (title: string, baseVal: number, targetDv?: number, modifiers?: { name: string; val: number }[]) => RollResult;
+  onRollCustomCheck?: (title: string, baseVal: number, targetDv?: number, modifiers?: { name: string; val: number }[], isAttack?:boolean) => RollResult;
   onRollCustomDamage?: (title: string, formula: string) => void;
   onOpenShop?: (category?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' | 'vehicles') => void;
   lang: Language;
@@ -192,7 +192,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   const handleRollBrawlingStrikeAttack = () => {
     onRollCustomCheck?.(
       lang === 'ru' ? 'Рукопашная атака: Удар (Драка / Brawling) [Полная броня]' : 'Melee Attack: Brawling Strike [Full SP]',
-      brawlingBase
+      brawlingBase + soloPrecisionBonus(character), undefined, undefined, true
     );
   };
 
@@ -206,7 +206,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   const handleRollGrab = () => {
     onRollCustomCheck?.(
       lang === 'ru' ? 'Захват противника (Grab) [ЛВК + Драка vs Драка]' : 'Grapple Check (Grab) [DEX + Brawling vs Brawling]',
-      brawlingBase
+      brawlingBase + soloPrecisionBonus(character), undefined, undefined, true
     );
   };
 
@@ -227,7 +227,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
     if (maLvl < 1) return;
     onRollCustomCheck?.(
       lang === 'ru' ? `Атака Боевых Искусств: ${styleData.nameRu} [Игнор 50% ОС]` : `Martial Arts Strike: ${styleData.nameEn} [Half SP]`,
-      maBase
+      maBase + soloPrecisionBonus(character), undefined, undefined, true
     );
   };
 
@@ -260,16 +260,16 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
       return;
     }
     if (['karate_bone_break', 'taekwondo_pressure_point', 'taekwondo_flying_kick'].includes(move.id)) {
-      onRollCustomCheck?.(`${styleData.nameEn}: ${move.nameEn} · vs Evasion`, maBase);
+      onRollCustomCheck?.(`${styleData.nameEn}: ${move.nameEn} · vs Evasion`, maBase + soloPrecisionBonus(character), undefined, undefined, true);
       return;
     }
 
     if (move.id === 'boxing_knockout') {
       onRollCustomCheck?.(
         lang === 'ru' ? 'Бокс: Нокаутирующий удар (-5 штраф в голову, Травма Челюсти)' : 'Boxing: Knockout Punch (-5 aimed head penalty)',
-        maBase,
+        maBase + soloPrecisionBonus(character),
         undefined,
-        [{ name: 'Aimed Penalty', val: -5 }]
+        [{ name: 'Aimed Penalty', val: -5 }], true
       );
       return;
     }

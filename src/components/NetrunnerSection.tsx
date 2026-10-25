@@ -4,7 +4,7 @@ import { Character, ProgramItem, ProgramCategory } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { PRESET_PROGRAMS } from '../data/initialData';
 import { sfx } from '../utils/audio';
-import { deckCapacity, programSlots, usedDeckSlots } from '../utils/rules';
+import { deckCapacity, interfaceRank as getInterfaceRank, programSlots, usedDeckSlots } from '../utils/rules';
 import { 
   Cpu, 
   Terminal, 
@@ -37,10 +37,11 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
   lang
 }) => {
   const t = translations[lang];
-  const interfaceRank = character.roleAbilities.netrunner.interfaceRank;
+  const interfaceRank = getInterfaceRank(character);
+  const ownsDeck = character.cyberdeck.isOwned !== false;
 
   // Calculate CPR Net Actions per turn based on Interface Rank
-  const netActionsPerTurn = interfaceRank >= 10 ? 5 : interfaceRank >= 7 ? 4 : interfaceRank >= 4 ? 3 : 2;
+  const netActionsPerTurn = !interfaceRank ? 0 : interfaceRank >= 10 ? 5 : interfaceRank >= 7 ? 4 : interfaceRank >= 4 ? 3 : 2;
 
   const [showAddProgram, setShowAddProgram] = useState(false);
   const catalog = useCatalogNotice(lang);
@@ -118,7 +119,11 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
 
   return (
     <div className="space-y-4">
+      <label className="flex gap-2 text-sm text-cyan-300"><input type="checkbox" aria-label={lang === 'ru' ? 'Есть кибердека' : 'Own a cyberdeck'} checked={ownsDeck} onChange={event => onUpdateCharacter({ ...character, cyberdeck: { ...character.cyberdeck, isOwned: event.target.checked }, programs: character.programs.map(program => ({ ...program, isInstalled: false, isActive: false })) })} />{lang === 'ru' ? 'Есть кибердека' : 'Own a cyberdeck'}</label>
+      {!ownsDeck && <p className="text-sm text-zinc-400">{lang === 'ru' ? 'Кибердеки нет. Отметьте наличие после приобретения; сохранённые программы остаются в инвентаре.' : 'No cyberdeck. Mark it owned after acquiring one; saved programs remain in inventory.'}</p>}
+      {!interfaceRank && <p className="text-sm text-amber-300">{lang === 'ru' ? 'Нет способности «Интерфейс»: владеть декой и программами можно, но сетевые действия недоступны.' : 'No Interface ability: owning a deck and programs does not grant NET actions.'}</p>}
       {netError && <p role="alert" className="text-red-400">{netError}</p>}
+      <fieldset disabled={!ownsDeck} className="space-y-4 disabled:opacity-50">
       {/* Cyberdeck Status Banner */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-3 mb-3">
@@ -213,6 +218,8 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
         </div>
       </div>
 
+      </fieldset>
+      <fieldset disabled={!ownsDeck || !interfaceRank} className="space-y-4 disabled:opacity-50">
       {/* Quick Net Actions Matrix */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 shadow-md">
         <div className="flex items-center gap-2 mb-3 border-b border-zinc-800 pb-2">
@@ -345,6 +352,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
         </div>
       </div>
 
+      </fieldset>
       {/* Programs List */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 shadow-md">
         <div className="flex items-center justify-between mb-3 border-b border-zinc-800 pb-2">
@@ -416,7 +424,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
                     </button>
                   </div>
 
-                  {prog.category !== 'Attacker' && <button type="button" disabled={!prog.isInstalled} onClick={() => onUpdateCharacter({ ...character, programs: character.programs.map(item => item.id === prog.id ? { ...item, isActive: !item.isActive, rezCurrent: !item.isActive ? item.rezMax : item.rezCurrent } : item) })} className="text-cyan-300 text-xs underline disabled:opacity-40">{prog.isActive ? 'Derez' : 'Rez'} · 1 NET Action</button>}
+                  {prog.category !== 'Attacker' && <button type="button" disabled={!ownsDeck || !interfaceRank || !prog.isInstalled} onClick={() => onUpdateCharacter({ ...character, programs: character.programs.map(item => item.id === prog.id ? { ...item, isActive: !item.isActive, rezCurrent: !item.isActive ? item.rezMax : item.rezCurrent } : item) })} className="text-cyan-300 text-xs underline disabled:opacity-40">{prog.isActive ? 'Derez' : 'Rez'} · 1 NET Action</button>}
                   {/* REZ Bar & Status */}
                   <div className="my-2 bg-zinc-900 p-2 rounded border border-zinc-850">
                     <div className="flex items-center justify-between text-[11px] mb-1">
@@ -469,7 +477,7 @@ export const NetrunnerSection: React.FC<NetrunnerSectionProps> = ({
 
                   {prog.category === 'Attacker' || prog.category === 'Black ICE' ? (
                     <button
-                      disabled={!prog.isInstalled || (prog.category !== 'Attacker' && !prog.isActive)}
+                      disabled={!ownsDeck || !interfaceRank || !prog.isInstalled || (prog.category !== 'Attacker' && !prog.isActive)}
                       onClick={() => onRollProgramAttack(prog)}
                       className="px-3 py-1.5 min-h-[34px] sm:min-h-[28px] bg-red-900/60 hover:bg-red-800 border border-red-700 text-white rounded text-[11px] font-bold flex items-center justify-center gap-1 shadow-sm"
                     >

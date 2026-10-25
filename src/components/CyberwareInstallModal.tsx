@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Character, CyberwareItem } from '../types/character';
 import { Language } from '../locales/i18n';
-import { cyberwareDefinition, cyberwareHosts, cyberwareInstallError, cyberwareMounts, cyberwareSlotLabel, findCyberwarePlacement, installCyberware, isCyberwareInstalled, mountableWeapons } from '../utils/cyberware';
+import { cyberwareDefinition, cyberwareHosts, cyberwareInstallError, cyberwareMounts, cyberwareSlotLabel, findCyberwarePlacement, installCyberware, isCyberwareInstalled, isExternalCyberware, mountableWeapons } from '../utils/cyberware';
 
 interface Props {
   character: Character;
@@ -31,7 +31,7 @@ export const CyberwareInstallModal: React.FC<Props> = ({ character, item, lang, 
   return <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/85 backdrop-blur-sm no-print">
     <section role="dialog" aria-modal="true" aria-label={lang === 'ru' ? 'Установка импланта' : 'Install cyberware'} className="bg-zinc-900 border border-cyan-500 rounded-lg p-4 space-y-3 max-w-xl w-full max-h-[90dvh] overflow-y-auto">
       <div className="flex justify-between gap-3"><h3 className="font-orbitron text-cyan-300">{definition.name}</h3><button aria-label={lang === 'ru' ? 'Закрыть установку' : 'Close installation'} onClick={onClose}>✕</button></div>
-      <p className="text-xs text-zinc-400">{alreadyInstalled ? (lang === 'ru' ? 'Переназначение размещения: повторная Humanity не списывается.' : 'Reassign placement: no repeated Humanity loss.') : (lang === 'ru' ? 'Humanity списывается при установке. Услуги клиники и особые условия сверяйте с описанием.' : 'Installation deducts Humanity. Check clinic fees and special conditions in the description.')}</p>
+      <p className="text-xs text-zinc-400">{isExternalCyberware(character,{...item,installedIn:targets}) ? (lang === 'ru' ? 'Внешнее устройство: потери Humanity и снижения её максимума нет. Опции работают, когда устройство надето.' : 'External device: no Humanity loss or maximum reduction. Options work while the device is worn.') : alreadyInstalled && !isExternalCyberware(character,item) ? (lang === 'ru' ? 'Переназначение размещения: повторная Humanity не списывается.' : 'Reassign placement: no repeated Humanity loss.') : (lang === 'ru' ? 'Установка в тело списывает Humanity. Услуги клиники и особые условия сверяйте с описанием.' : 'Body installation deducts Humanity. Check clinic fees and special conditions in the description.')}</p>
       {mounts.map((mount, index) => <label key={index} className="block text-xs text-zinc-200">
         {lang === 'ru' ? `Крепление ${index + 1}: ${mount.slots} слот(а)` : `Mount ${index + 1}: ${mount.slots} slot(s)`} · {mount.allowedHosts.map(type => cyberwareSlotLabel(type,lang)).join(' / ')}
         <select aria-label={`${lang === 'ru' ? 'Место установки' : 'Installation host'} ${index + 1}`} value={targets[index] ?? ''} onChange={event => { setTargets(mounts.map((_, i) => i === index ? event.target.value : targets[i] ?? '')); setError(''); }} className="block w-full bg-zinc-950 border border-zinc-700 p-2 rounded mt-1">
@@ -39,7 +39,8 @@ export const CyberwareInstallModal: React.FC<Props> = ({ character, item, lang, 
           {hosts.filter(host => host.ownerId !== item.id && mount.allowedHosts.includes(host.type)).map(host => <option key={host.id} value={host.id}>{host.name} · {host.capacity === 0 ? (lang === 'ru' ? 'особое крепление' : 'special mount') : `${host.used}/${host.capacity}`}</option>)}
         </select>
       </label>)}
-      {definition.installRule?.paired && <p className="text-xs text-amber-300">{lang === 'ru' ? 'Для работы нужны две отдельно купленные копии на разных основаниях. Установка одной копии занимает её слоты и списывает её HL.' : 'Requires two separately purchased copies on different hosts. Each copy consumes its own slots and Humanity.'}</p>}
+      {definition.installRule?.paired && <p className="text-xs text-amber-300">{lang === 'ru' ? 'В теле нужны две отдельно купленные копии на разных основаниях. В умных очках опция считается парной: достаточно одной копии.' : 'Body installation requires two separately purchased copies on different hosts. Smart Glasses treat a single option as paired.'}</p>}
+      {mounts.some(mount=>mount.allowedHosts.includes('arm-site')) && <p className="text-xs text-cyan-300">{lang === 'ru' ? 'Эту опцию можно установить непосредственно в органическую руку, без киберруки. Выберите левую или правую руку; занятую другой опцией руку использовать нельзя.' : 'This option can be installed directly in a meat arm without a cyberarm. Choose a free left/right arm site.'}</p>}
       {requiresWeapon && <label className="block text-xs text-zinc-200">{lang === 'ru' ? 'Имеющееся одноручное оружие' : 'Owned one-handed weapon'}
         <select aria-label="Embedded weapon" value={weaponId} onChange={event => setWeaponId(event.target.value)} className="block w-full p-2 bg-zinc-950 border border-zinc-700 rounded mt-1"><option value="">{lang === 'ru' ? 'Выберите оружие' : 'Choose a weapon'}</option>{weapons.map(weapon => <option key={weapon.id} value={weapon.id}>{weapon.name}</option>)}</select>
         <span className="block text-zinc-400 mt-1">{lang === 'ru' ? 'Оружие переносится из инвентаря в имплант, без дублирования. При снятии вернётся в инвентарь с остатком патронов.' : 'Transfers the weapon into the implant without duplicating it. Uninstalling returns it with remaining ammo.'}</span>

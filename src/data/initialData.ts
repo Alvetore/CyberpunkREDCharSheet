@@ -813,15 +813,16 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
     })),
 
     cyberdeck: {
+      isOwned: role === 'Netrunner',
       slotsMax: 7,
-      name: 'Kirama Cyberdeck',
+      name: role === 'Netrunner' ? 'Kirama Cyberdeck' : '',
       hardwareSlotsMax: 3,
-      hardwareSlotsUsed: 1,
+      hardwareSlotsUsed: role === 'Netrunner' ? 1 : 0,
       programSlotsMax: 5,
-      installedHardware: ['Backup Drive (+1 slot)']
+      installedHardware: role === 'Netrunner' ? ['Backup Drive (+1 slot)'] : []
     },
 
-    programs: [...PRESET_PROGRAMS],
+    programs: role === 'Netrunner' ? PRESET_PROGRAMS.map(program => ({ ...program })) : [],
 
     gear: [
       { id: 'gear-1', name: 'Agent (Смартфон/ИИ-ассистент)', category: 'Electronics', quantity: 1, costEb: 100, notes: 'Личный помощник, GPS, связь, сеть.' },
@@ -861,7 +862,7 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
         damageAbsorb: 0
       },
       netrunner: {
-        interfaceRank: 4
+        interfaceRank: role === 'Netrunner' ? 4 : 0
       },
       tech: {
         makerRank: 4,

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Character, Skill, SkillCategory, StatKey } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { CPR_SKILLS } from '../data/initialData';
+import { roleName } from '../locales/roles';
 import { CPR_ROLE_PACKAGES } from '../data/roleTemplates';
 import { sfx } from '../utils/audio';
 import { getRoleSkillBonus } from '../utils/roleUtils';
@@ -526,8 +527,8 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
 
                     {/* Stat (ХАР) */}
                     <div className="w-9 sm:w-10 text-center font-mono font-bold text-xs select-none">
-                      {isPenalizedByArmor ? (
-                        <span className="text-amber-400 cursor-help" title={`База ${statVal} + Штраф брони ${armorPenalty}`}>
+                      {effectiveStat !== statVal ? (
+                        <span className="text-amber-400 cursor-help" title={lang === 'ru' ? `Исходная: ${statVal}; текущая: ${effectiveStat} (с учётом модификаторов, Humanity и брони)` : `Original: ${statVal}; current: ${effectiveStat} (modifiers, Humanity and armor included)`}>
                           {effectiveStat}
                         </span>
                       ) : (
@@ -610,14 +611,14 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               onClick={handleApplyRolePackage}
               title={
                 lang === 'ru'
-                  ? `Пересчитать и применить официальный набор навыков Cyberpunk RED для роли «${character.role}» (Streetrat, 86 очков)`
+                  ? `Пересчитать и применить официальный набор навыков Cyberpunk RED для роли «${roleName(character.role,lang)}» (Streetrat, 86 очков)`
                   : `Recalculate and apply official Cyberpunk RED skill package for "${character.role}" (Streetrat, 86 pts)`
               }
               className="px-2.5 py-1.5 bg-zinc-800 hover:bg-cyan-950 border border-zinc-700 hover:border-cyan-700 text-zinc-200 hover:text-cyan-300 rounded text-xs font-semibold flex items-center gap-1.5 transition whitespace-nowrap shadow-xs"
             >
               <Wand2 size={13} className="text-cyan-400" />
               <span className="hidden sm:inline">
-                {lang === 'ru' ? `Пакет ${character.role}` : `${character.role} Pkg`}
+                {lang === 'ru' ? `Пакет ${roleName(character.role,lang)}` : `${character.role} Pkg`}
               </span>
             </button>
 

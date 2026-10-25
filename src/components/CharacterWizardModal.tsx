@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Character, StatKey, RoleType, Skill, Weapon, CyberwareItem, ArmorItem } from '../types/character';
+import { roleName } from '../locales/roles';
 import { Language, translations } from '../locales/i18n';
 import { CPR_SKILLS, CPR_CRITICAL_INJURIES, PRESET_PROGRAMS } from '../data/initialData';
 import { CPR_ROLE_PACKAGES, RolePackage } from '../data/roleTemplates';
@@ -361,8 +362,9 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
         isActive: false
       })),
       cyberdeck: {
+        isOwned: method !== 'pointbuy' && role === 'Netrunner',
         slotsMax: 7,
-        name: role === 'Netrunner' ? 'Novatech Cyberdeck' : 'Pocket Agent',
+        name: method !== 'pointbuy' && role === 'Netrunner' ? 'Novatech Cyberdeck' : '',
         hardwareSlotsMax: 3,
         hardwareSlotsUsed: 0,
         programSlotsMax: 7,
@@ -379,10 +381,10 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
       },
       roleAbilities: {
         solo: { threatDetection: 1, initiativeReaction: 1, precisionAttack: 1, spotWeakness: 1, damageAbsorb: 0 },
-        netrunner: { interfaceRank: 4 },
+        netrunner: { interfaceRank: role === 'Netrunner' ? 4 : 0 },
         tech: { makerRank: 4, fieldExpertise: 2, upgrade: 2, fabrication: 2, invention: 2 },
         medtech: { medicineRank: 4, surgery: 2, medicalTech: 1, pharmaceuticals: 1, speedhealDoses: 2, cryopumpDoses: 1 },
-        generic: { rank: 4, details: lang === 'ru' ? `Способность роли ${role} ранга 4.` : `Role ability for ${role} at rank 4.` }
+        generic: { rank: 4, details: lang === 'ru' ? `Способность роли ${roleName(role,lang)} ранга 4.` : `Role ability for ${role} at rank 4.` }
       },
       cashEb: startingCash,
       bankEb: 0,
@@ -585,9 +587,9 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                       }`}
                     >
                       <div>
-                        <div className="font-orbitron font-bold text-sm text-zinc-100">{r}</div>
+                        <div className="font-orbitron font-bold text-sm text-zinc-100">{roleName(r,lang)}</div>
                         <div className="text-[11px] text-zinc-400 mt-1">
-                          {lang === 'ru' ? CPR_ROLE_PACKAGES[r].nameRu : r}
+                          {lang === 'ru' ? CPR_ROLE_PACKAGES[r].descRu : ROLE_DESCRIPTIONS_EN[r]}
                         </div>
                       </div>
                       <div className="text-[9px] text-yellow-400 font-semibold mt-2">
@@ -600,7 +602,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
 
               <div className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-300">
                 <span className="font-bold text-yellow-400 block mb-1">
-                  {lang === 'ru' ? 'Выбрана роль:' : 'Selected role:'} {role} ({lang === 'ru' ? rolePackage.nameRu : role})
+                  {lang === 'ru' ? 'Выбрана роль:' : 'Selected role:'} {roleName(role,lang)}
                 </span>
                 {lang === 'ru' ? rolePackage.descRu : ROLE_DESCRIPTIONS_EN[role]}
               </div>
@@ -616,7 +618,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                   <div className="flex flex-wrap items-center justify-between gap-2 bg-zinc-950 p-3 rounded-lg border border-zinc-800">
                     <div>
                       <span className="text-xs font-semibold text-yellow-400 uppercase block">
-                        {lang === 'ru' ? `Официальная таблица характеристик роли ${role} (CPR Core Book)` : `Official stat table for ${role} (CPR Core Book)`}
+                        {lang === 'ru' ? `Официальная таблица характеристик роли ${roleName(role,lang)} (CPR Core Book)` : `Official stat table for ${roleName(role,lang)} (CPR Core Book)`}
                       </span>
                       <span className="text-[11px] text-zinc-500">
                         {lang === 'ru' ? (method === 'edgerunner' ? 'Отдельный бросок 1d10 на каждую характеристику.' : 'Бросьте 1d10 или выберите строку вручную.') : (method === 'edgerunner' ? 'Roll 1d10 separately for every STAT.' : 'Roll 1d10 or click a row manually.')}
@@ -758,9 +760,9 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                 <div>
                   <span className="text-xs font-semibold text-zinc-400 uppercase block">
                     {method === 'streetrat'
-                      ? (lang === 'ru' ? `Готовый пакет навыков роли ${role} (86 очков распределено)` : `Preset skill package for ${role} (86 pts allocated)`)
+                      ? (lang === 'ru' ? `Готовый пакет навыков роли ${roleName(role,lang)} (86 очков распределено)` : `Preset skill package for ${role} (86 pts allocated)`)
                       : method === 'edgerunner'
-                      ? (lang === 'ru' ? `Карьерные навыки роли ${role} + распределение свободных очков` : `Career skills for ${role} + customizable points`)
+                      ? (lang === 'ru' ? `Карьерные навыки роли ${roleName(role,lang)} + распределение свободных очков` : `Career skills for ${role} + customizable points`)
                       : (lang === 'ru' ? 'Полное распределение 86 очков навыков' : 'Full allocation of 86 skill points')}
                   </span>
                   <span className="text-[11px] text-zinc-500">
@@ -858,7 +860,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                 <div className="space-y-3">
                   <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-800">
                     <span className="text-xs font-semibold text-yellow-400 uppercase block">
-                      {lang === 'ru' ? `Классовый стартовый набор экипировки роли ${role} (CPR Core Book)` : `Class starting gear package for ${role} (CPR Core Book)`}
+                      {lang === 'ru' ? `Классовый стартовый набор экипировки роли ${roleName(role,lang)} (CPR Core Book)` : `Class starting gear package for ${roleName(role,lang)} (CPR Core Book)`}
                     </span>
                     <span className="text-[11px] text-zinc-400">
                       {lang === 'ru'
@@ -1054,7 +1056,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                       {name} <span className="text-red-500 font-bold">«{handle}»</span>
                     </h3>
                     <span className="text-xs text-yellow-400 font-bold uppercase">
-                      {role} ({lang === 'ru' ? 'Ранг 4' : 'Rank 4'}) • {lang === 'ru' ? 'Метод:' : 'Method:'} {method === 'streetrat' ? (lang === 'ru' ? 'Уличная шпана (Streetrats)' : 'Streetrats') : method === 'edgerunner' ? (lang === 'ru' ? 'Бегущий по краю (Edgerunners)' : 'Edgerunners') : (lang === 'ru' ? 'Полный конструктор (Point-Buy)' : 'Point-Buy')}
+                      {roleName(role,lang)} ({lang === 'ru' ? 'Ранг 4' : 'Rank 4'}) • {lang === 'ru' ? 'Метод:' : 'Method:'} {method === 'streetrat' ? (lang === 'ru' ? 'Уличная шпана (Streetrats)' : 'Streetrats') : method === 'edgerunner' ? (lang === 'ru' ? 'Бегущий по краю (Edgerunners)' : 'Edgerunners') : (lang === 'ru' ? 'Полный конструктор (Point-Buy)' : 'Point-Buy')}
                     </span>
                   </div>
                   <div className="text-right">

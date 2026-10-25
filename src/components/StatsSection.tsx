@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Character, StatKey, RoleType, RollResult } from '../types/character';
+import { roleName } from '../locales/roles';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { calculateHumanityStats } from '../utils/roleUtils';
@@ -191,7 +192,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
             >
               {ROLES.map((r) => (
                 <option key={r} value={r}>
-                  {r}
+                  {roleName(r,lang)}
                 </option>
               ))}
             </select>

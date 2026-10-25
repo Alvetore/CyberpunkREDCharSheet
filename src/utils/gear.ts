@@ -1,5 +1,6 @@
 import { Character, GearItem } from '../types/character';
 import { Language } from '../locales/i18n';
+import { gearCyberwareDevice } from './gearCyberware';
 
 export function gearPrice(item: Pick<GearItem, 'costEb' | 'billingPeriod'>, lang: Language): string {
   const price = item.costEb === 0 ? (lang === 'ru' ? 'Бесплатно' : 'Free') : `${item.costEb.toLocaleString(lang)} eb`;
@@ -25,6 +26,7 @@ export function addGearToInventory(character: Character, template: GearItem, qua
   const total = template.costEb * quantity;
   if (!Number.isFinite(total)) return { error: 'price' };
   if (purchase && character.cashEb < total) return { error: 'funds' };
+  if (gearCyberwareDevice(template)) return { character:{ ...character, cashEb:character.cashEb - (purchase ? total : 0), gear:[...character.gear,...Array.from({length:quantity},() => ({ ...template,id:'gear-' + crypto.randomUUID(),quantity:1,wornOn:undefined }))] } };
   const matching = template.catalogId && character.gear.find(item => item.catalogId === template.catalogId && item.name === template.name && item.category === template.category && item.notes === template.notes && item.costEb === template.costEb && item.billingPeriod === template.billingPeriod);
   const gear = matching
     ? character.gear.map(item => item.id === matching.id ? { ...item, quantity: item.quantity + quantity } : item)

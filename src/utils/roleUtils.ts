@@ -1,5 +1,5 @@
 import { Character, StatKey } from '../types/character';
-import { installedCyberware, cyberwareCapLoss, cyberwareHumanityCap } from './cyberware';
+import { installedCyberware, isExternalCyberware, cyberwareCapLoss, cyberwareHumanityCap } from './cyberware';
 
 export interface RoleSkillBonusInfo {
   bonus: number;
@@ -22,6 +22,14 @@ export function getRoleSkillBonus(character: Character, skillId: string): RoleSk
   const badgesEn: string[] = [];
   const descriptionsRu: string[] = [];
   const descriptionsEn: string[] = [];
+
+  if (character.role === 'Fixer' && skillId === 'trading') {
+    totalBonus += character.roleRank;
+    badgesRu.push(`Деловая хватка +${character.roleRank}`);
+    badgesEn.push(`Operator +${character.roleRank}`);
+    descriptionsRu.push('Деловая хватка: ранг добавляется к Торговле при торге.');
+    descriptionsEn.push('Operator rank applies to Trading when haggling.');
+  }
 
   // 1. NOMAD: Moto (Мото)
   // CPR Core Rulebook p.161: Nomad adds Moto rank to Drive Land, Pilot Air, Pilot Sea, Land Tech, Air Tech, Sea Tech
@@ -115,13 +123,13 @@ export function calculateHumanityStats(character: Character): HumanityStats {
   const baseHumanityMax = character.humanityMaxManual ?? (character.stats.EMP * 10);
   const cyberwareList = installedCyberware(character);
 
-  const totalInstallationHL = cyberwareList.reduce((acc, c) => acc + (c.humanityCost || 0), 0);
+  const totalInstallationHL = cyberwareList.reduce((acc, c) => acc + (isExternalCyberware(character,c) ? 0 : c.humanityCost || 0), 0);
 
   // Corebook p. 229:
   // "Каждый установленный киберимплант снижает максимум человечности на 2.
   // Каждый имплант боргирования снижает максимум человечности на 4.
   // Киберимпланты с 0 потери человечности при установке не снижают максимум."
-  const cyberwarePermanentLoss = cyberwareList.reduce((acc, item) => acc + cyberwareCapLoss(item), 0);
+  const cyberwarePermanentLoss = cyberwareList.reduce((acc, item) => acc + cyberwareCapLoss(item,character), 0);
 
   const maxRecoverableHumanity = cyberwareHumanityCap(character);
   const currentHumanity = Math.min(character.humanityCurrent, maxRecoverableHumanity);
