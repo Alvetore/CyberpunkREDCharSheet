@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Character, CyberwareItem, CyberwareCategory, RollResult } from '../types/character';
+import { Character, CyberwareItem, CyberwareCategory, RollResult, CYBERWARE_SLOT_TYPES, CyberwareSlotType } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { calculateHumanityStats } from '../utils/roleUtils';
 import { initializeCyberware } from '../utils/rules';
 import { TherapyModal } from './TherapyModal';
+import { DATAPOOL_CYBERWARE } from '../data/datapoolCatalog';
+import { cyberwareCapLoss, cyberwareDefinition, cyberwareHosts, cyberwareSlotLabel, cyberwareWarnings, isCyberwareInstalled, uninstallCyberware } from '../utils/cyberware';
+import { CyberwareInstallModal } from './CyberwareInstallModal';
 import { 
   Cpu, 
   Plus, 
@@ -26,32 +29,6 @@ interface CyberwareSectionProps {
   onAddRollResult?: (roll: RollResult) => void;
   lang: Language;
 }
-
-const CYBERWARE_PRESETS_RU: Partial<CyberwareItem>[] = [
-  { name: 'Neural Link (Нейролинк)', category: 'Neuralware', installLocation: 'Spine/Brain', humanityCost: 7, description: 'Базовая шина для киберимплантов и разъемов.' },
-  { name: 'Interface Plugs (Разъемы интерфейса)', category: 'Neuralware', installLocation: 'Wrists', humanityCost: 7, description: 'Штекеры прямого подключения к смартганам и деке.' },
-  { name: 'Sandevistan (Сандевистан)', category: 'Neuralware', installLocation: 'Spine', humanityCost: 7, description: '+3 к инициативе при активации на 1 минуту.' },
-  { name: 'Kerenzikov (Керензиков)', category: 'Neuralware', installLocation: 'Spine', humanityCost: 14, description: 'Постоянный бонус +2 к инициативе.' },
-  { name: 'Cybereye (Киберглаз)', category: 'Cyberoptics', installLocation: 'Head', humanityCost: 7, description: 'Кибернетический глаз с 3 слотами опций.' },
-  { name: 'Targeting Scope (Прицельная сетка)', category: 'Cyberoptics', installLocation: 'Cybereye', humanityCost: 3, description: '+1 к проверкам прицельной стрельбы (Aimed Shots).' },
-  { name: 'Cyberaudio Suite (Кибераудио)', category: 'Cyberaudio', installLocation: 'Head', humanityCost: 7, description: 'Аудиосистема с 3 слотами модификаций.' },
-  { name: 'Subdermal Armor (Подкожная броня)', category: 'Internal', installLocation: 'Body', humanityCost: 14, description: 'Подкожная защита: дает SP 11 на тело и голову без штрафа!' },
-  { name: 'Cyberarm (Киберрука)', category: 'Cyberlimb', installLocation: 'Left/Right Arm', humanityCost: 7, description: 'Киберпротез руки с 4 слотами для оружия и инструментов.' },
-  { name: 'Grafted Muscle and Bone Lace (Мышечно-костный каркас)', category: 'Internal', installLocation: 'Skeleton', humanityCost: 14, description: '+2 к характеристике BODY (ОЗ и спасбросок от смерти возрастают).' }
-];
-
-const CYBERWARE_PRESETS_EN: Partial<CyberwareItem>[] = [
-  { name: 'Neural Link', category: 'Neuralware', installLocation: 'Spine/Brain', humanityCost: 7, description: 'Standard baseline neural interface.' },
-  { name: 'Interface Plugs', category: 'Neuralware', installLocation: 'Wrists', humanityCost: 7, description: 'Direct neural interface plugs for smartguns and cyberdeck.' },
-  { name: 'Sandevistan', category: 'Neuralware', installLocation: 'Spine', humanityCost: 7, description: '+3 Initiative bonus for 1 minute on activation.' },
-  { name: 'Kerenzikov', category: 'Neuralware', installLocation: 'Spine', humanityCost: 14, description: 'Constant passive +2 bonus to Initiative.' },
-  { name: 'Cybereye', category: 'Cyberoptics', installLocation: 'Head', humanityCost: 7, description: 'Cybernetic eye with 3 option slots.' },
-  { name: 'Targeting Scope', category: 'Cyberoptics', installLocation: 'Cybereye', humanityCost: 3, description: '+1 bonus to Aimed Shot checks.' },
-  { name: 'Cyberaudio Suite', category: 'Cyberaudio', installLocation: 'Head', humanityCost: 7, description: 'Cyberaudio hearing suite with 3 option slots.' },
-  { name: 'Subdermal Armor', category: 'Internal', installLocation: 'Body', humanityCost: 14, description: 'Provides SP 11 to Head and Body without armor penalty.' },
-  { name: 'Cyberarm', category: 'Cyberlimb', installLocation: 'Left/Right Arm', humanityCost: 7, description: 'Cybernetic replacement arm with 4 option slots.' },
-  { name: 'Grafted Muscle & Bone Lace', category: 'Internal', installLocation: 'Skeleton', humanityCost: 14, description: '+2 bonus to BODY stat (boosts HP and Death Save).' }
-];
 
 const CATEGORIES: CyberwareCategory[] = [
   'Neuralware',
@@ -80,20 +57,26 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
     category: 'Neuralware',
     installLocation: 'Spine',
     humanityCost: 7,
-    description: lang === 'ru' ? 'Основа для нервных имплантов' : 'Baseline neural interface foundation'
+    description: lang === 'ru' ? 'Основа для нервных имплантов' : 'Baseline neural interface foundation',
+    installRule: DATAPOOL_CYBERWARE.find(item => item.name === 'Нейролинк')?.installRule,
   });
 
   const stats = calculateHumanityStats(character);
 
   const [itemToDelete, setItemToDelete] = useState<CyberwareItem | null>(null);
+  const [installId, setInstallId] = useState<string | null>(null);
+  const [catalogQuery, setCatalogQuery] = useState('');
+  const itemToInstall = character.cyberware.find(item => item.id === installId);
+  const warnings = cyberwareWarnings(character, lang);
+  const hosts = cyberwareHosts(character);
 
   const confirmDeleteItem = (mode: 'full' | 'cpr') => {
     if (!itemToDelete) return;
     sfx.playClick();
-    const updated = character.cyberware.filter((c) => c.id !== itemToDelete.id);
-    const cost = itemToDelete.humanityCost || 0;
-    const permRefund = itemToDelete.category === 'Borgware' ? 4 : 2;
-    const nextStats = calculateHumanityStats({ ...character, cyberware: updated });
+    const uninstalled = uninstallCyberware(character, itemToDelete.id);
+    const updated = uninstalled.cyberware.filter((c) => c.id !== itemToDelete.id);
+    const cost = isCyberwareInstalled(character, itemToDelete) ? itemToDelete.humanityLoss ?? itemToDelete.humanityCost : 0;
+    const nextStats = calculateHumanityStats({ ...uninstalled, cyberware: updated });
 
     let newHumanity: number;
     if (mode === 'full') {
@@ -105,7 +88,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
     }
 
     onUpdateCharacter({
-      ...character,
+      ...uninstalled,
       cyberware: updated,
       humanityCurrent: newHumanity
     });
@@ -116,38 +99,29 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
   const handleAddItem = () => {
     sfx.playClick();
     const cost = newItem.humanityCost || 0;
-    const item: CyberwareItem = {
-      id: 'cyb-' + Date.now(),
+    const item: CyberwareItem = cyberwareDefinition({
+      ...newItem,
+      id: 'cyb-' + crypto.randomUUID(),
       name: newItem.name || (lang === 'ru' ? 'Имплант' : 'Cyberware'),
       category: (newItem.category as CyberwareCategory) || 'Internal',
       installLocation: newItem.installLocation || (lang === 'ru' ? 'Тело' : 'Body'),
       humanityCost: cost,
-      description: newItem.description || ''
-    };
+      description: newItem.description || '',
+      isInstalled: false,
+    });
 
     const newCyberware = [...character.cyberware, initializeCyberware(item)];
-    const nextStats = calculateHumanityStats({ ...character, cyberware: newCyberware });
-
-    // Deduct immediate installation HL trauma, capped at new maximum recoverable
-    const newHumanity = Math.min(
-      nextStats.maxRecoverableHumanity,
-      character.humanityCurrent - cost
-    );
-
     onUpdateCharacter({
       ...character,
       cyberware: newCyberware,
-      humanityCurrent: newHumanity
     });
 
     setShowAddModal(false);
+    setInstallId(item.id);
   };
 
   const handleApplyPreset = (preset: Partial<CyberwareItem>) => {
-    setNewItem({
-      ...newItem,
-      ...preset
-    });
+    setNewItem({ ...preset });
   };
 
   return (
@@ -227,6 +201,13 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
         </div>
       </div>
 
+      <section className="bg-zinc-900 border border-zinc-800 rounded p-3 space-y-2">
+        <h3 className="text-cyan-300 font-bold text-sm">{lang === 'ru' ? 'Слоты установки' : 'Installation slots'}</h3>
+        <p className="text-xs text-zinc-400">{lang === 'ru' ? 'Покупка и установка разделены. Выберите конкретное основание для каждой опции. Снятые импланты не дают эффектов и не занимают слоты.' : 'Purchase and installation are separate. Assign each option to a specific host. Uninstalled inventory provides no effects and occupies no slots.'}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">{hosts.map(host => <div key={host.id} className={`bg-zinc-950 rounded p-2 ${host.used > host.capacity ? 'text-red-300' : 'text-zinc-300'}`}><span>{host.name}</span><strong className="block text-cyan-300">{host.capacity === 0 ? (lang === 'ru' ? 'Особое крепление — см. описание' : 'Special mount — see description') : `${host.used} / ${host.capacity}`}</strong></div>)}</div>
+        {warnings.length > 0 && <details className="text-xs text-amber-300"><summary>{lang === 'ru' ? `Проверьте размещение / условия (${warnings.length})` : `Review placement / conditions (${warnings.length})`}</summary><ul className="list-disc pl-4 space-y-1 mt-2">{warnings.map((warning,index) => <li key={index}>{warning}</li>)}</ul></details>}
+      </section>
+
       {/* Cyberware Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {character.cyberware.map((item) => (
@@ -240,6 +221,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                   <h3 className="font-orbitron font-bold text-xs text-white">
                     {item.name}
                   </h3>
+                  <span className="text-[10px] text-cyan-300">{isCyberwareInstalled(character, item) ? (lang === 'ru' ? 'Установлен' : 'Installed') : (lang === 'ru' ? 'В инвентаре' : 'Inventory')}</span>
                   <div className="text-[10px] text-cyan-400 font-mono">
                     {item.category} • {item.installLocation}
                   </div>
@@ -247,7 +229,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
                 <div className="flex items-center gap-2">
                   <span className="font-orbitron font-bold text-xs text-red-400 bg-zinc-950 px-2 py-0.5 rounded border border-red-950">
-                    -{item.humanityCost} HL
+                    {item.humanityCostKnown === false ? 'HL —' : `-${item.humanityCost} HL`}
                   </span>
                   <button
                     onClick={() => {
@@ -264,6 +246,11 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
               <div className="text-xs text-zinc-300 mt-2 leading-relaxed">
                 {item.description}
+              </div>
+              {cyberwareDefinition(item).installRule?.notes && <p className="text-xs text-amber-300 mt-2">{cyberwareDefinition(item).installRule?.notes}</p>}
+              <div className="flex flex-wrap gap-2 mt-3 text-xs">
+                <button onClick={() => setInstallId(item.id)} className="bg-cyan-900 px-2 py-1 rounded text-cyan-200">{isCyberwareInstalled(character,item) ? (lang === 'ru' ? 'Размещение / оружие' : 'Placement / weapon') : (lang === 'ru' ? 'Установить' : 'Install')}</button>
+                {isCyberwareInstalled(character,item) && <button onClick={() => onUpdateCharacter(uninstallCyberware(character,item.id))} className="bg-zinc-800 px-2 py-1 rounded">{lang === 'ru' ? 'Снять в инвентарь' : 'Uninstall to inventory'}</button>}
               </div>
             </div>
           </div>
@@ -289,20 +276,21 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
             {/* Presets */}
             <div>
               <label className="text-xs text-zinc-400 uppercase font-semibold block mb-1">
-                {lang === 'ru' ? 'Каталог распространенных имплантов' : 'Common Cyberware Catalog'}
+                {lang === 'ru' ? 'Полный каталог имплантов DataPool' : 'Full DataPool cyberware catalog'}
               </label>
+              <input aria-label="Search cyberware" placeholder={lang === 'ru' ? 'Поиск импланта...' : 'Search cyberware...'} value={catalogQuery} onChange={event => setCatalogQuery(event.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs mb-2" />
               <select
+                aria-label="Cyberware catalog"
                 onChange={(e) => {
-                  const presets = lang === 'ru' ? CYBERWARE_PRESETS_RU : CYBERWARE_PRESETS_EN;
-                  const preset = presets.find((p) => p.name === e.target.value);
+                  const preset = DATAPOOL_CYBERWARE.find((p) => p.id === e.target.value);
                   if (preset) handleApplyPreset(preset);
                 }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100 text-xs min-h-[38px]"
               >
                 <option value="">{lang === 'ru' ? 'Выберите из каталога...' : 'Select from catalog...'}</option>
-                {(lang === 'ru' ? CYBERWARE_PRESETS_RU : CYBERWARE_PRESETS_EN).map((p) => (
-                  <option key={p.name} value={p.name}>
-                    {p.name} ({p.category}, {p.humanityCost} HL)
+                {DATAPOOL_CYBERWARE.filter(item => `${item.name} ${item.description}`.toLowerCase().includes(catalogQuery.toLowerCase())).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.category}, {p.humanityCostKnown === false ? 'HL —' : `${p.humanityCost} HL`})
                   </option>
                 ))}
               </select>
@@ -375,6 +363,11 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
               />
             </div>
 
+            <details className="text-xs text-zinc-400"><summary>{lang === 'ru' ? 'Правила слотов (ручной имплант / домашние правила)' : 'Slot rules (custom / homebrew implant)'}</summary>
+              <label className="block mt-2">{lang === 'ru' ? 'Тип основания' : 'Host type'} <select aria-label="Custom cyberware host type" value={newItem.installRule?.allowedHosts[0] ?? 'internal'} onChange={event => setNewItem({ ...newItem, catalogId: undefined, installRule: { ...newItem.installRule, allowedHosts: [event.target.value as CyberwareSlotType], slots: newItem.installRule?.slots ?? 1 } })} className="bg-zinc-950 border border-zinc-700 p-1">{CYBERWARE_SLOT_TYPES.map(type => <option key={type} value={type}>{cyberwareSlotLabel(type,lang)}</option>)}</select></label>
+              <label className="block mt-2">{lang === 'ru' ? 'Занимает слотов' : 'Slots used'} <input aria-label="Custom cyberware slot cost" type="number" min="0" max="20" value={newItem.installRule?.slots ?? 1} onChange={event => setNewItem({ ...newItem, installRule: { allowedHosts: ['internal'], ...newItem.installRule, slots: Math.max(0, Math.min(20, Number(event.target.value) || 0)) } })} className="w-16 bg-zinc-950 border border-zinc-700 p-1" /></label>
+            </details>
+
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowAddModal(false)}
@@ -386,12 +379,14 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                 onClick={handleAddItem}
                 className="px-4 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs uppercase rounded font-orbitron"
               >
-                {lang === 'ru' ? 'Установить' : 'Install'}
+                {lang === 'ru' ? 'Добавить и выбрать слоты' : 'Add and choose slots'}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {itemToInstall && <CyberwareInstallModal key={itemToInstall.id} character={character} item={itemToInstall} lang={lang} onUpdateCharacter={onUpdateCharacter} onClose={() => setInstallId(null)} />}
 
       {/* Therapy Modal */}
       <TherapyModal
@@ -434,8 +429,8 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
 
             <div className="text-xs text-zinc-300">
               {lang === 'ru'
-                ? 'Как вы хотите восстановить человечность персонажа при удалении?'
-                : 'How would you like to restore the character\'s Humanity?'}
+                ? 'Зависимые опции будут сняты в инвентарь. Встроенное обычное оружие вернётся с остатком патронов. Удаляется только выбранная запись.'
+                : 'Dependent options move to inventory. Embedded ordinary weapons return with remaining ammo. Only the selected record is deleted.'}
             </div>
 
             <div className="space-y-2">
@@ -453,7 +448,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                       {lang === 'ru' ? 'Полный возврат' : 'Full Refund'}
                     </span>
                     <span className="font-mono font-bold text-xs text-emerald-400">
-                      +{itemToDelete.humanityCost || 0} HL
+                      +{isCyberwareInstalled(character,itemToDelete) ? itemToDelete.humanityLoss ?? itemToDelete.humanityCost : 0} HL
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-400 mt-0.5 leading-tight">
@@ -478,13 +473,13 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                       {lang === 'ru' ? 'По правилам Cyberpunk RED' : 'Official CPR Rules'}
                     </span>
                     <span className="font-mono font-bold text-xs text-cyan-400">
-                      +{itemToDelete.category === 'Borgware' ? 4 : 2} к порогу
+                      +{isCyberwareInstalled(character,itemToDelete) ? cyberwareCapLoss(itemToDelete) : 0} {lang === 'ru' ? 'к порогу' : 'cap'}
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-400 mt-0.5 leading-tight">
                     {lang === 'ru'
-                      ? `Игровое извлечение у хирурга. Снимает штраф к порогу (+${itemToDelete.category === 'Borgware' ? 4 : 2} HL), остальную человечность нужно добирать через терапию.`
-                      : `In-game surgical removal. Lifts cap penalty (+${itemToDelete.category === 'Borgware' ? 4 : 2} HL), rest must be recovered via Therapy.`}
+                      ? 'Удаление не возвращает текущую Humanity. Восстановление — через терапию.'
+                      : 'Removal does not refund current Humanity. Recover through Therapy.'}
                   </p>
                 </div>
               </button>

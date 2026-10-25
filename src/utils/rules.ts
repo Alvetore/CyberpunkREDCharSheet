@@ -1,20 +1,17 @@
-import { Character, CriticalInjury, CyberwareItem, ProgramItem, StatKey, Weapon } from '../types/character';
+import { Character, CriticalInjury, ProgramItem, StatKey, Weapon } from '../types/character';
 import { calculateHumanityStats, getRoleSkillBonus } from './roleUtils';
+import { cyberwareBody, functionalCyberware } from './cyberware';
+export { initializeCyberware } from './cyberware';
 
 export function armorPenalty(character: Character): number {
-  return Math.min(0, character.armor.head.penalty, character.armor.body.penalty);
+  const heavySubdermal = character.automaticCyberwareEffects && cyberwareBody(character) < 14 && functionalCyberware(character).some(item => /heavy subdermal|тяжелая подкожная|тяжёлая подкожная/i.test(item.name));
+  return Math.min(0, character.armor.head.penalty, character.armor.body.penalty, heavySubdermal ? -2 : 0);
 }
 
 export function effectiveStat(character: Character, key: StatKey): number {
   let value = key === 'EMP' ? calculateHumanityStats(character).currentEmp : character.stats[key];
   value += character.statMods[key] || 0;
-  if (key === 'BODY' && character.automaticCyberwareEffects) {
-    const names = character.cyberware.map(item => item.name.toLowerCase());
-    const grafts = names.filter(name => /grafted muscle|bone lace|мышечно.кост|усиленные мышцы/.test(name)).length;
-    if (grafts) value = Math.max(value, Math.min(10, value + 2 * grafts));
-    if (names.some(name => /linear frame.*(?:beta|β)|эндоскелет.*(?:бета|ß)/.test(name))) value = 14;
-    else if (names.some(name => /linear frame.*(?:sigma|∑|Σ)|эндоскелет.*(?:сигма|∑)/.test(name))) value = 12;
-  }
+  if (key === 'BODY') value = cyberwareBody(character);
   if (key === 'REF' || key === 'DEX' || key === 'MOVE') value = Math.max(0, value + armorPenalty(character));
   if (key === 'MOVE') {
     if (character.hpCurrent <= 0) value -= 6;
@@ -95,19 +92,14 @@ export function weaponPenetration(weapon: Weapon): 'none' | 'half' | 'ignore' {
 }
 
 export function initiativeBase(character: Character): number {
-  const cyberBonus = character.automaticCyberwareEffects && character.cyberware.some(item => /kerenzikov|керензиков/i.test(item.name)) ? 2 : 0;
+  const cyberBonus = character.automaticCyberwareEffects && functionalCyberware(character).some(item => /kerenzikov|керензиков/i.test(item.name)) ? 2 : 0;
   return effectiveStat(character, 'REF') + cyberBonus + (character.role === 'Solo' ? character.roleAbilities.solo.initiativeReaction : 0);
 }
 
 export function effectiveSP(character: Character, location: 'head' | 'body'): number {
   const armor = character.armor[location].spCurrent;
   if (!character.automaticCyberwareEffects) return armor;
-  return Math.max(armor, ...character.cyberware.map(item => item.armorSpCurrent?.[location] ?? 0));
-}
-
-export function initializeCyberware<T extends CyberwareItem>(item: T): T {
-  const sp = /subdermal armor|подкожная броня/i.test(item.name) ? 11 : /skinweave|тканекожа/i.test(item.name) ? 7 : 0;
-  return sp ? { ...item, armorSpCurrent: { head: sp, body: sp } } : item;
+  return Math.max(armor, ...functionalCyberware(character).map(item => item.armorSpCurrent?.[location] ?? 0));
 }
 
 export function programSlots(program: ProgramItem): number { return program.category === 'Black ICE' ? 2 : 1; }

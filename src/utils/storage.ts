@@ -2,6 +2,7 @@ import { Character } from '../types/character';
 import { createEmptyCharacter } from '../data/initialData';
 import { calculateHumanityStats } from './roleUtils';
 import { isCharacter, isCharacterCollection } from './characterValidation';
+import { syncCyberwareWeapons } from './cyberware';
 
 const CHARACTERS_STORAGE_KEY = 'cpr_characters_v1';
 const ACTIVE_CHAR_ID_KEY = 'cpr_active_char_id_v1';
@@ -58,7 +59,7 @@ export function loadStoredCharacters(): Character[] {
               updated.armor = { ...updated.armor, body: { ...updated.armor.body, name: 'Лёгкий арморджек (Light Armorjack)' } };
             }
           }
-          return updated;
+          return syncCyberwareWeapons(updated);
         });
       }
       throw new Error('Invalid character collection');

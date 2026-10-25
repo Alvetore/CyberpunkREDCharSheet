@@ -13,6 +13,7 @@ import {
 } from '../data/meleeRules';
 import { sfx } from '../utils/audio';
 import { effectiveStat, martialArtsLevel, selectedWeaponProfile, skillBase, updateWeaponAmmo, weaponPenetration } from '../utils/rules';
+import { cyberwareDefinition, functionalCyberware } from '../utils/cyberware';
 import { 
   Crosshair, 
   Plus, 
@@ -94,7 +95,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   });
 
   const body = effectiveStat(character, 'BODY');
-  const unarmedDamage = getUnarmedDamage(body, character.cyberware.some(item => /cyberarm|киберрука/i.test(item.name)));
+  const unarmedDamage = getUnarmedDamage(body, functionalCyberware(character).some(item => /cyberarm|киберрука/i.test(item.name)));
   const brawlingLvl = character.skills.find(skill => skill.id === 'brawling')?.level || 0;
   const brawlingBase = skillBase(character, 'brawling');
   const maLvl = martialArtsLevel(character);
@@ -136,6 +137,8 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   };
 
   const handleDeleteWeapon = (weaponId: string) => {
+    const sourceId = character.weapons.find(item => item.id === weaponId)?.sourceCyberwareId;
+    if (sourceId && character.cyberware.some(item => item.id === sourceId && cyberwareDefinition(item).weapon)) return;
     sfx.playClick();
     const updated = character.weapons.filter((w) => w.id !== weaponId);
     onUpdateCharacter({ ...character, weapons: updated });
@@ -1098,6 +1101,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                       <div>
                         <h3 className="font-orbitron font-bold text-sm text-zinc-100 flex items-center gap-1.5">
                           {weapon.name}
+                          {weapon.sourceCyberwareId && <span className="text-[10px] text-cyan-300 font-sans">{lang === 'ru' ? 'Кибероружие' : 'Cyberweapon'}</span>}
                           {weapon.concealable && (
                             <span className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.2 rounded font-sans">
                               {lang === 'ru' ? 'Скрытое' : 'Concealable'}
@@ -1113,6 +1117,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                       </div>
 
                       <button
+                        disabled={!!weapon.sourceCyberwareId && character.cyberware.some(item => item.id === weapon.sourceCyberwareId && cyberwareDefinition(item).weapon)}
                         onClick={() => handleDeleteWeapon(weapon.id)}
                         className="text-zinc-500 hover:text-red-400 p-1 transition"
                         title={lang === 'ru' ? 'Удалить оружие' : 'Delete weapon'}
@@ -1191,15 +1196,16 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
 
                     <div className="grid grid-cols-2 gap-2">
                       <button
+                        disabled={weapon.attackRequiresRoll === false}
                         onClick={() => weapon.skillId === 'autofire' ? setShowRangeMatrix(true) : onRollWeaponAttack(weapon)}
                         className="py-2.5 sm:py-1.5 min-h-[38px] bg-red-600 hover:bg-red-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 shadow-sm"
                       >
                         <Crosshair size={14} />
-                        {isMelee ? (lang === 'ru' ? 'Атака (DEX)' : 'Attack (DEX)') : t.rollAttack}
+                        {weapon.attackRequiresRoll === false ? (lang === 'ru' ? 'Эффект без броска — см. описание' : 'Effect without attack roll — see description') : isMelee ? (lang === 'ru' ? 'Атака (DEX)' : 'Attack (DEX)') : t.rollAttack}
                       </button>
 
                       <button
-                        disabled={weapon.skillId === 'autofire'}
+                        disabled={weapon.skillId === 'autofire' || !weapon.damage}
                         onClick={() => onRollWeaponDamage(weapon)}
                         className="py-2.5 sm:py-1.5 min-h-[38px] bg-zinc-800 hover:bg-yellow-950/60 border border-yellow-700/60 text-yellow-300 font-orbitron font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5"
                       >

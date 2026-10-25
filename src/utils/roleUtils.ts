@@ -1,4 +1,5 @@
 import { Character, StatKey } from '../types/character';
+import { installedCyberware, cyberwareCapLoss, cyberwareHumanityCap } from './cyberware';
 
 export interface RoleSkillBonusInfo {
   bonus: number;
@@ -112,7 +113,7 @@ export interface HumanityStats {
  */
 export function calculateHumanityStats(character: Character): HumanityStats {
   const baseHumanityMax = character.humanityMaxManual ?? (character.stats.EMP * 10);
-  const cyberwareList = character.cyberware || [];
+  const cyberwareList = installedCyberware(character);
 
   const totalInstallationHL = cyberwareList.reduce((acc, c) => acc + (c.humanityCost || 0), 0);
 
@@ -120,13 +121,9 @@ export function calculateHumanityStats(character: Character): HumanityStats {
   // "Каждый установленный киберимплант снижает максимум человечности на 2.
   // Каждый имплант боргирования снижает максимум человечности на 4.
   // Киберимпланты с 0 потери человечности при установке не снижают максимум."
-  const cyberwarePermanentLoss = cyberwareList.reduce((acc, c) => {
-    const cost = c.humanityCost || 0;
-    if (cost <= 0) return acc;
-    return acc + (c.category === 'Borgware' ? 4 : 2);
-  }, 0);
+  const cyberwarePermanentLoss = cyberwareList.reduce((acc, item) => acc + cyberwareCapLoss(item), 0);
 
-  const maxRecoverableHumanity = Math.max(0, baseHumanityMax - cyberwarePermanentLoss);
+  const maxRecoverableHumanity = cyberwareHumanityCap(character);
   const currentHumanity = Math.min(character.humanityCurrent, maxRecoverableHumanity);
   const currentEmp = Math.max(0, Math.floor(currentHumanity / 10));
   const unrecoveredLoss = Math.max(0, maxRecoverableHumanity - currentHumanity);

@@ -4,6 +4,7 @@ import { Language, translations } from '../locales/i18n';
 import { CPR_SKILLS, CPR_CRITICAL_INJURIES, CPR_LIFEPATH_TABLES, PRESET_PROGRAMS } from '../data/initialData';
 import { CPR_ROLE_PACKAGES, RolePackage } from '../data/roleTemplates';
 import { DATAPOOL_CYBERWARE } from '../data/datapoolCatalog';
+import { placeStartingCyberware } from '../utils/cyberware';
 import { rollD10 } from '../utils/dice';
 import { sfx } from '../utils/audio';
 import { initializeCyberware } from '../utils/rules';
@@ -419,7 +420,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
       updatedAt: Date.now()
     };
 
-    onCharacterCreated(newCharacter);
+    onCharacterCreated(placeStartingCyberware(newCharacter));
     onClose();
   };
 

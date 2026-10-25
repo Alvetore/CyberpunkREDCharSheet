@@ -1,5 +1,6 @@
 import { Character, CriticalInjury } from '../types/character';
 import { effectiveSP, rollNewInjury } from './rules';
+import { functionalCyberware } from './cyberware';
 
 export interface DamageOptions {
   location: 'head' | 'body';
@@ -53,7 +54,7 @@ export function applyDamage(character: Character, result: ReturnType<typeof reso
       [result.location]: { ...character.armor[result.location], spCurrent: result.newSp },
       ...(character.armor.shield && result.shieldDamageTaken > 0 ? { shield: { ...character.armor.shield, spCurrent: result.remainingShieldHp } } : {}),
     },
-    cyberware: character.cyberware.map(item => character.automaticCyberwareEffects && item.armorSpCurrent !== undefined ? { ...item, armorSpCurrent: { ...item.armorSpCurrent, [result.location]: Math.max(0, item.armorSpCurrent[result.location] - result.ablationAmount) } } : item),
+    cyberware: character.cyberware.map(item => character.automaticCyberwareEffects && functionalCyberware(character).some(active => active.id === item.id) && item.armorSpCurrent !== undefined ? { ...item, armorSpCurrent: { ...item.armorSpCurrent, [result.location]: Math.max(0, item.armorSpCurrent[result.location] - result.ablationAmount) } } : item),
     criticalInjuries: character.criticalInjuries.map(item => item.id === result.rolledInjury?.id ? { ...item, isActive: true } : item),
   };
 }

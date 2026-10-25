@@ -265,20 +265,19 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
       }
     } else if (item.type === 'cyberware' && item.cyberwareData) {
       const newCyber: CyberwareItem = {
+        ...item.cyberwareData,
         id: 'cyber-dp-' + Date.now(),
         name: item.cyberwareData.name,
         category: item.cyberwareData.category,
         installLocation: item.cyberwareData.installLocation,
         humanityCost: item.cyberwareData.humanityCost,
         humanityLoss: item.cyberwareData.humanityCost,
+        isInstalled: false,
         description: item.cyberwareData.description
       };
       updatedChar.cyberware = [...updatedChar.cyberware, initializeCyberware(newCyber)];
 
-      // Deduct Humanity Loss if any
-      if (newCyber.humanityCost > 0) {
-        updatedChar.humanityCurrent = updatedChar.humanityCurrent - newCyber.humanityCost;
-      }
+      // Purchase creates inventory. Installation allocates slots and deducts HL separately.
     } else if (item.type === 'gear' && item.gearData) {
       // Check if gear with same name exists
       const existingIdx = updatedChar.gear.findIndex((g) => g.name.toLowerCase() === item.name.toLowerCase());
@@ -713,7 +712,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                         {item.type === 'cyberware' && item.cyberwareData && (
                           <>
                             <span className="bg-purple-950 text-purple-300 border border-purple-800 px-1.5 py-0.5 rounded">
-                              {lang === 'ru' ? 'Потеря ПЧ:' : 'HL:'} <strong>{item.cyberwareData.humanityCostFormula || item.cyberwareData.humanityCost}</strong>
+                              {lang === 'ru' ? 'ПЧ при установке:' : 'Installation HL:'} <strong>{item.cyberwareData.humanityCostKnown === false ? (lang === 'ru' ? 'не указана' : 'not specified') : item.cyberwareData.humanityCostFormula || item.cyberwareData.humanityCost}</strong>
                             </span>
                             <span className="bg-zinc-900 text-zinc-400 border border-zinc-800 px-1.5 py-0.5 rounded">
                               {item.cyberwareData.installLocation}
@@ -793,7 +792,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                     {/* Buy Action Button */}
                     <div className="pt-2 border-t border-zinc-900 flex items-center justify-between gap-2 mt-2">
                       <span className="text-[10px] text-zinc-500 font-mono">
-                        {item.type === 'cyberware' && item.cyberwareData?.humanityCost ? `-${item.cyberwareData.humanityCost} ${lang === 'ru' ? 'Человечности' : 'Humanity'}` : ''}
+                        {item.type === 'cyberware' && item.cyberwareData?.humanityCost ? `${lang === 'ru' ? 'При установке:' : 'On installation:'} -${item.cyberwareData.humanityCost} HL` : ''}
                       </span>
 
                       <button
@@ -806,7 +805,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                         }`}
                       >
                         <ShoppingCart size={13} />
-                        <span>{lang === 'ru' ? 'Купить' : 'Buy'}</span>
+                        <span>{item.type === 'cyberware' ? (lang === 'ru' ? 'Купить в инвентарь' : 'Buy to inventory') : (lang === 'ru' ? 'Купить' : 'Buy')}</span>
                       </button>
                     </div>
                   </div>

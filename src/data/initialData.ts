@@ -1,4 +1,5 @@
 import { Skill, CriticalInjury, Weapon, ProgramItem, ArmorItem, Character } from '../types/character';
+import { placeStartingCyberware } from '../utils/cyberware';
 
 export const CPR_SKILLS: Omit<Skill, 'level'>[] = [
   // Awareness Skills (Навыки восприятия)
@@ -707,7 +708,7 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
   const startingCyberwareLoss = 14; // Neural Link (7) + Interface Plugs (7)
   const humanity = Math.max(0, baseHumanity - startingCyberwareLoss); // 46 Humanity
 
-  return {
+  return placeStartingCyberware({
     automaticCyberwareEffects: true,
     id: 'char-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
     name,
@@ -884,5 +885,5 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
 
     createdAt: Date.now(),
     updatedAt: Date.now()
-  };
+  });
 }

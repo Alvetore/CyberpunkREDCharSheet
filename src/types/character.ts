@@ -113,6 +113,8 @@ export interface Weapon {
   armorPenetration?: 'none' | 'half' | 'ignore';
   canCrit?: boolean;
   bodyRequirement?: number;
+  sourceCyberwareId?: string;
+  attackRequiresRoll?: boolean;
 }
 
 export interface ArmorItem {
@@ -135,6 +137,26 @@ export type CyberwareCategory =
   | 'Cyberlimb'
   | 'Borgware';
 
+export const CYBERWARE_SLOT_TYPES = ['fashion','internal','external','neural-site','eye-site','audio-site','arm-site','leg-site','neural','eye','audio','arm','leg','chip','finger','gorilla','mantis','monowire','neuroport'] as const;
+export type CyberwareSlotType = typeof CYBERWARE_SLOT_TYPES[number];
+
+export interface CyberwareInstallRule {
+  allowedHosts: CyberwareSlotType[];
+  slots: number;
+  hostCount?: number;
+  additionalMounts?: { allowedHosts: CyberwareSlotType[]; slots: number }[];
+  provides?: { type: CyberwareSlotType; capacity: number; key?: string }[];
+  paired?: boolean;
+  maxInstances?: number;
+  requires?: string[];
+  requiresSameHost?: string[];
+  bodyRequirement?: number;
+  muscleGrafts?: number;
+  exclusiveGroup?: string;
+  repeatHumanityFree?: boolean;
+  notes?: string;
+}
+
 export interface CyberwareItem {
   id: string;
   name: string;
@@ -144,6 +166,21 @@ export interface CyberwareItem {
   humanityLoss?: number;
   description: string;
   armorSpCurrent?: { head: number; body: number };
+  catalogId?: string;
+  sourceUrl?: string;
+  sourceBook?: string;
+  installationFacility?: string;
+  kind?: 'implant' | 'chip' | 'upgrade';
+  borgware?: boolean;
+  humanityCostKnown?: boolean;
+  isInstalled?: boolean;
+  installedIn?: string[];
+  hasBeenInstalled?: boolean;
+  installRule?: CyberwareInstallRule;
+  weapon?: Omit<Weapon, 'id' | 'currentAmmo'>;
+  weaponMount?: 'melee' | 'ranged';
+  embeddedWeaponId?: string;
+  weaponState?: { currentAmmo: number; selectedProfile?: number; profileAmmo?: Record<string, number> };
 }
 
 export type ProgramCategory = 'Booster' | 'Defender' | 'Attacker' | 'Black ICE';

@@ -19,6 +19,7 @@ import { createEmptyCharacter } from './data/initialData';
 import { executeCyberpunkCheck, executeDamageRoll, executeDeathSave } from './utils/dice';
 import { sfx } from './utils/audio';
 import { effectiveStat, initiativeBase, injuryDeathPenalty, netActionBase, selectedWeaponProfile, updateWeaponAmmo, weaponAttackBase, weaponPenetration } from './utils/rules';
+import { syncCyberwareWeapons } from './utils/cyberware';
 
 import { Header } from './components/Header';
 import { StatsSection } from './components/StatsSection';
@@ -128,7 +129,7 @@ export const App: React.FC = () => {
   }, [soundEnabled]);
 
   const handleUpdateActiveCharacter = (updated: Character) => {
-    const updatedWithTimestamp = { ...updated, updatedAt: Date.now() };
+    const updatedWithTimestamp = { ...syncCyberwareWeapons(updated), updatedAt: Date.now() };
     setCharacters((prev) =>
       prev.map((c) => (c.id === updated.id ? updatedWithTimestamp : c))
     );
@@ -249,6 +250,7 @@ export const App: React.FC = () => {
 
   const handleRollWeaponAttack = (weapon: Weapon, targetDv?: number, rangeStr?: string, autofire = false) => {
     weapon = selectedWeaponProfile(activeChar.weapons.find(item => item.id === weapon.id) ?? weapon);
+    if (weapon.attackRequiresRoll === false) return;
     autofire = autofire || weapon.skillId === 'autofire';
     if (weapon.bodyRequirement && effectiveStat(activeChar, 'BODY') < weapon.bodyRequirement) { alert(`BODY ${weapon.bodyRequirement}+`); return; }
     if (autofire && (weapon.currentAmmo < 10 || targetDv === undefined)) {

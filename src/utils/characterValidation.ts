@@ -1,4 +1,4 @@
-import { Character } from '../types/character';
+import { Character, CYBERWARE_SLOT_TYPES } from '../types/character';
 import { createEmptyCharacter } from '../data/initialData';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -12,7 +12,31 @@ const boolean = (value: unknown) => typeof value === 'boolean';
 const quality = (value: unknown) => ['Poor','Standard','Excellent'].includes(value as string);
 const penetration = (value: unknown) => ['none','half','ignore'].includes(value as string);
 function validWeaponOptions(value: Record<string, unknown>): boolean {
-  return optionalFields(value, { category:text, skillId:text, quality, standardRof:nonnegative, magCapacity:nonnegative, ammoType:text, armorPenetration:penetration, canCrit:boolean, bodyRequirement:nonnegative, autofireLimit:nonnegative });
+  return optionalFields(value, { category:text, skillId:text, quality, standardRof:nonnegative, magCapacity:nonnegative, ammoType:text, armorPenetration:penetration, canCrit:boolean, bodyRequirement:nonnegative, autofireLimit:nonnegative, attackRequiresRoll:boolean, sourceCyberwareId:text });
+}
+const slotNumber = (value: unknown) => nonnegative(value) && Number.isInteger(value) && (value as number) <= 1000;
+const hostType = (value: unknown) => CYBERWARE_SLOT_TYPES.includes(value as typeof CYBERWARE_SLOT_TYPES[number]);
+const hostTypes = (value: unknown) => Array.isArray(value) && value.length > 0 && value.length <= CYBERWARE_SLOT_TYPES.length && value.every(hostType);
+const textArray = (value: unknown) => Array.isArray(value) && value.length <= 30 && value.every(text);
+const mount = (value: unknown) => isRecord(value) && hostTypes(value.allowedHosts) && slotNumber(value.slots);
+function validInstallRule(value: unknown): boolean {
+  if (isRecord(value) && Array.isArray(value.provides)) {
+    const keys = value.provides.map(pool => isRecord(pool) ? pool.key ?? pool.type : undefined);
+    if (new Set(keys).size !== keys.length) return false;
+  }
+  return mount(value) && isRecord(value) && optionalFields(value, {
+    hostCount:n => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= 4,
+    additionalMounts:items => Array.isArray(items) && items.length <= 8 && items.every(mount),
+    provides:items => Array.isArray(items) && items.length <= 12 && items.every(pool => isRecord(pool) && hostType(pool.type) && slotNumber(pool.capacity) && optionalFields(pool,{key:text})),
+    paired:boolean,maxInstances:slotNumber,requires:textArray,requiresSameHost:textArray,bodyRequirement:slotNumber,muscleGrafts:slotNumber,exclusiveGroup:text,repeatHumanityFree:boolean,notes:text,
+  });
+}
+function validWeapon(value: unknown): boolean {
+  if (!isRecord(value) || !matches(value,{name:'',category:'',damage:'',standardRof:0,magCapacity:0,ammoType:'',concealable:false,notes:''}) || !validWeaponOptions(value)) return false;
+  if (!optionalFields(value,{sourceUrl:text,selectedProfile:n => Number.isInteger(n) && (n as number) >= 0})) return false;
+  if (value.damageProfiles !== undefined && (!Array.isArray(value.damageProfiles) || value.damageProfiles.length > 100 || !value.damageProfiles.every(profile => isRecord(profile) && text(profile.name) && text(profile.damage) && validWeaponOptions(profile)))) return false;
+  if (value.selectedProfile !== undefined && (value.selectedProfile as number) >= Math.max(1, (value.damageProfiles as unknown[] | undefined)?.length ?? 0)) return false;
+  return value.profileAmmo === undefined || (isRecord(value.profileAmmo) && Object.values(value.profileAmmo).every(n => nonnegative(n) && Number.isInteger(n)));
 }
 function matches(value: unknown, template: unknown): boolean {
   if (typeof template === 'number') return typeof value === 'number' && Number.isFinite(value);
@@ -42,19 +66,22 @@ export function isCharacter(value: unknown): value is Character {
   }
   if (!matches(value, required)) return false;
   const character = value as unknown as Character;
+  if (character.cyberware.some(item => !item.id) || character.weapons.some(item => !item.id) || new Set(character.cyberware.map(item => item.id)).size !== character.cyberware.length || new Set(character.weapons.map(item => item.id)).size !== character.weapons.length) return false;
   const roles = ['Solo','Netrunner','Tech','Medtech','Rockerboy','Media','Lawman','Exec','Fixer','Nomad'];
   if (!character.id || !character.name.trim() || !roles.includes(character.role)) return false;
   if (!Object.values(character.stats).every(n => Number.isInteger(n) && n >= 0 && n <= 30)) return false;
   if (!character.skills.every(skill => Object.hasOwn(template.stats, skill.stat) && Number.isInteger(skill.level) && skill.level >= 0 && skill.level <= 10 && [1,2].includes(skill.multiplier))) return false;
   for (const weapon of character.weapons) {
-    if (weapon.profileAmmo !== undefined && (!isRecord(weapon.profileAmmo) || !Object.values(weapon.profileAmmo).every(n => nonnegative(n) && Number.isInteger(n)))) return false;
-    const data = weapon as unknown as Record<string, unknown>;
-    if (!validWeaponOptions(data) || !optionalFields(data, { sourceUrl:text, selectedProfile:n => Number.isInteger(n) && (n as number) >= 0 })) return false;
-    if (weapon.damageProfiles !== undefined && (!Array.isArray(weapon.damageProfiles) || weapon.damageProfiles.length > 100 || !weapon.damageProfiles.every(profile => isRecord(profile) && text(profile.name) && text(profile.damage) && validWeaponOptions(profile)))) return false;
-    if (weapon.selectedProfile !== undefined && weapon.selectedProfile >= Math.max(1, weapon.damageProfiles?.length ?? 0)) return false;
+    if (!validWeapon(weapon)) return false;
   }
   if (!character.programs.every(program => optionalFields(program as unknown as Record<string,unknown>, { isActive:boolean, perception:nonnegative, speed:nonnegative }))) return false;
-  if (!character.cyberware.every(item => optionalFields(item as unknown as Record<string,unknown>, { humanityLoss:finite, armorSpCurrent:sp => isRecord(sp) && nonnegative(sp.head) && nonnegative(sp.body) }))) return false;
+  if (!character.cyberware.every(item => optionalFields(item as unknown as Record<string,unknown>, {
+    humanityLoss:nonnegative, armorSpCurrent:sp => isRecord(sp) && nonnegative(sp.head) && nonnegative(sp.body),
+    catalogId:text,sourceUrl:text,sourceBook:text,installationFacility:text,embeddedWeaponId:text,
+    kind:kind => ['implant','chip','upgrade'].includes(kind as string),borgware:boolean,humanityCostKnown:boolean,isInstalled:boolean,hasBeenInstalled:boolean,
+    installedIn:textArray,installRule:validInstallRule,weapon:validWeapon,weaponMount:mount => mount === 'melee' || mount === 'ranged',
+    weaponState:state => isRecord(state) && nonnegative(state.currentAmmo) && optionalFields(state,{selectedProfile:n => nonnegative(n) && Number.isInteger(n),profileAmmo:ammo => isRecord(ammo) && Object.values(ammo).every(n => nonnegative(n) && Number.isInteger(n))}),
+  }))) return false;
   if (value.martialArtsLevels !== undefined && (!isRecord(value.martialArtsLevels) || !Object.values(value.martialArtsLevels).every(n => typeof n === 'number' && Number.isInteger(n) && n >= 0 && n <= 10))) return false;
   if (!['automaticCyberwareEffects','soloSpotWeaknessUsed','soloDamageDeflectionUsed'].every(key => value[key] === undefined || typeof value[key] === 'boolean')) return false;
   if (!optionalFields(value, { avatarUrl:text, martialArtsStyle:text, legacyMartialArtsStyle:text })) return false;
