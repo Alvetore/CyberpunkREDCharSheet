@@ -1,6 +1,8 @@
 // Generated DataPool Catalog from https://alec-leon.github.io/data-pool/
 import { ArmorItem, CyberwareItem, GearItem, Weapon } from '../types/character';
 import { GRENADE_CATALOG } from './grenadeCatalog';
+import { GEAR_CATALOG, GEAR_SECTIONS } from './gearCatalog';
+import { AMMUNITION_CATALOG } from './ammunitionCatalog';
 
 export interface CatalogWeaponItem extends Weapon {
   costEb: number;
@@ -378,7 +380,8 @@ export const DATAPOOL_ARMORS: CatalogArmorItem[] = [
 
 export { CYBERWARE_CATALOG as DATAPOOL_CYBERWARE } from './cyberwareCatalog';
 
-export { GEAR_CATALOG as DATAPOOL_GEAR } from './gearCatalog';
+export const DATAPOOL_GEAR: CatalogGearItem[] = [...GEAR_CATALOG, ...AMMUNITION_CATALOG];
+export const DATAPOOL_GEAR_SECTIONS = [...GEAR_SECTIONS, { id: 'ammunition', ru: 'Боеприпасы', en: 'Ammunition' }];
 // Weapon data regenerated 2026-10-23 from saved public Data Pool HTML.
 // Secondary reference; full descriptions retained. Explicit RTG 2026 WAA and Black Chrome v1.5 overrides below.
 export const DATAPOOL_BASE_WEAPONS: CatalogWeaponItem[] = [

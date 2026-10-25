@@ -3,6 +3,7 @@ import { Character, GearItem } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { GearCatalogBrowser } from './GearCatalogBrowser';
+import { AMMUNITION_CATALOG } from '../data/ammunitionCatalog';
 import { useCatalogNotice } from './CatalogNotice';
 import { addEquipmentToBackpack, BackpackEquipment, backpackCyberware } from '../utils/backpack';
 import { BackpackEquipmentSection } from './BackpackEquipmentSection';
@@ -22,6 +23,9 @@ interface GearSectionProps {
   onUpdateCharacter: (char: Character) => void;
   lang: Language;
 }
+
+const ammunitionIds = new Set(AMMUNITION_CATALOG.map(item => item.id));
+const isPackAmmo = (item: Partial<GearItem>) => !!item.catalogId && ammunitionIds.has(item.catalogId);
 
 const LIFESTYLES: { id: string; nameRu: string; nameEn: string }[] = [
   { id: 'kibble', nameRu: 'На киббле (100 eb/мес)', nameEn: 'Kibble (100 eb/mo)' },
@@ -234,7 +238,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
               {character.gear.map((item) => (
                 <tr key={item.id} className="border-b border-zinc-800/60 hover:bg-zinc-800/30">
                   <td className="py-2 px-2 font-semibold text-zinc-200">{item.name}</td>
-                  <td className="py-2 px-2 text-zinc-400">{item.category}</td>
+                  <td className="py-2 px-2 text-zinc-400">{item.category === 'Ammunition' && lang === 'ru' ? 'Боеприпасы' : item.category}</td>
                   <td className="py-2 px-2 text-center">
                     <div className="inline-flex items-center gap-1.5 bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
                       <button
@@ -245,6 +249,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
                       </button>
                       <span className="font-bold text-white min-w-[14px] text-center">
                         {item.quantity}
+                        {isPackAmmo(item) && <span className="ml-1 text-[10px] text-zinc-500">{lang === 'ru' ? 'уп.' : 'packs'}</span>}
                       </span>
                       <button
                         onClick={() => handleAdjustQuantity(item.id, 1)}
@@ -359,9 +364,10 @@ export const GearSection: React.FC<GearSectionProps> = ({
             </details>
 
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-300">
-              <label>{lang === 'ru' ? 'Количество' : 'Quantity'} <input aria-label={lang === 'ru' ? 'Количество предметов' : 'Item quantity'} type="number" min="1" max="999" step="1" value={newItem.quantity ?? 1} onChange={event => { setNewItem({ ...newItem, quantity: Number(event.target.value) }); setError(''); }} className="ml-2 w-20 bg-zinc-950 border border-zinc-700 p-2 rounded" /></label>
+              <label>{isPackAmmo(newItem) ? (lang === 'ru' ? 'Количество упаковок' : 'Number of packs') : (lang === 'ru' ? 'Количество' : 'Quantity')} <input aria-label={lang === 'ru' ? 'Количество предметов' : 'Item quantity'} type="number" min="1" max="999" step="1" value={newItem.quantity ?? 1} onChange={event => { setNewItem({ ...newItem, quantity: Number(event.target.value) }); setError(''); }} className="ml-2 w-20 bg-zinc-950 border border-zinc-700 p-2 rounded" /></label>
               <span>{lang === 'ru' ? 'Итого' : 'Total'}: {((newItem.costEb ?? 0) * (newItem.quantity ?? 1)).toLocaleString(lang)} eb{newItem.billingPeriod === 'monthly' ? (lang === 'ru' ? ' за первый месяц' : ' for the first month') : ''} · {lang === 'ru' ? 'Наличные' : 'Cash'}: {character.cashEb.toLocaleString(lang)} eb</span>
             </div>
+            {isPackAmmo(newItem) && <p className="text-xs text-amber-300">{lang === 'ru' ? 'Размер упаковки указан в названии. Ракеты — поштучно. Запасы и перезарядка учитываются вручную.' : 'Pack size is shown in the name. Rockets are individual rounds. Track reserve ammo and reloads manually.'}</p>}
             <p className="text-[11px] text-zinc-500">{lang === 'ru' ? 'Добавление без покупки не списывает eb. Покупка оплачивается из наличных; подписки — за первый месяц.' : 'Adding owned gear does not charge eb. Purchases use cash; subscriptions charge the first month.'}</p>
             {error && <p role="alert" className="text-xs text-red-300">{error}</p>}
             {catalog.notice}

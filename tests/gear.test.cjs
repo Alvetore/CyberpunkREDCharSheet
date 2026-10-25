@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { load, mount, nodes, button, label } = require('./helpers.cjs');
 const { createEmptyCharacter } = load('src/data/initialData.ts');
 const { DATAPOOL_GEAR, DATAPOOL_WEAPONS, DATAPOOL_ARMORS, DATAPOOL_CYBERWARE } = load('src/data/datapoolCatalog.ts');
-const { GEAR_SECTIONS } = load('src/data/gearCatalog.ts');
+const { GEAR_CATALOG, GEAR_SECTIONS } = load('src/data/gearCatalog.ts');
 const { CatalogBrowser } = load('src/components/CatalogBrowser.tsx');
 const { GearCatalogBrowser } = load('src/components/GearCatalogBrowser.tsx');
 const { GearSection } = load('src/components/GearSection.tsx');
@@ -17,11 +17,11 @@ const cards = tree => nodes(tree,n=>n.type==='button'&&n.props['aria-label']?.st
 beforeEach(()=>{ const data = new Map(); global.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)}; global.alert=()=>{}; });
 
 test('gear catalogue covers the priced equipment tables and retains all 126 legacy identities',()=>{
-  assert.equal(DATAPOOL_GEAR.length,261);assert.equal(GEAR_SECTIONS.length,14);
-  assert.equal(new Set(DATAPOOL_GEAR.map(item=>item.id)).size,261);
-  assert.equal(new Set(DATAPOOL_GEAR.map(item=>item.sourceKey)).size,261);
+  assert.equal(GEAR_CATALOG.length,261);assert.equal(GEAR_SECTIONS.length,14);
+  assert.equal(new Set(GEAR_CATALOG.map(item=>item.id)).size,261);
+  assert.equal(new Set(GEAR_CATALOG.map(item=>item.sourceKey)).size,261);
   for(let n=1;n<=126;n++) assert.ok(DATAPOOL_GEAR.some(item=>item.id===`cat-gear-${n}`));
-  for(const item of DATAPOOL_GEAR) { assert.ok(GEAR_SECTIONS.some(section=>section.id===item.section));assert.ok(item.notes.length>40);assert.ok(item.sourceUrl.startsWith('https://alec-leon.github.io/data-pool/equipment/'));assert.ok(Number.isFinite(item.costEb)&&item.costEb>=0); }
+  for(const item of GEAR_CATALOG) { assert.ok(GEAR_SECTIONS.some(section=>section.id===item.section));assert.ok(item.notes.length>40);assert.ok(item.sourceUrl.startsWith('https://alec-leon.github.io/data-pool/equipment/'));assert.ok(Number.isFinite(item.costEb)&&item.costEb>=0); }
   assert.equal(DATAPOOL_GEAR.filter(item=>item.section==='clothing').length,90);
   assert.equal(DATAPOOL_GEAR.filter(item=>item.section==='software').length,20);
   assert.ok(find('Агент (обычного качества)').notes.length>1000);
@@ -32,7 +32,7 @@ test('gear catalogue covers the priced equipment tables and retains all 126 lega
 test('gear navigation and search keep all offers reachable and pass the original selected item',()=>{
   let selected,equipment;const props=GearCatalogBrowser({lang:'en',onSelect:(item,entry)=>{selected=item;equipment=entry;}}).props;
   const view=mount(CatalogBrowser,props);
-  assert.equal(cards(view.render()).length,261+DATAPOOL_WEAPONS.length+DATAPOOL_ARMORS.length+DATAPOOL_CYBERWARE.length);
+  assert.equal(cards(view.render()).length,DATAPOOL_GEAR.length+DATAPOOL_WEAPONS.length+DATAPOOL_ARMORS.length+DATAPOOL_CYBERWARE.length);
   button(view.render(),'Medical equipment').props.onClick();assert.equal(cards(view.render()).length,5);
   nodes(view.render(),n=>n.type==='input')[0].props.onChange({target:{value:'  Фонарик  '}});assert.equal(cards(view.render()).length,0);
   button(view.render(),'All sections').props.onClick();

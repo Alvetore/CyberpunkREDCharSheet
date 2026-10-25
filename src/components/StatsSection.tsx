@@ -152,7 +152,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
     <div className="space-y-4">
       {/* Character Identity Bar */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 shadow-md">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 items-end">
           {/* Name */}
           <div>
             <label className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 block mb-1">
@@ -196,6 +196,17 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               ))}
             </select>
           </div>
+
+          <label className="text-[11px] font-semibold uppercase tracking-wider text-cyan-400 block">
+            {lang === 'ru' ? 'Репутация' : 'Reputation'}
+            <input
+              aria-label={lang === 'ru' ? 'Репутация' : 'Reputation'}
+              title={lang === 'ru' ? 'Репутация 0–10, назначается мастером за события игры.' : 'Reputation 0–10, assigned by the GM for events in play.'}
+              type="number" min="0" max="10" step="1" value={character.reputation ?? 0}
+              onChange={event => onUpdateCharacter({ ...character, reputation: Math.max(0, Math.min(10, parseInt(event.target.value, 10) || 0)) })}
+              className="block w-full mt-1 bg-zinc-950 border border-cyan-900 focus:border-cyan-500 rounded px-2.5 py-1.5 text-cyan-200 font-bold text-sm text-center focus:outline-none"
+            />
+          </label>
 
           {/* Role Rank & Initiative */}
           <div className="flex gap-2">

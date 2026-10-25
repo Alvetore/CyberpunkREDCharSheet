@@ -16,7 +16,7 @@ import {
   CatalogCyberwareItem,
   CatalogGearItem
 } from '../data/datapoolCatalog';
-import { GEAR_SECTIONS } from '../data/gearCatalog';
+import { DATAPOOL_GEAR_SECTIONS as GEAR_SECTIONS } from '../data/datapoolCatalog';
 import {
   DATAPOOL_ALL_VEHICLES,
   DATAPOOL_VEHICLE_UPGRADES,

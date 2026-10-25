@@ -8,6 +8,8 @@ import {
   setActiveCharacterId,
   getStoredTheme,
   saveStoredTheme,
+  getStoredSoundEnabled,
+  saveStoredSoundEnabled,
   AppTheme,
   exportSingleCharacter,
   exportAllCharacters,
@@ -64,7 +66,7 @@ export const App: React.FC = () => {
   });
 
   const [lang, setLang] = useState<Language>('ru');
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => getStoredSoundEnabled());
   const [dualTerms, setDualTerms] = useState<boolean>(true);
   const [theme, setTheme] = useState<AppTheme>(() => getStoredTheme());
 
@@ -126,6 +128,7 @@ export const App: React.FC = () => {
   // Sync SFX state
   useEffect(() => {
     sfx.enabled = soundEnabled;
+    saveStoredSoundEnabled(soundEnabled);
   }, [soundEnabled]);
 
   const handleUpdateActiveCharacter = (updated: Character) => {

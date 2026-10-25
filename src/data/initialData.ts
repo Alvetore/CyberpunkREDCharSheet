@@ -721,6 +721,7 @@ export function createEmptyCharacter(name = 'Новый бегущий', role: C
     handle: 'Street-Sam',
     role,
     roleRank: 4,
+    reputation: 0,
     avatarUrl: '',
     notes: 'Готов к работе на улицах Найт-Сити.',
 

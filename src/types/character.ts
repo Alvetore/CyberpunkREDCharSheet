@@ -350,6 +350,7 @@ export interface Character {
   handle: string; // Nickname / Handle in Night City
   role: RoleType;
   roleRank: number;
+  reputation?: number;
   avatarUrl?: string;
   notes: string;
 

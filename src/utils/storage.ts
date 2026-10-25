@@ -7,6 +7,7 @@ import { syncCyberwareWeapons } from './cyberware';
 const CHARACTERS_STORAGE_KEY = 'cpr_characters_v1';
 const ACTIVE_CHAR_ID_KEY = 'cpr_active_char_id_v1';
 const THEME_STORAGE_KEY = 'cpr_theme_v1';
+const SOUND_STORAGE_KEY = 'cpr_sound_enabled_v1';
 const RECOVERY_STORAGE_KEY = 'cpr_characters_recovery_v1';
 const PREVIOUS_STORAGE_KEY = 'cpr_characters_previous_v1';
 let recoveredStorage = false;
@@ -20,6 +21,16 @@ export function exportStorageRecovery(): void {
 }
 
 export type AppTheme = 'dark' | 'light';
+
+export function getStoredSoundEnabled(): boolean {
+  try { return localStorage.getItem(SOUND_STORAGE_KEY) !== 'false'; }
+  catch { return true; }
+}
+
+export function saveStoredSoundEnabled(enabled: boolean): void {
+  try { localStorage.setItem(SOUND_STORAGE_KEY, String(enabled)); }
+  catch { /* Sound still works for this session if storage is unavailable. */ }
+}
 
 export function getStoredTheme(): AppTheme {
   try {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CatalogGearItem, DATAPOOL_GEAR, DATAPOOL_WEAPONS, DATAPOOL_ARMORS, DATAPOOL_CYBERWARE } from '../data/datapoolCatalog';
-import { GEAR_SECTIONS } from '../data/gearCatalog';
+import { DATAPOOL_GEAR_SECTIONS as GEAR_SECTIONS } from '../data/datapoolCatalog';
 import { Language } from '../locales/i18n';
 import { gearPrice } from '../utils/gear';
 import { CatalogBrowser } from './CatalogBrowser';

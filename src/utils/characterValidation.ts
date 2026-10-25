@@ -58,7 +58,7 @@ function validArmor(value: unknown): boolean {
 export function isCharacter(value: unknown): value is Character {
   if (!isRecord(value)) return false;
   const template = createEmptyCharacter('Validation');
-  const { avatarUrl: _avatar, ...required } = template;
+  const { avatarUrl: _avatar, reputation: _reputation, ...required } = template;
   for (const key of ['vehicles','spareArmor','martialArtsStyle','legacyMartialArtsStyle','martialArtsLevels','automaticCyberwareEffects','soloSpotWeaknessUsed','soloDamageDeflectionUsed']) delete (required as unknown as Record<string, unknown>)[key];
   delete required.cyberdeck.slotsMax;
   // Lists have explicit element templates even when the starting character has none.
@@ -75,6 +75,7 @@ export function isCharacter(value: unknown): value is Character {
   }
   if (!matches(value, required)) return false;
   const character = value as unknown as Character;
+  if (value.reputation !== undefined && (!Number.isInteger(value.reputation) || (value.reputation as number) < 0 || (value.reputation as number) > 10)) return false;
   const relationships = (entries: unknown) => Array.isArray(entries) && entries.length <= 100 && entries.every(text);
   if (!optionalFields(character.lifepath as unknown as Record<string,unknown>, {
     friendEntries:relationships,loveAffairEntries:relationships,
