@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Character, Weapon, ArmorItem, CyberwareItem, GearItem, Vehicle } from '../types/character';
+import { Character, Weapon, ArmorItem, CyberwareItem, GearItem } from '../types/character';
 import { Language } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { initializeCyberware } from '../utils/rules';
 import { addGearToInventory, gearErrorMessage, gearPrice } from '../utils/gear';
+import { addVehicleToGarage, vehicleErrorMessage, vehicleFromCatalog } from '../utils/vehicles';
 import { 
   DATAPOOL_WEAPONS, 
   DATAPOOL_ARMORS, 
@@ -290,23 +291,10 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
       updatedChar.gear = result.character.gear;
       updatedChar.cashEb = result.character.cashEb;
     } else if (item.type === 'vehicle' && item.vehicleData) {
-      const newVeh: Vehicle = {
-        id: 'veh-dp-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-        name: item.vehicleData.name,
-        model: item.vehicleData.name,
-        category: item.vehicleData.category,
-        sdpMax: item.vehicleData.sdpMax,
-        sdpCurrent: item.vehicleData.sdpMax,
-        armorSp: item.vehicleData.armorSp,
-        seats: item.vehicleData.seats,
-        speedCombat: item.vehicleData.speedCombat,
-        speedNarrative: item.vehicleData.speedNarrative,
-        costEb: item.vehicleData.costEb,
-        notes: lang === 'ru' ? item.vehicleData.descriptionRu : (item.vehicleData.descriptionEn || item.vehicleData.descriptionRu),
-        nomadRankReq: item.vehicleData.nomadRankReq,
-        upgrades: []
-      };
-      updatedChar.vehicles = [...(updatedChar.vehicles || []), newVeh];
+      const result = addVehicleToGarage(character, vehicleFromCatalog(item.vehicleData, lang), !isFreeMode);
+      if (!result.character) { alert(vehicleErrorMessage(result.error!, lang)); return; }
+      updatedChar.vehicles = result.character.vehicles;
+      updatedChar.cashEb = result.character.cashEb;
     } else if (item.type === 'vehicle_upgrade' && item.vehicleUpgradeData) {
       const upgTitle = lang === 'ru' ? item.vehicleUpgradeData.nameRu : item.vehicleUpgradeData.nameEn;
       if (updatedChar.vehicles && updatedChar.vehicles.length > 0) {

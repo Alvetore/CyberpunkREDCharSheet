@@ -2,13 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { Character, Vehicle, VehicleCategory, StatKey } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
+import { VehicleCatalogModal } from './VehicleCatalogModal';
 import { DATAPOOL_VEHICLE_UPGRADES, CatalogVehicleUpgrade } from '../data/datapoolVehicles';
 import { 
   Car, 
   Wrench, 
   Plus, 
   Trash2, 
-  ShoppingCart, 
   Shield, 
   Gauge, 
   Users, 
@@ -30,7 +30,6 @@ interface VehiclesSectionProps {
   onUpdateCharacter: (char: Character) => void;
   onRollCustomCheck: (title: string, baseVal: number, dv?: number) => void;
   onRollCustomDamage: (title: string, formula: string) => void;
-  onOpenShop?: (category?: 'all' | 'weapons' | 'armor' | 'cyberware' | 'gear' | 'vehicles') => void;
   lang: Language;
 }
 
@@ -39,7 +38,6 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
   onUpdateCharacter,
   onRollCustomCheck,
   onRollCustomDamage,
-  onOpenShop,
   lang
 }) => {
   const t = translations[lang];
@@ -50,22 +48,6 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
   const [upgradeTargetVehId, setUpgradeTargetVehId] = useState<string | null>(null);
   const [selectedUpgradeId, setSelectedUpgradeId] = useState<string>('');
   const [customUpgradeText, setCustomUpgradeText] = useState<string>('');
-
-  // Form for custom vehicle
-  const [newVehicle, setNewVehicle] = useState<Partial<Vehicle>>({
-    name: lang === 'ru' ? 'Свой транспорт' : 'Custom Vehicle',
-    model: '',
-    category: 'Ground',
-    sdpMax: 50,
-    sdpCurrent: 50,
-    armorSp: 0,
-    seats: 4,
-    speedCombat: '20 СКО',
-    speedNarrative: '160 км/ч',
-    costEb: 30000,
-    notes: '',
-    nomadRankReq: 0
-  });
 
   // Calculate fleet stats
   const totalFleetCost = useMemo(() => {
@@ -93,33 +75,6 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
   const armorPenalty = Math.min(character.armor.head.penalty || 0, character.armor.body.penalty || 0);
 
   // Handlers for Vehicle Management
-  const handleAddCustomVehicle = () => {
-    sfx.playClick();
-    const veh: Vehicle = {
-      id: 'veh-custom-' + Date.now(),
-      name: newVehicle.name?.trim() || (lang === 'ru' ? 'Кастомный транспорт' : 'Custom Vehicle'),
-      model: newVehicle.model?.trim() || newVehicle.name?.trim() || '',
-      category: newVehicle.category || 'Ground',
-      sdpMax: Number(newVehicle.sdpMax) || 35,
-      sdpCurrent: Number(newVehicle.sdpMax) || 35,
-      armorSp: Number(newVehicle.armorSp) || 0,
-      seats: newVehicle.seats || 2,
-      speedCombat: newVehicle.speedCombat || '20 СКО',
-      speedNarrative: newVehicle.speedNarrative || '160 км/ч',
-      costEb: Number(newVehicle.costEb) || 0,
-      notes: newVehicle.notes || '',
-      nomadRankReq: Number(newVehicle.nomadRankReq) || 0,
-      upgrades: []
-    };
-
-    onUpdateCharacter({
-      ...character,
-      vehicles: [...vehicles, veh]
-    });
-
-    setShowAddModal(false);
-  };
-
   const handleDeleteVehicle = (vehId: string) => {
     const veh = vehicles.find((v) => v.id === vehId);
     if (!veh) return;
@@ -316,18 +271,6 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
 
           {/* Quick Action Buttons */}
           <div className="flex items-center gap-2 flex-wrap">
-            {onOpenShop && (
-              <button
-                onClick={() => {
-                  sfx.playClick();
-                  onOpenShop('vehicles');
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded-lg shadow-md transition min-h-[38px]"
-              >
-                <ShoppingCart size={15} />
-                <span>{lang === 'ru' ? 'Авторынок DataPool' : 'DataPool Dealership'}</span>
-              </button>
-            )}
 
             <button
               onClick={() => {
@@ -425,32 +368,8 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
               {lang === 'ru' ? 'В гараже пусто' : 'Garage is empty'}
             </h3>
             <p className="text-xs text-zinc-500 leading-relaxed">
-              {t.emptyGarage}
+              {lang === 'ru' ? 'Нажмите «Добавить транспорт», чтобы выбрать модель из каталога или внести свою.' : 'Choose Add Vehicle to select a catalog model or enter a custom vehicle.'}
             </p>
-          </div>
-          <div className="flex items-center justify-center gap-3 pt-2">
-            {onOpenShop && (
-              <button
-                onClick={() => {
-                  sfx.playClick();
-                  onOpenShop('vehicles');
-                }}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider rounded-lg shadow-md transition flex items-center gap-2 min-h-[38px]"
-              >
-                <ShoppingCart size={14} />
-                <span>{lang === 'ru' ? 'Купить в DataPool (64 модели)' : 'Open DataPool Store'}</span>
-              </button>
-            )}
-            <button
-              onClick={() => {
-                sfx.playClick();
-                setShowAddModal(true);
-              }}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 font-orbitron font-bold text-xs uppercase tracking-wider rounded-lg transition flex items-center gap-2 min-h-[38px]"
-            >
-              <Plus size={14} />
-              <span>{t.addVehicle}</span>
-            </button>
           </div>
         </div>
       ) : (
@@ -710,7 +629,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
 
                   {/* Lore / Notes */}
                   {vehicle.notes && (
-                    <div className="text-[11px] text-zinc-400 leading-relaxed bg-zinc-950/50 p-2.5 rounded border border-zinc-800/60">
+                    <div className="text-[11px] text-zinc-400 leading-relaxed bg-zinc-950/50 p-2.5 rounded border border-zinc-800/60 max-h-40 overflow-y-auto whitespace-pre-line">
                       {vehicle.notes}
                     </div>
                   )}
@@ -846,178 +765,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
         </div>
       )}
 
-      {/* Add Custom Vehicle Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-lg p-5 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <div className="flex items-center gap-2 text-amber-500 font-orbitron font-bold text-base">
-                <Car size={18} />
-                <span>{t.addVehicle}</span>
-              </div>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-zinc-400 hover:text-white p-1 rounded"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-zinc-400 font-semibold mb-1">
-                  {lang === 'ru' ? 'Название / Марка ТС:' : 'Vehicle Name:'}
-                </label>
-                <input
-                  type="text"
-                  value={newVehicle.name || ''}
-                  onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
-                  placeholder={lang === 'ru' ? 'Например: Quadra Turbo-R V-Tech' : 'e.g. Quadra Turbo-R'}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 focus:outline-none focus:border-amber-500 min-h-[38px]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-zinc-400 font-semibold mb-1">
-                    {lang === 'ru' ? 'Категория:' : 'Category:'}
-                  </label>
-                  <select
-                    value={newVehicle.category || 'Ground'}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, category: e.target.value as VehicleCategory })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 focus:outline-none focus:border-amber-500 min-h-[38px]"
-                  >
-                    <option value="Ground">{lang === 'ru' ? 'Наземный (Авто/Мото)' : 'Ground'}</option>
-                    <option value="Sea">{lang === 'ru' ? 'Водный (Катер/Лодка)' : 'Sea'}</option>
-                    <option value="Air">{lang === 'ru' ? 'Воздушный (AV/Вертолет)' : 'Air'}</option>
-                    <option value="Bicycle">{lang === 'ru' ? 'Велосипед' : 'Bicycle'}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-zinc-400 font-semibold mb-1">
-                    {lang === 'ru' ? 'Прочность ПЗТ (SDP):' : 'SDP Max:'}
-                  </label>
-                  <input
-                    type="number"
-                    value={newVehicle.sdpMax || 50}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, sdpMax: Number(e.target.value) })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 focus:outline-none focus:border-amber-500 min-h-[38px]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-zinc-400 font-semibold mb-1">
-                    {t.seats}
-                  </label>
-                  <input
-                    type="number"
-                    value={newVehicle.seats || 4}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, seats: Number(e.target.value) })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 focus:outline-none focus:border-amber-500 min-h-[38px]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-zinc-400 font-semibold mb-1">
-                    {lang === 'ru' ? 'Броня (SP):' : 'Armor SP:'}
-                  </label>
-                  <input
-                    type="number"
-                    value={newVehicle.armorSp || 0}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, armorSp: Number(e.target.value) })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 focus:outline-none focus:border-amber-500 min-h-[38px]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-zinc-400 font-semibold mb-1">
-                    {t.speedCombat}
-                  </label>
-                  <input
-                    type="text"
-                    value={newVehicle.speedCombat || '20 СКО'}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, speedCombat: e.target.value })}
-                    placeholder="20 СКО"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 focus:outline-none focus:border-amber-500 min-h-[38px]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-zinc-400 font-semibold mb-1">
-                    {t.speedNarrative}
-                  </label>
-                  <input
-                    type="text"
-                    value={newVehicle.speedNarrative || '160 км/ч'}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, speedNarrative: e.target.value })}
-                    placeholder="160 км/ч"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 focus:outline-none focus:border-amber-500 min-h-[38px]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-zinc-400 font-semibold mb-1">
-                    {lang === 'ru' ? 'Стоимость (eb):' : 'Cost (eb):'}
-                  </label>
-                  <input
-                    type="number"
-                    value={newVehicle.costEb || 0}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, costEb: Number(e.target.value) })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 focus:outline-none focus:border-amber-500 min-h-[38px]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-zinc-400 font-semibold mb-1">
-                    {lang === 'ru' ? 'Ранг Кочевника:' : 'Nomad Rank Req:'}
-                  </label>
-                  <input
-                    type="number"
-                    value={newVehicle.nomadRankReq || 0}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, nomadRankReq: Number(e.target.value) })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 focus:outline-none focus:border-amber-500 min-h-[38px]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-zinc-400 font-semibold mb-1">
-                  {lang === 'ru' ? 'Описание / Особенности:' : 'Notes:'}
-                </label>
-                <textarea
-                  rows={2}
-                  value={newVehicle.notes || ''}
-                  onChange={(e) => setNewVehicle({ ...newVehicle, notes: e.target.value })}
-                  placeholder={lang === 'ru' ? 'Особое оборудование, тайники, цвет...' : 'Special equipment, trunk stash...'}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded font-bold text-xs min-h-[36px]"
-              >
-                {t.close}
-              </button>
-              <button
-                onClick={handleAddCustomVehicle}
-                className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded font-orbitron font-bold text-xs uppercase tracking-wider min-h-[36px]"
-              >
-                {t.addVehicle}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showAddModal && <VehicleCatalogModal character={character} lang={lang} onUpdateCharacter={onUpdateCharacter} onClose={() => setShowAddModal(false)} />}
     </div>
   );
 };

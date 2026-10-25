@@ -487,7 +487,6 @@ export const App: React.FC = () => {
               onUpdateCharacter={handleUpdateActiveCharacter}
               onRollCustomCheck={handleRollCustomCheck}
               onRollCustomDamage={handleRollCustomDamage}
-              onOpenShop={handleOpenShop}
               lang={lang}
             />
           )}

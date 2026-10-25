@@ -8,7 +8,7 @@ are retained; new IDs derive from source identities, never table positions.
 import argparse
 from collections import Counter
 from hashlib import sha256
-from html.parser import HTMLParser
+from datapool_tables import Tables
 import json
 from pathlib import Path
 import re
@@ -47,46 +47,10 @@ ITEM_GROUPS = {
     'household': {22,23,49,50,51,57,71,79,85},
 }
 
-def clean(value):
-    return '\n'.join(' '.join(line.split()) for line in value.splitlines() if line.strip())
 
 def normalize(value):
     return re.sub(r'[^a-zа-яё0-9]', '', unicodedata.normalize('NFKC', value).lower())
 
-class Tables(HTMLParser):
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.rows, self.headers, self.divs = [], [], []
-        self.row = self.cell = self.cell_tag = None
-
-    def handle_starttag(self, tag, attrs):
-        if tag == 'div':
-            self.divs.append(dict(attrs).get('id', ''))
-        elif tag == 'table':
-            self.headers = []
-        elif tag == 'tr':
-            self.row = []
-        elif tag in ('th', 'td') and self.row is not None:
-            self.cell, self.cell_tag = [], tag
-        elif tag in ('br', 'p', 'li') and self.cell is not None:
-            self.cell.append('\n')
-
-    def handle_data(self, data):
-        if self.cell is not None:
-            self.cell.append(data)
-
-    def handle_endtag(self, tag):
-        if tag in ('th', 'td') and self.cell is not None:
-            self.row.append(clean(''.join(self.cell)))
-            self.cell = None
-        elif tag == 'tr' and self.row is not None:
-            if self.cell_tag == 'th':
-                self.headers = self.row
-            elif self.row:
-                self.rows.append({'cells': self.row, 'headers': self.headers[:], 'tab': next((x for x in reversed(self.divs) if x), '')})
-            self.row = self.cell_tag = None
-        elif tag == 'div' and self.divs:
-            self.divs.pop()
 
 def previous_items():
     text = OUTPUT.read_text(encoding='utf-8') if OUTPUT.exists() else (ROOT / 'src/data/datapoolCatalog.ts').read_text(encoding='utf-8')

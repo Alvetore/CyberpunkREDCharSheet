@@ -264,6 +264,10 @@ export type VehicleCategory = 'Ground' | 'Sea' | 'Air' | 'Bicycle';
 
 export interface Vehicle {
   id: string;
+  catalogId?: string;
+  sourceUrl?: string;
+  priceLabel?: string;
+  nomadRankLabel?: string;
   name: string;
   model: string;
   category: VehicleCategory;

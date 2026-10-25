@@ -90,7 +90,7 @@ export function isCharacter(value: unknown): value is Character {
   if (!['hpMaxManual','humanityMaxManual'].every(key => value[key] === undefined || (typeof value[key] === 'number' && Number.isFinite(value[key]) && (value[key] as number) >= 0))) return false;
   if (character.armor.shield && !matches(character.armor.shield, {id:'',name:'',location:'',spMax:0,spCurrent:0,penalty:0})) return false;
   if (value.vehicles !== undefined && (!Array.isArray(value.vehicles) || !value.vehicles.every(item => matches(item, {id:'',name:'',model:'',category:'',sdpMax:0,sdpCurrent:0,seats:typeof (item as Record<string,unknown>)?.seats === 'number' ? 0 : '',speedCombat:'',speedNarrative:'',costEb:0,notes:''})))) return false;
-  if (character.vehicles?.some(vehicle => !optionalFields(vehicle as unknown as Record<string,unknown>, { armorSp:nonnegative, nomadRankReq:nonnegative, upgrades:upgrades => Array.isArray(upgrades) && upgrades.every(text) }))) return false;
+  if (character.vehicles?.some(vehicle => !optionalFields(vehicle as unknown as Record<string,unknown>, { catalogId:text,sourceUrl:text,priceLabel:text,nomadRankLabel:text,armorSp:nonnegative, nomadRankReq:nonnegative, upgrades:upgrades => Array.isArray(upgrades) && upgrades.every(text) }))) return false;
   return true;
 }
 
