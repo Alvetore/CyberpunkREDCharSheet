@@ -226,6 +226,13 @@ export interface CriticalInjury {
   isActive: boolean;
 }
 
+export interface LifepathEnemy {
+  who: string;
+  why: string;
+  resources: string;
+  response: string;
+}
+
 export interface Lifepath {
   culturalOrigin: string;
   languages: string;
@@ -245,6 +252,9 @@ export interface Lifepath {
   tragicLoveAffairs: string;
   enemies: string;
   roleLifepathNotes: string;
+  friendEntries?: string[];
+  loveAffairEntries?: string[];
+  enemyEntries?: LifepathEnemy[];
 }
 
 export interface GearItem {

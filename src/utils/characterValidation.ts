@@ -66,6 +66,11 @@ export function isCharacter(value: unknown): value is Character {
   }
   if (!matches(value, required)) return false;
   const character = value as unknown as Character;
+  const relationships = (entries: unknown) => Array.isArray(entries) && entries.length <= 100 && entries.every(text);
+  if (!optionalFields(character.lifepath as unknown as Record<string,unknown>, {
+    friendEntries:relationships,loveAffairEntries:relationships,
+    enemyEntries:entries => Array.isArray(entries) && entries.length <= 100 && entries.every(row => isRecord(row) && ['who','why','resources','response'].every(key => text(row[key]))),
+  })) return false;
   if (!character.gear.every(item => optionalFields(item as unknown as Record<string,unknown>, { catalogId:text,sourceUrl:text,priceLabel:text,billingPeriod:period => period === 'monthly' }))) return false;
   if (character.cyberware.some(item => !item.id) || character.weapons.some(item => !item.id) || new Set(character.cyberware.map(item => item.id)).size !== character.cyberware.length || new Set(character.weapons.map(item => item.id)).size !== character.weapons.length) return false;
   const roles = ['Solo','Netrunner','Tech','Medtech','Rockerboy','Media','Lawman','Exec','Fixer','Nomad'];

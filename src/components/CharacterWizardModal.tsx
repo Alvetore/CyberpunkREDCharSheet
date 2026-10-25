@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Character, StatKey, RoleType, Skill, Weapon, CyberwareItem, ArmorItem } from '../types/character';
 import { Language, translations } from '../locales/i18n';
-import { CPR_SKILLS, CPR_CRITICAL_INJURIES, CPR_LIFEPATH_TABLES, PRESET_PROGRAMS } from '../data/initialData';
+import { CPR_SKILLS, CPR_CRITICAL_INJURIES, PRESET_PROGRAMS } from '../data/initialData';
 import { CPR_ROLE_PACKAGES, RolePackage } from '../data/roleTemplates';
 import { DATAPOOL_CYBERWARE } from '../data/datapoolCatalog';
 import { placeStartingCyberware } from '../utils/cyberware';
@@ -9,6 +9,8 @@ import { rollD10 } from '../utils/dice';
 import { sfx } from '../utils/audio';
 import { initializeCyberware } from '../utils/rules';
 import { BASIC_SKILL_IDS, creationErrors } from '../utils/creation';
+import { emptyLifepath } from '../utils/lifepath';
+import { LifepathEditor } from './LifepathEditor';
 import { 
   Wand2, 
   X, 
@@ -133,6 +135,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
 
   // Lifepath state
   const [lifepathData, setLifepathData] = useState({
+    ...emptyLifepath(),
     culturalOrigin: lang === 'ru' ? 'Северная Америка (Английский, Streetslang)' : 'North America (English, Streetslang)',
     personality: lang === 'ru' ? 'Холодный профессионал с ледяным взглядом' : 'Cold professional with an icy stare',
     clothingStyle: lang === 'ru' ? 'Милитари / Тактика (Tactical)' : 'Military / Tactical',
@@ -240,24 +243,6 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
       })
     );
   };
-
-  const handleRandomizeLifepath = () => {
-    sfx.playDiceRoll();
-    const origins = CPR_LIFEPATH_TABLES.culturalOrigins;
-    const origin = origins[Math.floor(Math.random() * origins.length)];
-    const personality = CPR_LIFEPATH_TABLES.personalities[Math.floor(Math.random() * CPR_LIFEPATH_TABLES.personalities.length)];
-    const style = CPR_LIFEPATH_TABLES.clothingStyles[Math.floor(Math.random() * CPR_LIFEPATH_TABLES.clothingStyles.length)];
-    const values = CPR_LIFEPATH_TABLES.valueMost[Math.floor(Math.random() * CPR_LIFEPATH_TABLES.valueMost.length)];
-
-    setLifepathData({
-      culturalOrigin: `${origin.origin} (${origin.languages})`,
-      personality,
-      clothingStyle: style,
-      valueMost: values,
-      enemies: lang === 'ru' ? 'Корпоративный наемник или лидер уличной банды' : 'Corporate solo or street gang leader'
-    });
-  };
-
   const validationErrors = creationErrors(method, stats, skills, rolePackage.edgerunnerCareerSkills, method === 'pointbuy' ? budgetRemaining : 0);
   if (method === 'pointbuy' && (!Number.isInteger(clothingCost) || clothingCost < 0 || clothingCost > 800 || (clothingCost > 0 && !clothingName.trim()))) validationErrors.push('Clothing: name and cost 0–800 eb');
 
@@ -390,19 +375,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
       gear: method === 'pointbuy' ? (clothingCost > 0 ? [{ id: 'clothing-wiz', name: clothingName.trim(), category: 'Clothing', quantity: 1, costEb: clothingCost, notes: 'Creation clothing allowance (800 eb). Unspent allowance forfeited.' }] : []) : rolePackage.equipment.gear.filter(item => !['Program','Shield'].includes(item.category)).map((item, index) => ({ ...item, quantity: item.category === 'Ammo' ? Math.max(0, item.quantity - finalWeapons.filter(weapon => weapon.ammoType + ' Ammo' === item.name || weapon.ammoType === item.name).reduce((sum, weapon) => sum + weapon.currentAmmo, 0)) : item.quantity, id: `gear-wiz-${index}`, costEb: 0 })),
       lifepath: {
         ...lifepathData,
-        languages: `Streetslang, ${culturalLanguage.trim()}`,
-        hairstyle: lang === 'ru' ? 'Неоновый ирокез' : 'Neon Mohawk',
-        affectation: lang === 'ru' ? 'Зеркальные очки даже ночью' : 'Mirrored shades even at night',
-        feelingsAboutPeople: lang === 'ru' ? 'Верю только напарникам по банде' : 'Only trust crew members',
-        valuedPerson: lang === 'ru' ? 'Старший наставник' : 'Senior mentor',
-        valuedPossession: lang === 'ru' ? 'Отцовский пистолет' : 'Father’s gun',
-        familyBackground: lang === 'ru' ? 'Уличные бродяги Night City' : 'Night City street drifters',
-        childhoodEnv: lang === 'ru' ? 'В Комбат-зоне среди перестрелок' : 'In the Combat Zone gunfire',
-        familyCrisis: lang === 'ru' ? 'Родители пропали в Войне Корпораций' : 'Parents vanished in the Corporate War',
-        lifeGoals: lang === 'ru' ? 'Стать легендой Посмертия' : 'Become an Afterlife legend',
-        friends: lang === 'ru' ? 'Фиксер из Маленького Китая' : 'Little China Fixer',
-        tragicLoveAffairs: lang === 'ru' ? 'Любовь прервана предательством' : 'Love ended by betrayal',
-        roleLifepathNotes: `${lang === 'ru' ? 'Специализация роли:' : 'Role specialization:'} ${role}`
+        languages: lifepathData.languages.trim() || `Streetslang, ${culturalLanguage.trim()}`,
       },
       roleAbilities: {
         solo: { threatDetection: 1, initiativeReaction: 1, precisionAttack: 1, spotWeakness: 1, damageAbsorb: 0 },
@@ -1069,80 +1042,7 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
           )}
 
           {/* STEP 5: Lifepath */}
-          {currentStep === 5 && (
-            <div className="space-y-3 animate-fade-in">
-              <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-                <span className="text-xs font-orbitron font-bold text-yellow-400 uppercase">
-                  {lang === 'ru' ? 'Жизненный путь и предыстория' : 'Lifepath & Background'}
-                </span>
-                <button
-                  onClick={handleRandomizeLifepath}
-                  className="px-3 py-1 bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-bold font-orbitron uppercase rounded flex items-center gap-1.5"
-                >
-                  <Sparkles size={13} />
-                  {lang === 'ru' ? 'Случайная предыстория' : 'Random Lifepath'}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div>
-                  <label className="text-zinc-400 uppercase font-semibold block mb-1">
-                    {lang === 'ru' ? 'Культурное происхождение' : 'Cultural Origin'}
-                  </label>
-                  <input
-                    type="text"
-                    value={lifepathData.culturalOrigin}
-                    onChange={(e) => setLifepathData({ ...lifepathData, culturalOrigin: e.target.value })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100"
-                  />
-                </div>
-                <div>
-                  <label className="text-zinc-400 uppercase font-semibold block mb-1">
-                    {lang === 'ru' ? 'Характер' : 'Personality'}
-                  </label>
-                  <input
-                    type="text"
-                    value={lifepathData.personality}
-                    onChange={(e) => setLifepathData({ ...lifepathData, personality: e.target.value })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100"
-                  />
-                </div>
-                <div>
-                  <label className="text-zinc-400 uppercase font-semibold block mb-1">
-                    {lang === 'ru' ? 'Стиль одежды' : 'Clothing Style'}
-                  </label>
-                  <input
-                    type="text"
-                    value={lifepathData.clothingStyle}
-                    onChange={(e) => setLifepathData({ ...lifepathData, clothingStyle: e.target.value })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100"
-                  />
-                </div>
-                <div>
-                  <label className="text-zinc-400 uppercase font-semibold block mb-1">
-                    {lang === 'ru' ? 'Главная ценность' : 'Values Most'}
-                  </label>
-                  <input
-                    type="text"
-                    value={lifepathData.valueMost}
-                    onChange={(e) => setLifepathData({ ...lifepathData, valueMost: e.target.value })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-zinc-100"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-red-400 uppercase font-semibold block mb-1">
-                    {lang === 'ru' ? 'Главный враг' : 'Primary Enemy'}
-                  </label>
-                  <input
-                    type="text"
-                    value={lifepathData.enemies}
-                    onChange={(e) => setLifepathData({ ...lifepathData, enemies: e.target.value })}
-                    className="w-full bg-zinc-950 border border-red-900/60 rounded px-2.5 py-1.5 text-zinc-100"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          {currentStep === 5 && <LifepathEditor value={lifepathData} onChange={setLifepathData} lang={lang} idPrefix="wizard-lifepath" />}
 
           {/* STEP 6: Review & Finalize */}
           {currentStep === 6 && (
