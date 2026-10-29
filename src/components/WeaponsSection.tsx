@@ -15,7 +15,7 @@ import { sfx } from '../utils/audio';
 import { effectiveStat, martialArtsLevel, selectedWeaponProfile, skillBase, soloPrecisionBonus, updateWeaponAmmo, weaponPenetration } from '../utils/rules';
 import { cyberwareDefinition, functionalCyberware } from '../utils/cyberware';
 import { useCatalogNotice } from './CatalogNotice';
-import { setWeaponEquipped } from '../utils/backpack';
+import { setWeaponEquipped, isGrenadeWeapon, isSameGrenadeType } from '../utils/backpack';
 import { 
   Crosshair, 
   Plus, 
@@ -164,6 +164,22 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
       notes: newWeapon.notes || '',
       skillId: newWeapon.skillId || (isMelee ? 'melee_weapon' : 'handgun')
     };
+
+    const isGrenade = isGrenadeWeapon(weapon);
+    const existing = isGrenade && character.weapons.find(
+      w => w.isEquipped !== false && !w.sourceCyberwareId && isSameGrenadeType(w, weapon)
+    );
+    if (existing) {
+      const addedAmmo = weapon.currentAmmo || weapon.magCapacity || 1;
+      const newAmmo = existing.currentAmmo + addedAmmo;
+      const newCap = existing.currentAmmo === 0 ? addedAmmo : Math.max(existing.magCapacity + addedAmmo, newAmmo);
+      onUpdateCharacter({
+        ...character,
+        weapons: character.weapons.map(w => w.id === existing.id ? { ...w, currentAmmo: newAmmo, magCapacity: newCap } : w)
+      });
+      catalog.added(weapon.name);
+      return;
+    }
 
     onUpdateCharacter({
       ...character,

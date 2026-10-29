@@ -3,6 +3,7 @@ import { createEmptyCharacter } from '../data/initialData';
 import { calculateHumanityStats } from './roleUtils';
 import { isCharacter, isCharacterCollection } from './characterValidation';
 import { syncCyberwareWeapons } from './cyberware';
+import { consolidateGrenadeWeapons } from './backpack';
 
 const CHARACTERS_STORAGE_KEY = 'cpr_characters_v1';
 const ACTIVE_CHAR_ID_KEY = 'cpr_active_char_id_v1';
@@ -80,6 +81,9 @@ export function loadStoredCharacters(): Character[] {
             if (bodyName === 'Лёгкий арморджек (Жилет)' || bodyName === 'Light Armorjack Vest') {
               updated.armor = { ...updated.armor, body: { ...updated.armor.body, name: 'Лёгкий арморджек (Light Armorjack)' } };
             }
+          }
+          if (updated.weapons) {
+            updated.weapons = consolidateGrenadeWeapons(updated.weapons);
           }
           return syncCyberwareWeapons(updated);
         });

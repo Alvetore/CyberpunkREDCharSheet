@@ -278,3 +278,154 @@ test('audit: WeaponsSection throw and wrestling choke deal direct damage through
   assert.ok(customDamage);
   assert.equal(customDamage.formula, '3d6');
 });
+
+const backpack = load('src/utils/backpack.ts');
+const { GRENADE_CATALOG } = load('src/data/grenadeCatalog.ts');
+const { GearSection } = load('src/components/GearSection.tsx');
+
+test('audit: equipping a grenade from backpack adds to existing equipped grenade instead of creating a duplicate', () => {
+  const c = createEmptyCharacter('Grenadier');
+  const frag = GRENADE_CATALOG.find(g => g.name === 'Бронебойная граната');
+  // 1 equipped grenade (1/1)
+  const equippedFrag = { ...frag, id: 'weap-frag-1', isEquipped: true, currentAmmo: 1, magCapacity: 1 };
+  // 1 unequipped grenade in backpack (1/1)
+  const backpackFrag = { ...frag, id: 'weap-frag-2', isEquipped: false, currentAmmo: 1, magCapacity: 1 };
+  c.weapons = [equippedFrag, backpackFrag];
+
+  // Equip the backpack grenade
+  const updated = backpack.setWeaponEquipped(c, 'weap-frag-2', true);
+  // Should NOT create 2 equipped weapons; should have 1 equipped weapon with currentAmmo = 2, magCapacity = 2
+  assert.equal(updated.weapons.length, 1);
+  assert.equal(updated.weapons[0].id, 'weap-frag-1');
+  assert.equal(updated.weapons[0].currentAmmo, 2);
+  assert.equal(updated.weapons[0].magCapacity, 2);
+  assert.equal(updated.weapons[0].isEquipped, true);
+});
+
+test('audit: buying or adding grenades in backpack stacks unequipped grenades', () => {
+  const c = createEmptyCharacter('Buyer');
+  c.weapons = [];
+  c.cashEb = 10000;
+  const frag = GRENADE_CATALOG.find(g => g.name === 'Бронебойная граната');
+  const equipment = { kind: 'weapon', item: frag };
+  const draft = { name: frag.name, costEb: frag.costEb, notes: frag.notes, quantity: 3, category: 'Gear' };
+
+  // Add 3 grenades to backpack
+  let updated = backpack.addEquipmentToBackpack(c, equipment, draft, 3, true).character;
+  assert.equal(updated.weapons.length, 1);
+  assert.equal(updated.weapons[0].currentAmmo, 3);
+  assert.equal(updated.weapons[0].magCapacity, 3);
+  assert.equal(updated.weapons[0].isEquipped, false);
+
+  // Add 2 more of the same grenade
+  updated = backpack.addEquipmentToBackpack(updated, equipment, draft, 2, true).character;
+  assert.equal(updated.weapons.length, 1);
+  assert.equal(updated.weapons[0].currentAmmo, 5);
+  assert.equal(updated.weapons[0].magCapacity, 5);
+
+  // Now equip it
+  updated = backpack.setWeaponEquipped(updated, updated.weapons[0].id, true);
+  assert.equal(updated.weapons.length, 1);
+  assert.equal(updated.weapons[0].isEquipped, true);
+  assert.equal(updated.weapons[0].currentAmmo, 5);
+  assert.equal(updated.weapons[0].magCapacity, 5);
+});
+
+test('audit: buying a grenade from DataPoolShopModal adds to existing equipped grenade', () => {
+  const c = createEmptyCharacter('Shopper');
+  c.cashEb = 5000;
+  const frag = GRENADE_CATALOG.find(g => g.name === 'Бронебойная граната');
+  c.weapons = [{ ...frag, id: 'owned-frag', isEquipped: true, currentAmmo: 1, magCapacity: 1 }];
+
+  let updated = null;
+  const view = mount(DataPoolShopModal, {
+    isOpen: true,
+    character: c,
+    lang: 'ru',
+    initialCategory: 'weapons',
+    onClose() {},
+    onUpdateCharacter(next) { updated = next; }
+  });
+
+  // Search for the grenade and click Buy
+  nodes(view.render(), n => n.type === 'input' && n.props.placeholder?.includes('Поиск'))[0].props.onChange({ target: { value: 'Бронебойная граната' } });
+  const buyBtn = button(view.render(), 'Купить');
+  assert.ok(buyBtn);
+  buyBtn.props.onClick();
+
+  assert.ok(updated);
+  // Still only 1 weapon in weapons array, with currentAmmo = 2
+  assert.equal(updated.weapons.length, 1);
+  assert.equal(updated.weapons[0].currentAmmo, 2);
+  assert.equal(updated.weapons[0].magCapacity, 2);
+});
+
+test('audit: equipping a grenade from character.gear adds to equipped grenade and decrements gear', () => {
+  const c = createEmptyCharacter('SoloGrenadier');
+  const frag = GRENADE_CATALOG.find(g => g.name === 'Бронебойная граната');
+  c.weapons = [{ ...frag, id: 'equipped-frag', isEquipped: true, currentAmmo: 1, magCapacity: 1 }];
+  c.gear = [{ id: 'gear-smoke', name: 'Smoke Grenade', category: 'Grenade', quantity: 2, costEb: 50, notes: '' }];
+
+  let updated = null;
+  const view = mount(GearSection, {
+    character: c,
+    lang: 'en',
+    onUpdateCharacter(next) { updated = next; }
+  });
+
+  const equipBtn = button(view.render(), 'Equip');
+  assert.ok(equipBtn);
+  equipBtn.props.onClick();
+
+  assert.ok(updated);
+  // Gear quantity decreased from 2 to 1
+  assert.equal(updated.gear.find(g => g.id === 'gear-smoke').quantity, 1);
+  // Now 2 weapons: the original frag and the newly equipped smoke grenade
+  assert.equal(updated.weapons.length, 2);
+  const smoke = updated.weapons.find(w => w.name.toLowerCase().includes('smoke') || w.name.toLowerCase().includes('дымов'));
+  assert.ok(smoke);
+  assert.equal(smoke.currentAmmo, 1);
+
+  // Equip second smoke grenade
+  let updated2 = null;
+  const view2 = mount(GearSection, {
+    character: updated,
+    lang: 'en',
+    onUpdateCharacter(next) { updated2 = next; }
+  });
+  button(view2.render(), 'Equip').props.onClick();
+  assert.ok(updated2);
+  // Gear is now completely removed (quantity was 1)
+  assert.equal(updated2.gear.some(g => g.id === 'gear-smoke'), false);
+  // Weapons length is STILL 2 (smoke grenade was merged, not added as 3rd weapon)
+  assert.equal(updated2.weapons.length, 2);
+  const smoke2 = updated2.weapons.find(w => w.id === smoke.id);
+  assert.equal(smoke2.currentAmmo, 2);
+  assert.equal(smoke2.magCapacity, 2);
+});
+
+test('audit: consolidateGrenadeWeapons merges duplicate equipped and unequipped grenades but preserves distinct firearms', () => {
+  const frag = GRENADE_CATALOG.find(g => g.name === 'Бронебойная граната');
+  const weapons = [
+    { id: 'gun-1', name: 'Heavy Pistol', category: 'Heavy Pistol', damage: '3d6', standardRof: 2, magCapacity: 8, currentAmmo: 8, ammoType: 'Heavy Pistol', isEquipped: true },
+    { id: 'gun-2', name: 'Heavy Pistol', category: 'Heavy Pistol', damage: '3d6', standardRof: 2, magCapacity: 8, currentAmmo: 8, ammoType: 'Heavy Pistol', isEquipped: true },
+    { ...frag, id: 'frag-eq-1', isEquipped: true, currentAmmo: 1, magCapacity: 1 },
+    { ...frag, id: 'frag-eq-2', isEquipped: true, currentAmmo: 1, magCapacity: 1 },
+    { ...frag, id: 'frag-bp-1', isEquipped: false, currentAmmo: 2, magCapacity: 2 },
+    { ...frag, id: 'frag-bp-2', isEquipped: false, currentAmmo: 1, magCapacity: 1 },
+  ];
+
+  const consolidated = backpack.consolidateGrenadeWeapons(weapons);
+  // Both pistols are preserved as distinct copies
+  assert.equal(consolidated.filter(w => w.name === 'Heavy Pistol').length, 2);
+  // Equipped frags are merged into 1 (currentAmmo: 2, magCapacity: 2)
+  const equippedFrags = consolidated.filter(w => w.name === frag.name && w.isEquipped !== false);
+  assert.equal(equippedFrags.length, 1);
+  assert.equal(equippedFrags[0].currentAmmo, 2);
+  assert.equal(equippedFrags[0].magCapacity, 2);
+  // Unequipped frags are merged into 1 (currentAmmo: 3, magCapacity: 3)
+  const unequippedFrags = consolidated.filter(w => w.name === frag.name && w.isEquipped === false);
+  assert.equal(unequippedFrags.length, 1);
+  assert.equal(unequippedFrags[0].currentAmmo, 3);
+  assert.equal(unequippedFrags[0].magCapacity, 3);
+});

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Character, GearItem } from '../types/character';
+import { Character, GearItem, Weapon } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { GearCatalogBrowser } from './GearCatalogBrowser';
 import { AMMUNITION_CATALOG } from '../data/ammunitionCatalog';
+import { GRENADE_CATALOG } from '../data/grenadeCatalog';
 import { gearCyberwareDevice, wearCyberwareGear } from '../utils/gearCyberware';
 import { useCatalogNotice } from './CatalogNotice';
-import { addEquipmentToBackpack, BackpackEquipment, backpackCyberware } from '../utils/backpack';
+import { addEquipmentToBackpack, BackpackEquipment, backpackCyberware, isSameGrenadeType } from '../utils/backpack';
 import { BackpackEquipmentSection } from './BackpackEquipmentSection';
 import { addGearToInventory, gearErrorMessage, gearPrice } from '../utils/gear';
 import { 
@@ -27,6 +28,11 @@ interface GearSectionProps {
 
 const ammunitionIds = new Set(AMMUNITION_CATALOG.map(item => item.id));
 const isPackAmmo = (item: Partial<GearItem>) => !!item.catalogId && ammunitionIds.has(item.catalogId);
+const isGearItemGrenade = (item: GearItem): boolean => {
+  if (item.category === 'Grenade' || item.category === 'Thrown Grenade') return true;
+  const name = item.name.toLowerCase();
+  return name.includes('граната') || name.includes('grenade');
+};
 
 const LIFESTYLES: { id: string; nameRu: string; nameEn: string }[] = [
   { id: 'kibble', nameRu: 'На киббле (100 eb/мес)', nameEn: 'Kibble (100 eb/mo)' },
@@ -90,6 +96,65 @@ export const GearSection: React.FC<GearSectionProps> = ({
     sfx.playClick();
     const updated = character.gear.filter((g) => g.id !== itemId);
     onUpdateCharacter({ ...character, gear: updated });
+  };
+
+  const handleEquipGearGrenade = (item: GearItem) => {
+    sfx.playClick();
+    const updatedGear = item.quantity > 1
+      ? character.gear.map(g => g.id === item.id ? { ...g, quantity: g.quantity - 1 } : g)
+      : character.gear.filter(g => g.id !== item.id);
+
+    const catalogMatch = GRENADE_CATALOG.find(g => 
+      (item.catalogId && g.id === item.catalogId) || 
+      g.name.toLowerCase() === item.name.toLowerCase() ||
+      (item.name.toLowerCase().includes('smoke') && g.name.toLowerCase().includes('дымов')) ||
+      (item.name.toLowerCase().includes('flashbang') && g.name.toLowerCase().includes('светошум')) ||
+      (item.name.toLowerCase().includes('teargas') && g.name.toLowerCase().includes('слезоточи'))
+    );
+
+    const baseWeapon: Weapon = catalogMatch ? {
+      ...catalogMatch,
+      id: 'weap-gear-' + crypto.randomUUID(),
+      catalogId: catalogMatch.id,
+      notes: item.notes || catalogMatch.notes,
+      currentAmmo: 1,
+      magCapacity: 1,
+      isEquipped: true
+    } : {
+      id: 'weap-gear-' + crypto.randomUUID(),
+      name: item.name,
+      category: 'Thrown Grenade',
+      damage: '6d6',
+      standardRof: 1,
+      magCapacity: 1,
+      currentAmmo: 1,
+      ammoType: 'Grenade',
+      skillId: 'athletics',
+      concealable: true,
+      consumable: true,
+      notes: item.notes,
+      isEquipped: true
+    };
+
+    const charWithUpdatedGear = { ...character, gear: updatedGear };
+    const existing = charWithUpdatedGear.weapons.find(
+      w => w.isEquipped !== false && !w.sourceCyberwareId && isSameGrenadeType(w, baseWeapon)
+    );
+    if (existing) {
+      const newAmmo = existing.currentAmmo + 1;
+      const newCap = existing.currentAmmo === 0 ? 1 : Math.max(existing.magCapacity + 1, newAmmo);
+      onUpdateCharacter({
+        ...charWithUpdatedGear,
+        weapons: charWithUpdatedGear.weapons.map(w =>
+          w.id === existing.id ? { ...w, currentAmmo: newAmmo, magCapacity: newCap } : w
+        )
+      });
+    } else {
+      onUpdateCharacter({
+        ...charWithUpdatedGear,
+        weapons: [...charWithUpdatedGear.weapons, baseWeapon]
+      });
+    }
   };
 
   const handleAdjustQuantity = (itemId: string, delta: number) => {
@@ -278,7 +343,16 @@ export const GearSection: React.FC<GearSectionProps> = ({
                     {gearPrice(item, lang)}
                   </td>
                   <td className="py-2 px-2 text-zinc-400 max-w-md">{item.notes.length > 160 ? <details><summary className="cursor-pointer">{item.notes.slice(0,100)}…</summary><p className="whitespace-pre-line mt-2">{item.notes}</p></details> : item.notes}</td>
-                  <td className="py-2 px-2 text-right">
+                  <td className="py-2 px-2 text-right whitespace-nowrap">
+                    {isGearItemGrenade(item) && (
+                      <button
+                        onClick={() => handleEquipGearGrenade(item)}
+                        className="mr-2 px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 text-xs hover:bg-cyan-900 border border-cyan-800 transition"
+                        title={lang === 'ru' ? 'Снарядить 1 шт. как оружие' : 'Equip 1 as weapon'}
+                      >
+                        {lang === 'ru' ? 'Снарядить' : 'Equip'}
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDeleteItem(item.id)}
                       className="text-zinc-500 hover:text-red-400 p-1"

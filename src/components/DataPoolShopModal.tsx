@@ -5,7 +5,7 @@ import { sfx } from '../utils/audio';
 import { initializeCyberware } from '../utils/rules';
 import { addGearToInventory, gearErrorMessage, gearPrice } from '../utils/gear';
 import { addVehicleToGarage, vehicleErrorMessage, vehicleFromCatalog } from '../utils/vehicles';
-import { stowArmor } from '../utils/backpack';
+import { stowArmor, isGrenadeWeapon, isSameGrenadeType } from '../utils/backpack';
 import { 
   DATAPOOL_WEAPONS, 
   DATAPOOL_ARMORS, 
@@ -253,22 +253,57 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
     updatedChar.cashEb = Math.max(0, character.cashEb - finalPrice);
 
     if (item.type === 'weapon' && item.weaponData) {
-      const newWeap: Weapon = {
-        ...item.weaponData,
-        id: 'weap-dp-' + crypto.randomUUID(),
-        catalogId: item.weaponData.id,
-        name: item.weaponData.name,
-        category: item.weaponData.category,
-        damage: item.weaponData.damage,
-        standardRof: item.weaponData.standardRof,
-        magCapacity: item.weaponData.magCapacity,
-        currentAmmo: item.weaponData.magCapacity,
-        ammoType: item.weaponData.ammoType,
-        concealable: item.weaponData.concealable,
-        notes: item.weaponData.notes,
-        skillId: item.weaponData.skillId
-      };
-      updatedChar.weapons = [...updatedChar.weapons, newWeap];
+      if (isGrenadeWeapon(item.weaponData)) {
+        const existingGrenade = updatedChar.weapons.find(
+          w => w.isEquipped !== false && !w.sourceCyberwareId && isSameGrenadeType(w, item.weaponData!)
+        );
+        if (existingGrenade) {
+          const addedAmmo = item.weaponData.magCapacity || item.weaponData.currentAmmo || 1;
+          const newAmmo = existingGrenade.currentAmmo + addedAmmo;
+          const newCap = existingGrenade.currentAmmo === 0
+            ? addedAmmo
+            : Math.max(existingGrenade.magCapacity + addedAmmo, newAmmo);
+
+          updatedChar.weapons = updatedChar.weapons.map(w =>
+            w.id === existingGrenade.id ? { ...w, currentAmmo: newAmmo, magCapacity: newCap } : w
+          );
+        } else {
+          const newWeap: Weapon = {
+            ...item.weaponData,
+            id: 'weap-dp-' + crypto.randomUUID(),
+            catalogId: item.weaponData.id,
+            name: item.weaponData.name,
+            category: item.weaponData.category,
+            damage: item.weaponData.damage,
+            standardRof: item.weaponData.standardRof,
+            magCapacity: item.weaponData.magCapacity,
+            currentAmmo: item.weaponData.magCapacity,
+            ammoType: item.weaponData.ammoType,
+            concealable: item.weaponData.concealable,
+            notes: item.weaponData.notes,
+            skillId: item.weaponData.skillId,
+            isEquipped: true
+          };
+          updatedChar.weapons = [...updatedChar.weapons, newWeap];
+        }
+      } else {
+        const newWeap: Weapon = {
+          ...item.weaponData,
+          id: 'weap-dp-' + crypto.randomUUID(),
+          catalogId: item.weaponData.id,
+          name: item.weaponData.name,
+          category: item.weaponData.category,
+          damage: item.weaponData.damage,
+          standardRof: item.weaponData.standardRof,
+          magCapacity: item.weaponData.magCapacity,
+          currentAmmo: item.weaponData.magCapacity,
+          ammoType: item.weaponData.ammoType,
+          concealable: item.weaponData.concealable,
+          notes: item.weaponData.notes,
+          skillId: item.weaponData.skillId
+        };
+        updatedChar.weapons = [...updatedChar.weapons, newWeap];
+      }
     } else if (item.type === 'armor' && item.armorData) {
       const newArmor: ArmorItem = {
         ...item.armorData,
