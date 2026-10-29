@@ -219,7 +219,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   };
 
   const handleRollThrow = () => {
-    onRollCustomDamage?.(lang === 'ru' ? 'Бросок: BODY напрямую по HP, цель сбита с ног' : 'Throw: BODY directly to HP, target Prone', String(body));
+    onRollCustomDamage?.(lang === 'ru' ? `Бросок: Урон рукопашной (${unarmedDamage}) напрямую по HP, цель сбита с ног` : `Throw: Brawling damage (${unarmedDamage}) directly to HP, target Prone`, unarmedDamage);
     setIsGrapplingTarget(false);
   };
 
@@ -292,17 +292,17 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
     }
 
     if (move.id === 'wrestling_choke') {
-      onRollCustomCheck?.(
-        lang === 'ru' ? `Реслинг: Мгновенное удушение (-${character.stats.BODY} ПЗ прямо в здоровье [Игнор ОС!])` : `Wrestling: Instant Choke (-${character.stats.BODY} direct HP [Ignores SP!])`,
-        character.stats.BODY
+      onRollCustomDamage?.(
+        lang === 'ru' ? `Реслинг: Мгновенное удушение (-${body} ПЗ прямо в здоровье [Игнор ОС!])` : `Wrestling: Instant Choke (-${body} direct HP [Ignores SP!])`,
+        String(body)
       );
       return;
     }
 
     if (move.id === 'yukon_crack_skulls') {
-      onRollCustomCheck?.(
-        lang === 'ru' ? `Юкон: Стукни друг о друга (-${character.stats.BODY} HP целям в захвате)` : `Yukon: Crack Skulls (-${character.stats.BODY} direct HP)`,
-        character.stats.BODY
+      onRollCustomDamage?.(
+        lang === 'ru' ? `Юкон: Стукни друг о друга (-${body} HP целям в захвате)` : `Yukon: Crack Skulls (-${body} direct HP)`,
+        String(body)
       );
       return;
     }

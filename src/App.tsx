@@ -15,7 +15,8 @@ import {
   exportAllCharacters,
   parseImportedJson,
   hasStorageRecovery,
-  exportStorageRecovery
+  exportStorageRecovery,
+  restorePreviousCharacters
 } from './utils/storage';
 import { createEmptyCharacter } from './data/initialData';
 import { executeCyberpunkCheck, executeDamageRoll, executeDeathSave } from './utils/dice';
@@ -82,6 +83,12 @@ export const App: React.FC = () => {
       root.classList.add('dark');
     }
   }, [theme]);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
+    }
+  }, [lang]);
 
   const handleToggleTheme = () => {
     sfx.playClick();
@@ -189,8 +196,23 @@ export const App: React.FC = () => {
 
     if (Array.isArray(parsed)) {
       // Multiple characters backup
-      setCharacters(parsed);
-      setActiveId(parsed[0]?.id || '');
+      const shouldReplace = window.confirm(
+        lang === 'ru'
+          ? `Файл содержит коллекцию из ${parsed.length} персонажей.\n\n• Нажмите «ОК», чтобы ПОЛНОСТЬЮ ЗАМЕНИТЬ текущую коллекцию персонажей.\n• Нажмите «Отмена», чтобы ОБЪЕДИНИТЬ импортированных персонажей с существующими.`
+          : `The file contains a collection of ${parsed.length} characters.\n\n• Click "OK" to REPLACE the current character collection.\n• Click "Cancel" to MERGE imported characters with existing ones.`
+      );
+      if (shouldReplace) {
+        setCharacters(parsed);
+        setActiveId(parsed[0]?.id || '');
+      } else {
+        const existingIds = new Set(characters.map((c) => c.id));
+        const merged = [
+          ...characters,
+          ...parsed.map((c, idx) => existingIds.has(c.id) ? { ...c, id: 'imported-' + Date.now() + '-' + idx } : c)
+        ];
+        setCharacters(merged);
+        setActiveId(parsed[0]?.id || characters[0]?.id || '');
+      }
       alert(lang === 'ru' ? `Успешно импортировано ${parsed.length} персонажей!` : `Successfully imported ${parsed.length} characters!`);
     } else {
       // Single character
@@ -401,9 +423,34 @@ export const App: React.FC = () => {
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-2.5 sm:p-4 md:p-5 space-y-4 pb-24 sm:pb-8 min-w-0">
         {(saveFailed || hasStorageRecovery()) && (
-          <div role="alert" className="p-3 border border-amber-500 text-amber-300 rounded text-sm">
-            {saveFailed ? (lang === 'ru' ? 'Не удалось сохранить лист. Экспортируйте данные перед закрытием страницы.' : 'Saving failed. Export your data before closing this page.') : (lang === 'ru' ? 'Повреждённое сохранение сохранено отдельно для восстановления.' : 'The damaged original has been preserved for recovery.')}
-            <button className="underline ml-3" onClick={exportStorageRecovery}>{lang === 'ru' ? 'Выгрузить резервную копию' : 'Download recovery copy'}</button>
+          <div role="alert" className="p-3 border border-amber-500 text-amber-300 rounded text-sm flex items-center justify-between flex-wrap gap-2">
+            <div>
+              {saveFailed
+                ? (lang === 'ru' ? 'Не удалось сохранить лист. Экспортируйте данные перед закрытием страницы.' : 'Saving failed. Export your data before closing this page.')
+                : (lang === 'ru' ? 'Резервная копия сохранена отдельно для восстановления.' : 'A backup copy has been preserved for recovery.')}
+            </div>
+            <div className="flex items-center gap-3">
+              <button type="button" className="underline hover:text-amber-200" onClick={exportStorageRecovery}>
+                {lang === 'ru' ? 'Выгрузить резервную копию' : 'Download recovery copy'}
+              </button>
+              {restorePreviousCharacters() && (
+                <button
+                  type="button"
+                  className="underline hover:text-amber-200 font-semibold"
+                  onClick={() => {
+                    const restored = restorePreviousCharacters();
+                    if (restored && restored.length > 0) {
+                      if (window.confirm(lang === 'ru' ? 'Восстановить предыдущую коллекцию персонажей?' : 'Restore previous character collection?')) {
+                        setCharacters(restored);
+                        setActiveId(restored[0]?.id || '');
+                      }
+                    }
+                  }}
+                >
+                  {lang === 'ru' ? 'Восстановить прошлую коллекцию' : 'Restore previous collection'}
+                </button>
+              )}
+            </div>
           </div>
         )}
         {/* Core Stats always visible on top */}
@@ -561,25 +608,29 @@ export const App: React.FC = () => {
       />
 
       {/* Character Creation Wizard Modal */}
-      <CharacterWizardModal
-        isOpen={isWizardOpen}
-        onClose={() => setIsWizardOpen(false)}
-        onCharacterCreated={(newChar) => {
-          setCharacters((prev) => [...prev, newChar]);
-          setActiveId(newChar.id);
-        }}
-        lang={lang}
-      />
+      {isWizardOpen && (
+        <CharacterWizardModal
+          isOpen={isWizardOpen}
+          onClose={() => setIsWizardOpen(false)}
+          onCharacterCreated={(newChar) => {
+            setCharacters((prev) => [...prev, newChar]);
+            setActiveId(newChar.id);
+          }}
+          lang={lang}
+        />
+      )}
 
       {/* DataPool Market & Store Modal */}
-      <DataPoolShopModal
-        isOpen={isShopOpen}
-        onClose={() => setIsShopOpen(false)}
-        character={activeChar}
-        onUpdateCharacter={handleUpdateActiveCharacter}
-        lang={lang}
-        initialCategory={shopCategory}
-      />
+      {isShopOpen && (
+        <DataPoolShopModal
+          isOpen={isShopOpen}
+          onClose={() => setIsShopOpen(false)}
+          character={activeChar}
+          onUpdateCharacter={handleUpdateActiveCharacter}
+          lang={lang}
+          initialCategory={shopCategory}
+        />
+      )}
 
       {/* Footer */}
       <footer className="border-t border-zinc-900 bg-zinc-950 py-3 text-center text-xs text-zinc-600 font-mono no-print">

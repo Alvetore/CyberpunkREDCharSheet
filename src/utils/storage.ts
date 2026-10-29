@@ -12,12 +12,23 @@ const RECOVERY_STORAGE_KEY = 'cpr_characters_recovery_v1';
 const PREVIOUS_STORAGE_KEY = 'cpr_characters_previous_v1';
 let recoveredStorage = false;
 export const hasStorageRecovery = () => {
-  try { return recoveredStorage || localStorage.getItem(RECOVERY_STORAGE_KEY) !== null; }
+  try { return recoveredStorage || localStorage.getItem(RECOVERY_STORAGE_KEY) !== null || localStorage.getItem(PREVIOUS_STORAGE_KEY) !== null; }
   catch { return recoveredStorage; }
 };
 export function exportStorageRecovery(): void {
   const raw = localStorage.getItem(RECOVERY_STORAGE_KEY) || localStorage.getItem(PREVIOUS_STORAGE_KEY);
   if (raw) downloadTextFile('CPR_Storage_Recovery.json', raw);
+}
+export function restorePreviousCharacters(): Character[] | null {
+  try {
+    const raw = localStorage.getItem(PREVIOUS_STORAGE_KEY) || localStorage.getItem(RECOVERY_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (isCharacterCollection(parsed)) return parsed;
+  } catch (err) {
+    console.error('Failed to restore previous characters', err);
+  }
+  return null;
 }
 
 export type AppTheme = 'dark' | 'light';

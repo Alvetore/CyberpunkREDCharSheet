@@ -83,15 +83,23 @@ export const SectionNav: React.FC<SectionNavProps> = ({
 
   // View mode: 'hubs' (2-tier, never overflows) or 'grid' (all 9 sections in 3 columns on desktop)
   const [viewMode, setViewMode] = useState<'hubs' | 'grid'>(() => {
-    const saved = localStorage.getItem('cpr_section_nav_mode');
-    return saved === 'grid' ? 'grid' : 'hubs';
+    try {
+      const saved = localStorage.getItem('cpr_section_nav_mode');
+      return saved === 'grid' ? 'grid' : 'hubs';
+    } catch {
+      return 'hubs';
+    }
   });
 
   const handleToggleViewMode = () => {
     sfx.playClick();
     const next = viewMode === 'hubs' ? 'grid' : 'hubs';
     setViewMode(next);
-    localStorage.setItem('cpr_section_nav_mode', next);
+    try {
+      localStorage.setItem('cpr_section_nav_mode', next);
+    } catch {
+      // Ignore localStorage write failures in restricted environments
+    }
   };
 
   // Keep active category and last tabs synced with activeTab

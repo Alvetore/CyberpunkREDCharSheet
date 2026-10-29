@@ -466,20 +466,20 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
               <div className={`p-2 rounded border ${rank >= 1 ? 'bg-amber-950/30 border-amber-800/60 text-zinc-200' : 'bg-zinc-900/40 border-zinc-800 text-zinc-500'}`}>
-                <div className="font-bold text-amber-400 font-orbitron">Ранг 1</div>
-                <div>{lang === 'ru' ? 'Мотоцикл, Гидроцикл или 1 модификация' : 'Roadbike, Jet Ski, or 1 Upgrade'}</div>
+                <div className="font-bold text-amber-400 font-orbitron">{lang === 'ru' ? 'Ранги 1–4' : 'Ranks 1–4'}</div>
+                <div>{lang === 'ru' ? 'Компактный авто, Автожир, Гидроцикл, Дорожный мотоцикл' : 'Compact Car, Gyrocopter, Jet Ski, Roadbike'}</div>
               </div>
-              <div className={`p-2 rounded border ${rank >= 2 ? 'bg-amber-950/30 border-amber-800/60 text-zinc-200' : 'bg-zinc-900/40 border-zinc-800 text-zinc-500'}`}>
-                <div className="font-bold text-amber-400 font-orbitron">Ранги 2–3</div>
-                <div>{lang === 'ru' ? 'Компактный авто, Автожир' : 'Compact Car, Gyrocopter'}</div>
-              </div>
-              <div className={`p-2 rounded border ${rank >= 4 ? 'bg-amber-950/30 border-amber-800/60 text-zinc-200' : 'bg-zinc-900/40 border-zinc-800 text-zinc-500'}`}>
-                <div className="font-bold text-amber-400 font-orbitron">Ранги 4–6</div>
-                <div>{lang === 'ru' ? 'Седан, Супербайк, Катер' : 'Sedan, Superbike, Cabin Cruiser'}</div>
+              <div className={`p-2 rounded border ${rank >= 5 ? 'bg-amber-950/30 border-amber-800/60 text-zinc-200' : 'bg-zinc-900/40 border-zinc-800 text-zinc-500'}`}>
+                <div className="font-bold text-amber-400 font-orbitron">{lang === 'ru' ? 'Ранги 5–6' : 'Ranks 5–6'}</div>
+                <div>{lang === 'ru' ? 'Спорткар, Вертолёт, Скоростной катер' : 'High Performance Car, Helicopter, Speedboat'}</div>
               </div>
               <div className={`p-2 rounded border ${rank >= 7 ? 'bg-amber-950/30 border-amber-800/60 text-zinc-200' : 'bg-zinc-900/40 border-zinc-800 text-zinc-500'}`}>
-                <div className="font-bold text-amber-400 font-orbitron">Ранги 7–10</div>
-                <div>{lang === 'ru' ? 'Суперкар, Аэродин (AV-4), Броневик' : 'Supercar, AV-4 Aerodyne, Armored Vehicle'}</div>
+                <div className="font-bold text-amber-400 font-orbitron">{lang === 'ru' ? 'Ранги 7–8' : 'Ranks 7–8'}</div>
+                <div>{lang === 'ru' ? 'Супербайк, Круизный катер, Аэродин AV-4' : 'Superbike, Cabin Cruiser, AV-4 Aerodyne'}</div>
+              </div>
+              <div className={`p-2 rounded border ${rank >= 9 ? 'bg-amber-950/30 border-amber-800/60 text-zinc-200' : 'bg-zinc-900/40 border-zinc-800 text-zinc-500'}`}>
+                <div className="font-bold text-amber-400 font-orbitron">{lang === 'ru' ? 'Ранги 9–10' : 'Ranks 9–10'}</div>
+                <div>{lang === 'ru' ? 'Суперкар, Яхта, Дирижабль, Аэродин AV-9' : 'Supercar, Yacht, Airship, AV-9 Aerodyne'}</div>
               </div>
             </div>
           </div>

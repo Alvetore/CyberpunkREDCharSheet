@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { TaskList } from '@tiptap/extension-task-list';
@@ -48,6 +48,10 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
   const t = translations[lang];
   const [copied, setCopied] = useState(false);
   const [isRawSourceMode, setIsRawSourceMode] = useState(false);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingNotesRef = useRef<string | null>(null);
+  const characterRef = useRef(character);
+  characterRef.current = character;
 
   // Initialize TipTap with Markdown and TaskList extensions
   const editor = useEditor({
@@ -62,7 +66,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
         nested: true,
       }),
       Markdown.configure({
-        html: true,
+        html: false,
         tightLists: true,
         bulletListMarker: '-',
         linkify: true,
@@ -78,9 +82,26 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
     onUpdate: ({ editor: ed }) => {
       const storage = ed.storage as unknown as { markdown?: { getMarkdown: () => string } };
       const md = storage.markdown ? storage.markdown.getMarkdown() : ed.getHTML();
-      onUpdateCharacter({ ...character, notes: md });
+      pendingNotesRef.current = md;
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => {
+        onUpdateCharacter({ ...characterRef.current, notes: md });
+        pendingNotesRef.current = null;
+      }, 400);
     },
   });
+
+  // Flush pending notes on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      if (pendingNotesRef.current !== null) {
+        onUpdateCharacter({ ...characterRef.current, notes: pendingNotesRef.current });
+      }
+    };
+  }, [onUpdateCharacter]);
 
   // Sync content when switching characters from the header dropdown
   useEffect(() => {

@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Character, Vehicle, VehicleCategory, StatKey } from '../types/character';
+import { Character, Vehicle, VehicleCategory } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { VehicleCatalogModal } from './VehicleCatalogModal';
 import { useCatalogNotice } from './CatalogNotice';
 import { functionalCyberware } from '../utils/cyberware';
+import { maxHP, skillBase, woundPenalty } from '../utils/rules';
 import { DATAPOOL_VEHICLE_UPGRADES, CatalogVehicleUpgrade } from '../data/datapoolVehicles';
 import { 
   Car, 
@@ -72,10 +73,8 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
   }, [vehicles, categoryFilter]);
 
   // General wound penalty of character
-  const hpMax = character.hpMaxManual || (10 + 5 * Math.ceil((character.stats.BODY + character.stats.WILL) / 2));
-  const seriouslyWoundedThreshold = Math.ceil(hpMax / 2);
-  const woundPenalty = character.hpCurrent <= 0 ? -4 : character.hpCurrent <= seriouslyWoundedThreshold ? -2 : 0;
-  const armorPenalty = Math.min(character.armor.head.penalty || 0, character.armor.body.penalty || 0);
+  const characterMaxHp = maxHP(character);
+  const characterWoundPenalty = woundPenalty(character);
 
   // Handlers for Vehicle Management
   const handleDeleteVehicle = (vehId: string) => {
@@ -164,31 +163,22 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
   const handleRollDriveCheck = (veh: Vehicle) => {
     // Determine driving skill
     let skillId = 'drive_land';
-    let statKey: StatKey = 'REF';
 
     if (veh.category === 'Bicycle') {
       skillId = 'athletics';
-      statKey = 'DEX';
     } else if (veh.category === 'Air') {
       skillId = 'pilot_air';
-      statKey = 'REF';
     } else if (veh.category === 'Sea') {
       skillId = 'pilot_sea';
-      statKey = 'REF';
-    } else {
-      skillId = 'drive_land';
-      statKey = 'REF';
     }
 
     const skillObj = character.skills.find((s) => s.id === skillId);
-    const skillLvl = skillObj ? skillObj.level : 0;
-    const statVal = character.stats[statKey];
 
     // Penalties
     let sdpPenalty = 0;
-    const isCriticalDamage = veh.sdpCurrent <= Math.floor(veh.sdpMax / 2);
+    const isCriticalDamage = veh.sdpCurrent < Math.ceil(veh.sdpMax / 2);
     if (isCriticalDamage) {
-      sdpPenalty = -2; // -2 to all driving checks if vehicle SDP <= 50%
+      sdpPenalty = -2; // -2 to all driving checks if vehicle SDP < 50%
     }
 
     // Neural link / interface plugs upgrade check
@@ -205,7 +195,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
       interfaceBonus = 2; // +2 for direct neural drive link
     }
 
-    const baseVal = statVal + skillLvl + armorPenalty + woundPenalty + sdpPenalty + interfaceBonus;
+    const baseVal = skillBase(character, skillId) + sdpPenalty + interfaceBonus;
 
     const skillTitle = skillObj 
       ? (lang === 'ru' ? skillObj.nameRu : skillObj.nameEn)
@@ -235,8 +225,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
     else if (veh.category === 'Air') skillId = 'air_vehicle_tech';
 
     const skillObj = character.skills.find((s) => s.id === skillId);
-    const skillLvl = skillObj ? skillObj.level : 0;
-    const baseVal = character.stats.TECH + skillLvl + woundPenalty;
+    const baseVal = skillBase(character, skillId);
 
     const skillTitle = skillObj
       ? (lang === 'ru' ? skillObj.nameRu : skillObj.nameEn)

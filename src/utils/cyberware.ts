@@ -69,7 +69,7 @@ export function isCyberwareInstalled(character: Character, item: CyberwareItem, 
   const visited = new Set(seen).add(item.id);
   if (cyberwareDefinition(item).installRule?.requires?.some(id => !character.cyberware.some(other => other.id !== item.id && providesPrerequisite(other,id) && isCyberwareInstalled(character,other,visited)))) return false;
   if (cyberwareDefinition(item).installRule?.requiresSameHost?.some(id => !character.cyberware.some(other => other.id !== item.id && providesPrerequisite(other,id) && other.installedIn?.[0] === item.installedIn?.[0] && isCyberwareInstalled(character,other,visited)))) return false;
-  if (!item.installedIn?.length) return item.isInstalled === undefined;
+  if (!item.installedIn?.length) return true;
   const mounts = cyberwareMounts(item);
   if (mounts.length !== item.installedIn.length || new Set(item.installedIn).size !== item.installedIn.length) return false;
   return item.installedIn.every((target,index) => {
@@ -93,7 +93,7 @@ export function pairedCyberwareReady(character: Character, item: CyberwareItem):
   const gear = gearForCyberwareHost(character, item.installedIn?.[0]);
   const device = gear && gearCyberwareDevice(gear);
   if (device && 'paired' in device && device.paired) return true;
-  if (!item.installedIn?.length) return item.isInstalled === undefined;
+  if (!item.installedIn?.length) return true;
   return installedCyberware(character).some(other => other.id !== item.id && !isExternalCyberware(character,other) && !isExternalCyberware(character,item) && (definition.catalogId ? other.catalogId === definition.catalogId : other.name === definition.name) && other.installedIn?.[0] && other.installedIn[0] !== item.installedIn![0]);
 }
 
@@ -247,8 +247,9 @@ export function installCyberware(character: Character, id: string, targets: stri
     weapons = [...weapons.filter(weapon => weapon.id !== originalId), { ...embedded, id: `cyberweapon:${item.id}`, sourceCyberwareId: item.id, currentAmmo }];
   }
   const external = isExternalCyberware(character,{...definition,installedIn:targets});
-  const loss = external || (alreadyInstalled && !isExternalCyberware(character,item)) || (definition.installRule?.repeatHumanityFree && item.hasBeenInstalled) ? 0 : item.humanityLoss ?? item.humanityCost;
-  const installed = initializeCyberware({ ...definition, isInstalled: true, installedIn: targets, hasBeenInstalled: item.hasBeenInstalled || !external });
+  const wasAlreadyInstalled = alreadyInstalled || item.isInstalled === true || item.hasBeenInstalled;
+  const loss = external || (wasAlreadyInstalled && !isExternalCyberware(character,item)) || (definition.installRule?.repeatHumanityFree && item.hasBeenInstalled) ? 0 : item.humanityLoss ?? item.humanityCost;
+  const installed = initializeCyberware({ ...definition, isInstalled: true, installedIn: targets, hasBeenInstalled: item.hasBeenInstalled || !external || item.isInstalled === true || alreadyInstalled });
   let updated = { ...character, weapons, cyberware: character.cyberware.map(entry => entry.id === id ? installed : entry) };
   updated = { ...updated, humanityCurrent: Math.min(cyberwareHumanityCap(updated), character.humanityCurrent - loss) };
   return { character: syncCyberwareWeapons(updated) };

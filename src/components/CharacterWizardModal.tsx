@@ -245,9 +245,11 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
     );
   };
   const validationErrors = creationErrors(method, stats, skills, rolePackage.edgerunnerCareerSkills, method === 'pointbuy' ? budgetRemaining : 0);
+  if (!name.trim()) validationErrors.push(lang === 'ru' ? 'Укажите имя персонажа' : 'Character name is required');
   if (method === 'pointbuy' && (!Number.isInteger(clothingCost) || clothingCost < 0 || clothingCost > 800 || (clothingCost > 0 && !clothingName.trim()))) validationErrors.push('Clothing: name and cost 0–800 eb');
 
   const handleCompleteCreation = () => {
+    if (!name.trim()) { setCreationError(lang === 'ru' ? 'Укажите имя персонажа.' : 'Character name is required.'); setCurrentStep(1); return; }
     if (validationErrors.length) { setCreationError(validationErrors.join(' · ')); return; }
     if (method === 'pointbuy') {
       const hasLink = selectedCyberware.some(item => item.nameEn === 'Neural Link');
@@ -465,6 +467,9 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {/* Method 1: Streetrats */}
                   <div
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelectMethod('streetrat'); } }}
                     onClick={() => handleSelectMethod('streetrat')}
                     className={`p-3.5 rounded-lg border cursor-pointer transition flex flex-col justify-between ${
                       method === 'streetrat'
@@ -491,6 +496,9 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
 
                   {/* Method 2: Edgerunners */}
                   <div
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelectMethod('edgerunner'); } }}
                     onClick={() => handleSelectMethod('edgerunner')}
                     className={`p-3.5 rounded-lg border cursor-pointer transition flex flex-col justify-between ${
                       method === 'edgerunner'
@@ -517,6 +525,9 @@ export const CharacterWizardModal: React.FC<CharacterWizardModalProps> = ({
 
                   {/* Method 3: Point-Buy */}
                   <div
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelectMethod('pointbuy'); } }}
                     onClick={() => handleSelectMethod('pointbuy')}
                     className={`p-3.5 rounded-lg border cursor-pointer transition flex flex-col justify-between ${
                       method === 'pointbuy'

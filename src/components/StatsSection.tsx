@@ -5,7 +5,7 @@ import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { calculateHumanityStats, setRoleRank } from '../utils/roleUtils';
 import { TherapyModal } from './TherapyModal';
-import { effectiveStat, initiativeBase, maxHP } from '../utils/rules';
+import { effectiveStat, initiativeBase, injuryDeathPenalty, maxHP } from '../utils/rules';
 import { CPR_SKILLS } from '../data/initialData';
 import { 
   Heart, 
@@ -112,11 +112,16 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
       humanityCurrent = Math.min(newMaxRecoverable, character.humanityCurrent + empDelta * 10);
     }
 
+    const updatedChar = { ...character, stats: updatedStats };
+    const newMaxHp = maxHP(updatedChar);
+    const hpCurrent = Math.min(newMaxHp, character.hpCurrent);
+
     onUpdateCharacter({
       ...character,
       stats: updatedStats,
       luckCurrent,
-      humanityCurrent
+      humanityCurrent,
+      hpCurrent
     });
   };
 
@@ -163,6 +168,11 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               type="text"
               value={character.name}
               onChange={(e) => onUpdateCharacter({ ...character, name: e.target.value })}
+              onBlur={() => {
+                if (!character.name.trim()) {
+                  onUpdateCharacter({ ...character, name: character.handle.trim() || (lang === 'ru' ? 'Бегущий' : 'Edgerunner') });
+                }
+              }}
               className="w-full bg-zinc-950 border border-zinc-800 focus:border-red-500 rounded px-3 py-1.5 text-zinc-100 font-bold text-sm focus:outline-none"
             />
           </div>
@@ -534,16 +544,29 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               <Skull size={15} />
               <span>{t.deathSave}</span>
             </div>
-            <span className="font-mono text-xs text-zinc-400">
-              {lang === 'ru' ? 'Штраф: +' : 'Penalty: +'}{character.deathSavePenalties}
-            </span>
+            <div className="flex items-center gap-2 font-mono text-xs text-zinc-400">
+              <span>{lang === 'ru' ? 'Штраф: +' : 'Penalty: +'}{character.deathSavePenalties + injuryDeathPenalty(character)}</span>
+              {character.deathSavePenalties > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    sfx.playClick();
+                    onUpdateCharacter({ ...character, deathSavePenalties: 0 });
+                  }}
+                  title={lang === 'ru' ? 'Сбросить штрафы (стабилизирован)' : 'Reset penalties (stabilized)'}
+                  className="text-[10px] text-zinc-400 hover:text-emerald-400 underline"
+                >
+                  {lang === 'ru' ? 'Сброс' : 'Reset'}
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex items-baseline justify-between mb-2">
             <span className="font-orbitron font-black text-2xl text-white">
-              {character.stats.BODY}
+              {effectiveStat(character, 'BODY')}
               <span className="text-red-400 text-sm font-semibold">
-                {character.deathSavePenalties > 0 ? ` (+${character.deathSavePenalties})` : ''}
+                {character.deathSavePenalties + injuryDeathPenalty(character) > 0 ? ` (+${character.deathSavePenalties + injuryDeathPenalty(character)})` : ''}
               </span>
             </span>
             <div className="flex items-center gap-1.5">

@@ -34,6 +34,7 @@ function validInstallRule(value: unknown): boolean {
 }
 function validWeapon(value: unknown): boolean {
   if (!isRecord(value) || !matches(value,{name:'',category:'',damage:'',standardRof:0,magCapacity:0,ammoType:'',concealable:false,notes:''}) || !validWeaponOptions(value)) return false;
+  if (value.currentAmmo !== undefined && !nonnegative(value.currentAmmo)) return false;
   if (!optionalFields(value,{sourceUrl:text,catalogId:text,costEb:nonnegative,isEquipped:boolean,consumable:boolean,selectedProfile:n => Number.isInteger(n) && (n as number) >= 0})) return false;
   if (value.damageProfiles !== undefined && (!Array.isArray(value.damageProfiles) || value.damageProfiles.length > 100 || !value.damageProfiles.every(profile => isRecord(profile) && text(profile.name) && text(profile.damage) && validWeaponOptions(profile)))) return false;
   if (value.selectedProfile !== undefined && (value.selectedProfile as number) >= Math.max(1, (value.damageProfiles as unknown[] | undefined)?.length ?? 0)) return false;
@@ -93,8 +94,16 @@ export function isCharacter(value: unknown): value is Character {
   const wornDevices=character.gear.filter(item=>item.wornOn&&gearCyberwareDevice(item));
   if (new Set(wornDevices.map(item=>item.wornOn)).size!==wornDevices.length || wornDevices.some(item=>item.quantity!==1||!(gearCyberwareDevice(item)!.sites as readonly string[]).includes(item.wornOn!))) return false;
   if (character.cyberware.some(item => !item.id) || character.weapons.some(item => !item.id) || new Set(character.cyberware.map(item => item.id)).size !== character.cyberware.length || new Set(character.weapons.map(item => item.id)).size !== character.weapons.length) return false;
+  if (character.gear.some(item => !item.id) || new Set(character.gear.map(item => item.id)).size !== character.gear.length) return false;
+  if (character.programs.some(item => !item.id) || new Set(character.programs.map(item => item.id)).size !== character.programs.length) return false;
+  if (character.criticalInjuries.some(item => !item.id) || new Set(character.criticalInjuries.map(item => item.id)).size !== character.criticalInjuries.length) return false;
+  if (character.skills.some(item => !item.id) || new Set(character.skills.map(item => item.id)).size !== character.skills.length) return false;
   const roles = ['Solo','Netrunner','Tech','Medtech','Rockerboy','Media','Lawman','Exec','Fixer','Nomad'];
   if (!character.id || !character.name.trim() || !roles.includes(character.role)) return false;
+  if (character.roleRank !== undefined && (!Number.isInteger(character.roleRank) || character.roleRank < 1 || character.roleRank > 10)) return false;
+  if (typeof character.cashEb === 'number' && character.cashEb < 0) return false;
+  if (typeof character.bankEb === 'number' && character.bankEb < 0) return false;
+  if (typeof character.hpCurrent === 'number' && character.hpCurrent < 0) return false;
   if (!Object.values(character.stats).every(n => Number.isInteger(n) && n >= 0 && n <= 30)) return false;
   if (!character.skills.every(skill => Object.hasOwn(template.stats, skill.stat) && Number.isInteger(skill.level) && skill.level >= 0 && skill.level <= 10 && [1,2].includes(skill.multiplier))) return false;
   for (const weapon of character.weapons) {
@@ -116,7 +125,8 @@ export function isCharacter(value: unknown): value is Character {
   if (value.spareArmor !== undefined && (!Array.isArray(value.spareArmor) || !value.spareArmor.every(validArmor))) return false;
   const armor = [character.armor.head, character.armor.body, ...(character.armor.shield === undefined ? [] : [character.armor.shield]), ...(character.spareArmor ?? [])];
   if (!armor.every(validArmor) || new Set(armor.map(item => item.id)).size !== armor.length) return false;
-  if (value.vehicles !== undefined && (!Array.isArray(value.vehicles) || !value.vehicles.every(item => matches(item, {id:'',name:'',model:'',category:'',sdpMax:0,sdpCurrent:0,seats:typeof (item as Record<string,unknown>)?.seats === 'number' ? 0 : '',speedCombat:'',speedNarrative:'',costEb:0,notes:''})))) return false;
+  if (value.vehicles !== undefined && (!Array.isArray(value.vehicles) || !value.vehicles.every(item => matches(item, {id:'',name:'',model:'',category:'',sdpMax:0,sdpCurrent:0,seats:typeof (item as Record<string,unknown>)?.seats === 'number' ? 0 : '',speedCombat:'',speedNarrative:'',costEb:0,notes:''}) && (item.sdpCurrent as number) >= 0 && (item.sdpMax as number) >= 0 && (item.costEb as number) >= 0))) return false;
+  if (character.vehicles && (character.vehicles.some(item => !item.id) || new Set(character.vehicles.map(item => item.id)).size !== character.vehicles.length)) return false;
   if (character.vehicles?.some(vehicle => !optionalFields(vehicle as unknown as Record<string,unknown>, { catalogId:text,sourceUrl:text,priceLabel:text,nomadRankLabel:text,armorSp:nonnegative, nomadRankReq:nonnegative, upgrades:upgrades => Array.isArray(upgrades) && upgrades.every(text) }))) return false;
   return true;
 }

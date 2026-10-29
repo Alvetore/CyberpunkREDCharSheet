@@ -75,10 +75,18 @@ export const TherapyModal: React.FC<TherapyModalProps> = ({
     let costPaid = 0;
 
     if (deductCost && costEb > 0) {
+      if (updatedCash + updatedBank < costEb) {
+        alert(
+          lang === 'ru'
+            ? `Недостаточно средств для оплаты терапии! Требуется: ${costEb} eb, доступно: ${updatedCash + updatedBank} eb.`
+            : `Insufficient funds for therapy! Required: ${costEb} eb, available: ${updatedCash + updatedBank} eb.`
+        );
+        return;
+      }
       if (updatedCash >= costEb) {
         updatedCash -= costEb;
         costPaid = costEb;
-      } else if (updatedCash + updatedBank >= costEb) {
+      } else {
         const remainder = costEb - updatedCash;
         updatedCash = 0;
         updatedBank -= remainder;

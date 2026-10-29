@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Character, Weapon, ArmorItem, CyberwareItem, GearItem } from '../types/character';
 import { Language } from '../locales/i18n';
 import { sfx } from '../utils/audio';
@@ -87,8 +87,23 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [purchaseSuccessMessage, setPurchaseSuccessMessage] = useState<string | null>(null);
 
+  const [prevCat, setPrevCat] = useState(initialCategory);
+  if (initialCategory !== prevCat) {
+    setPrevCat(initialCategory);
+    setActiveTab(initialCategory);
+  }
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialCategory);
+      setIsFreeMode(false);
+      setSearchQuery('');
+    }
+  }, [isOpen, initialCategory]);
+
   // Normalize all items into a unified list
   const allItems: UnifiedShopItem[] = useMemo(() => {
+    if (!isOpen) return [];
     const list: UnifiedShopItem[] = [];
 
     // Weapons
@@ -179,10 +194,11 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
     });
 
     return list;
-  }, [lang]);
+  }, [lang, isOpen]);
 
   // Filtered and sorted items
   const filteredItems = useMemo(() => {
+    if (!isOpen) return [];
     return allItems.filter((item) => {
       // Category filter
       if (activeTab === 'weapons' && item.type !== 'weapon') return false;

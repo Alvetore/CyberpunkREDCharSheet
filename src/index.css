@@ -165,15 +165,29 @@ html.light .scanlines {
 
 /* Print styles */
 @media print {
+  *, *::before, *::after {
+    background-color: transparent !important;
+    color: #09090b !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-color: #d4d4d8 !important;
+  }
   body {
-    background: white !important;
-    color: black !important;
+    background: #ffffff !important;
+    color: #09090b !important;
   }
   .no-print {
     display: none !important;
   }
   .print-page {
     page-break-after: always;
+  }
+  input, select, textarea {
+    border-bottom: 1px solid #71717a !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    color: #000000 !important;
   }
 }
 

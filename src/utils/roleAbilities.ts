@@ -4,7 +4,7 @@ import { executeCyberpunkCheck, rollD10, rollD6 } from './dice';
 
 export const execTeamSize = (rank:number) => rank >= 9 ? 3 : rank >= 5 ? 2 : rank >= 3 ? 1 : 0;
 export const mediaBelievability = (rank:number) => rank >= 10 ? 7 : rank >= 9 ? 6 : Math.floor((rank + 1) / 2) + 1;
-export const fixerReach = (rank:number) => rank >= 10 ? '10,000+ eb' : rank >= 9 ? '5,000 eb' : rank >= 7 ? '1,000 eb' : rank >= 3 ? '500 eb' : '20 eb';
+export const fixerReach = (rank:number) => rank >= 10 ? '10,000+ eb (Супер-роскошь / Super Luxury)' : rank >= 9 ? '10,000 eb (Роскошь / Luxury)' : rank >= 7 ? '5,000 eb (Очень дорогие / Very Expensive)' : rank >= 5 ? '1,000 eb (Дорогие / Expensive)' : rank >= 3 ? '500 eb (Премиум / Premium)' : '20 eb (Повседневные / Everyday)';
 export const medtechSkills = (character:Character) => ({
   surgery:Math.min(10,2*character.roleAbilities.medtech.surgery),
   medicalTech:Math.min(10,character.roleAbilities.medtech.medicalTech + character.roleAbilities.medtech.pharmaceuticals),
