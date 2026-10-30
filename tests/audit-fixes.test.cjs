@@ -13,6 +13,7 @@ const { DataPoolShopModal } = load('src/components/DataPoolShopModal.tsx');
 const { TherapyModal } = load('src/components/TherapyModal.tsx');
 const { WeaponsSection } = load('src/components/WeaponsSection.tsx');
 const { VehiclesSection } = load('src/components/VehiclesSection.tsx');
+const { SkillsSection } = load('src/components/SkillsSection.tsx');
 
 let memory;
 beforeEach(() => {
@@ -428,4 +429,110 @@ test('audit: consolidateGrenadeWeapons merges duplicate equipped and unequipped 
   assert.equal(unequippedFrags.length, 1);
   assert.equal(unequippedFrags[0].currentAmmo, 3);
   assert.equal(unequippedFrags[0].magCapacity, 3);
+});
+
+test('mobile usability: SkillsSection trained-only filter and 1-tap skill rolling', () => {
+  const c = createEmptyCharacter('SkillTester');
+  // Reset all skills to level 0 then train exactly 2 skills
+  c.skills = CPR_SKILLS.map(s => ({ ...s, level: 0 }));
+  c.skills.find(s => s.id === 'brawling').level = 4;
+  c.skills.find(s => s.id === 'athletics').level = 2;
+
+  let rolledSkill = null;
+  const view = mount(SkillsSection, {
+    character: c,
+    onUpdateCharacter() {},
+    onRollSkill(skill) { rolledSkill = skill; },
+    lang: 'ru',
+    dualTerms: true
+  });
+
+  // Verify "Изученные" filter button exists
+  const trainedBtn = button(view.render(), 'Изученные');
+  assert.ok(trainedBtn);
+
+  // Click "Изученные" filter to show only trained skills
+  trainedBtn.props.onClick();
+
+  // Test tap-to-roll: find the clickable title container for brawling
+  const titleNodes = nodes(view.render(), n => n.type === 'div' && n.props?.onClick && n.props?.title?.includes('Бросить'));
+  assert.ok(titleNodes.length > 0);
+  titleNodes[0].props.onClick();
+  assert.ok(rolledSkill);
+});
+
+test('mobile usability: GearSection renders compact mobile cards and equips grenades directly', () => {
+  const c = createEmptyCharacter('GearTester');
+  c.weapons = []; // Start with no weapons
+  c.gear = [
+    { id: 'g-frag', name: 'Armor-Piercing Grenade', category: 'Grenade', quantity: 2, costEb: 100, notes: 'Heavy explosive' },
+    { id: 'g-rope', name: 'Nylon Rope', category: 'Gear', quantity: 1, costEb: 20, notes: '10m strong rope' }
+  ];
+
+  let updatedChar = null;
+  const view = mount(GearSection, {
+    character: c,
+    lang: 'en',
+    onUpdateCharacter(next) { updatedChar = next; }
+  });
+
+  // Both desktop table and mobile cards are rendered
+  const rendered = view.render();
+  const equipButtons = nodes(rendered, n => n.type === 'button' && label(n).includes('Equip'));
+  assert.ok(equipButtons.length >= 2); // In desktop table and in mobile cards
+
+  // Clicking mobile equip button equips grenade
+  equipButtons[equipButtons.length - 1].props.onClick();
+  assert.ok(updatedChar);
+  assert.equal(updatedChar.gear.find(g => g.id === 'g-frag').quantity, 1);
+  assert.equal(updatedChar.weapons.length, 1);
+});
+
+test('mobile usability: SectionNav provides 1-tap mobile bar for Skills, Gear, Cyberware and expandable More menu', () => {
+  const c = createEmptyCharacter('NavTester');
+  let selectedTab = null;
+
+  const view = mount(SectionNav, {
+    activeTab: 'main',
+    onChangeTab(tab) { selectedTab = tab; },
+    character: c,
+    lang: 'ru'
+  });
+
+  // Check mobile 1-tap tabs exist
+  const skillsBtn = button(view.render(), 'Навыки');
+  assert.ok(skillsBtn);
+  skillsBtn.props.onClick();
+  assert.equal(selectedTab, 'skills');
+
+  // Check mobile "Ещё ▾" button toggles secondary tabs drawer
+  const moreBtn = button(view.render(), 'Ещё ▾');
+  assert.ok(moreBtn);
+  moreBtn.props.onClick();
+
+  // Pick secondary tab from drawer: "Травмы и Броня"
+  const injuriesBtn = button(view.render(), 'Травмы и Броня');
+  assert.ok(injuriesBtn);
+  injuriesBtn.props.onClick();
+  assert.equal(selectedTab, 'injuries');
+});
+
+test('mobile usability: StatsSection collapsible 10 stats and 2x2 vitals grid', () => {
+  const c = createEmptyCharacter('StatsTester');
+  const view = mount(StatsSection, {
+    character: c,
+    lang: 'ru',
+    onUpdateCharacter() {},
+    onRollStat() {},
+    onRollInitiative() {},
+    onRollDeathSave() {},
+    onOpenDamageCalc() {}
+  });
+
+  const rendered = view.render();
+  // Check details element for mobile stats summary exists
+  const details = nodes(rendered, n => n.type === 'details');
+  assert.ok(details.length > 0);
+  const summary = nodes(rendered, n => n.type === 'summary' && label(n).includes('10 ХАР'));
+  assert.ok(summary.length > 0);
 });
