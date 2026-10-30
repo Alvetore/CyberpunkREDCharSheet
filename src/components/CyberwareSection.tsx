@@ -204,7 +204,36 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
         </div>
       </div>
 
-      <section className="bg-zinc-900 border border-zinc-800 rounded p-3 space-y-2">
+      {/* Installation Slots - Collapsible on mobile (< md), fully visible on tablet & desktop (>= md) */}
+      <details className="mobile-only md:hidden bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 space-y-2 group">
+        <summary className="flex items-center justify-between cursor-pointer font-bold text-cyan-300 text-xs select-none">
+          <div className="flex items-center gap-1.5">
+            <Layers size={14} className="text-cyan-400" />
+            <span>{lang === 'ru' ? 'Слоты установки' : 'Installation slots'}</span>
+            <span className="text-[10px] text-zinc-400 font-mono">({hosts.filter(h => h.used > 0).length} акт.)</span>
+          </div>
+          <span className="text-[10px] text-cyan-400 uppercase font-mono">▸</span>
+        </summary>
+        <p className="text-[11px] text-zinc-400 pt-1 leading-normal">
+          {lang === 'ru' ? 'Покупка и установка разделены. Снятые импланты не дают эффектов и не занимают слоты.' : 'Purchase and installation are separate. Uninstalled inventory provides no effects and occupies no slots.'}
+        </p>
+        <div className="grid grid-cols-2 gap-1.5 text-xs pt-1">
+          {hosts.map(host => (
+            <div key={host.id} className={`bg-zinc-950 rounded p-1.5 border border-zinc-800/60 ${host.used > host.capacity ? 'text-red-300 border-red-900' : 'text-zinc-300'}`}>
+              <span className="truncate block text-[11px] font-medium">{host.name}</span>
+              <strong className="block text-cyan-300 text-xs font-orbitron">{host.capacity === 0 ? (lang === 'ru' ? 'Особ.' : 'Spec.') : `${host.used} / ${host.capacity}`}</strong>
+            </div>
+          ))}
+        </div>
+        {warnings.length > 0 && (
+          <details className="text-xs text-amber-300 pt-1">
+            <summary className="cursor-pointer">{lang === 'ru' ? `Проверьте условия (${warnings.length})` : `Review conditions (${warnings.length})`}</summary>
+            <ul className="list-disc pl-4 space-y-1 mt-1 text-[11px]">{warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul>
+          </details>
+        )}
+      </details>
+
+      <section className="desktop-only hidden md:block bg-zinc-900 border border-zinc-800 rounded p-3 space-y-2">
         <h3 className="text-cyan-300 font-bold text-sm">{lang === 'ru' ? 'Слоты установки' : 'Installation slots'}</h3>
         <p className="text-xs text-zinc-400">{lang === 'ru' ? 'Покупка и установка разделены. Выберите конкретное основание для каждой опции. Снятые импланты не дают эффектов и не занимают слоты.' : 'Purchase and installation are separate. Assign each option to a specific host. Uninstalled inventory provides no effects and occupies no slots.'}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">{hosts.map(host => <div key={host.id} className={`bg-zinc-950 rounded p-2 ${host.used > host.capacity ? 'text-red-300' : 'text-zinc-300'}`}><span>{host.name}</span><strong className="block text-cyan-300">{host.capacity === 0 ? (lang === 'ru' ? 'Особое крепление — см. описание' : 'Special mount — see description') : `${host.used} / ${host.capacity}`}</strong></div>)}</div>
@@ -216,21 +245,24 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
         {character.cyberware.map((item) => (
           <div
             key={item.id}
-            className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-lg p-3 flex flex-col justify-between transition shadow-sm"
+            className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-lg p-2.5 sm:p-3 flex flex-col justify-between transition shadow-sm"
           >
             <div>
               <div className="flex items-start justify-between gap-2 mb-1">
-                <div>
-                  <h3 className="font-orbitron font-bold text-xs text-white">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-orbitron font-bold text-xs text-white truncate">
                     {item.name}
                   </h3>
-                  <span className="text-[10px] text-cyan-300">{isCyberwareInstalled(character, item) ? (lang === 'ru' ? 'Установлен' : 'Installed') : (lang === 'ru' ? 'В инвентаре' : 'Inventory')}</span>
-                  <div className="text-[10px] text-cyan-400 font-mono">
-                    {item.category} • {item.installLocation}
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[10px] font-semibold text-cyan-300">{isCyberwareInstalled(character, item) ? (lang === 'ru' ? 'Установлен' : 'Installed') : (lang === 'ru' ? 'В инвентаре' : 'Inventory')}</span>
+                    <span className="text-zinc-600 text-[10px]">•</span>
+                    <span className="text-[10px] text-cyan-400 font-mono truncate">
+                      {item.category} • {item.installLocation}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <span className="font-orbitron font-bold text-xs text-red-400 bg-zinc-950 px-2 py-0.5 rounded border border-red-950">
                     {isExternalCyberware(character,item) ? (lang === 'ru' ? 'Вне тела · HL 0' : 'External · HL 0') : item.humanityCostKnown === false ? 'HL —' : `-${item.humanityCost} HL`}
                   </span>
@@ -239,7 +271,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                       sfx.playClick();
                       setItemToDelete(item);
                     }}
-                    className="text-zinc-500 hover:text-red-400 p-0.5 transition"
+                    className="text-zinc-500 hover:text-red-400 p-1 transition"
                     title={lang === 'ru' ? "Удалить имплант" : "Delete cyberware"}
                   >
                     <Trash2 size={13} />
@@ -247,13 +279,31 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
                 </div>
               </div>
 
-              <div className="text-xs text-zinc-300 mt-2 leading-relaxed">
+              {/* Desktop description */}
+              <div className="desktop-only hidden md:block text-xs text-zinc-300 mt-2 leading-relaxed">
                 {item.description}
               </div>
-              {cyberwareDefinition(item).installRule?.notes && <p className="text-xs text-amber-300 mt-2">{cyberwareDefinition(item).installRule?.notes}</p>}
-              <div className="flex flex-wrap gap-2 mt-3 text-xs">
-                <button onClick={() => setInstallId(item.id)} className="bg-cyan-900 px-2 py-1 rounded text-cyan-200">{isCyberwareInstalled(character,item) ? (lang === 'ru' ? 'Размещение / оружие' : 'Placement / weapon') : (lang === 'ru' ? 'Установить' : 'Install')}</button>
-                {isCyberwareInstalled(character,item) && <button onClick={() => onUpdateCharacter(uninstallCyberware(character,item.id))} className="bg-zinc-800 px-2 py-1 rounded">{lang === 'ru' ? 'Снять в инвентарь' : 'Uninstall to inventory'}</button>}
+
+              {/* Mobile description: compact preview with tap-to-expand */}
+              <div className="mobile-only md:hidden mt-1 text-xs text-zinc-300">
+                {item.description.length > 70 ? (
+                  <details className="text-[11px] text-zinc-400">
+                    <summary className="cursor-pointer text-zinc-300 line-clamp-2">
+                      {item.description.slice(0, 70)}…
+                    </summary>
+                    <p className="mt-1.5 p-1.5 bg-zinc-950 rounded border border-zinc-800 text-zinc-300 whitespace-pre-line leading-relaxed">
+                      {item.description}
+                    </p>
+                  </details>
+                ) : (
+                  <p className="text-[11px] text-zinc-300 leading-normal">{item.description}</p>
+                )}
+              </div>
+
+              {cyberwareDefinition(item).installRule?.notes && <p className="text-xs text-amber-300 mt-1.5">{cyberwareDefinition(item).installRule?.notes}</p>}
+              <div className="flex flex-wrap gap-2 mt-2.5 text-xs">
+                <button onClick={() => setInstallId(item.id)} className="bg-cyan-900 hover:bg-cyan-800 active:scale-95 px-2.5 py-1.5 sm:py-1 rounded text-cyan-200 font-semibold touch-manipulation">{isCyberwareInstalled(character,item) ? (lang === 'ru' ? 'Размещение / оружие' : 'Placement / weapon') : (lang === 'ru' ? 'Установить' : 'Install')}</button>
+                {isCyberwareInstalled(character,item) && <button onClick={() => onUpdateCharacter(uninstallCyberware(character,item.id))} className="bg-zinc-800 hover:bg-zinc-700 active:scale-95 px-2.5 py-1.5 sm:py-1 rounded text-zinc-200 touch-manipulation">{lang === 'ru' ? 'Снять в инвентарь' : 'Uninstall to inventory'}</button>}
               </div>
             </div>
           </div>

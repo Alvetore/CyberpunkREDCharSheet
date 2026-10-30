@@ -177,9 +177,9 @@ export const GearSection: React.FC<GearSectionProps> = ({
   return (
     <div className="space-y-4">
       {/* Economy & Lifestyle Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 responsive-cols-4 gap-2 sm:gap-3">
         {/* Cash */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 sm:p-3">
           <div className="flex items-center gap-1.5 font-orbitron font-bold text-xs uppercase text-emerald-400 mb-1">
             <Coins size={15} />
             <span>{t.cash}</span>
@@ -190,12 +190,12 @@ export const GearSection: React.FC<GearSectionProps> = ({
             onChange={(e) =>
               onUpdateCharacter({ ...character, cashEb: parseInt(e.target.value, 10) || 0 })
             }
-            className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-emerald-300 font-orbitron font-black text-xl focus:border-emerald-500 focus:outline-none"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-emerald-300 font-orbitron font-black text-lg sm:text-xl focus:border-emerald-500 focus:outline-none"
           />
         </div>
 
         {/* Bank */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 sm:p-3">
           <div className="flex items-center gap-1.5 font-orbitron font-bold text-xs uppercase text-cyan-400 mb-1">
             <CreditCard size={15} />
             <span>{t.bank}</span>
@@ -206,12 +206,12 @@ export const GearSection: React.FC<GearSectionProps> = ({
             onChange={(e) =>
               onUpdateCharacter({ ...character, bankEb: parseInt(e.target.value, 10) || 0 })
             }
-            className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-cyan-300 font-orbitron font-black text-xl focus:border-cyan-500 focus:outline-none"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-cyan-300 font-orbitron font-black text-lg sm:text-xl focus:border-cyan-500 focus:outline-none"
           />
         </div>
 
         {/* Lifestyle */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 sm:p-3">
           <div className="flex items-center gap-1.5 font-orbitron font-bold text-xs uppercase text-yellow-400 mb-1">
             <Utensils size={15} />
             <span>{t.lifestyle}</span>
@@ -239,7 +239,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
         </div>
 
         {/* Housing */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 sm:p-3">
           <div className="flex items-center gap-1.5 font-orbitron font-bold text-xs uppercase text-zinc-300 mb-1">
             <Home size={15} />
             <span>{t.housing}</span>
@@ -294,7 +294,8 @@ export const GearSection: React.FC<GearSectionProps> = ({
           </div>
         </div>
 
-        <div className="overflow-x-auto touch-pan-x -mx-2 px-2 sm:mx-0 sm:px-0">
+        {/* Desktop Table View (>= md) */}
+        <div className="desktop-only hidden md:block overflow-x-auto touch-pan-x -mx-2 px-2 sm:mx-0 sm:px-0">
           <table className="w-full text-xs text-left border-collapse min-w-[550px]">
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-400 font-semibold uppercase text-[10px]">
@@ -364,6 +365,105 @@ export const GearSection: React.FC<GearSectionProps> = ({
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards View (< md) */}
+        <div className="mobile-only md:hidden space-y-2">
+          {character.gear.length === 0 ? (
+            <div className="p-4 text-center text-xs text-zinc-500 italic bg-zinc-950/60 rounded border border-zinc-800/60">
+              {lang === 'ru' ? 'Рюкзак пуст. Нажмите «+ Снаряжение»' : 'Backpack is empty. Tap "+ Add Gear"'}
+            </div>
+          ) : (
+            character.gear.map((item) => (
+              <div key={item.id} className="bg-zinc-950 border border-zinc-800/80 rounded-lg p-2.5 space-y-2">
+                {/* Header: Name, Category, Price, Equip Grenade, Delete */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-zinc-100 text-xs break-words leading-tight">{item.name}</div>
+                    <div className="flex items-center gap-2 mt-1 text-[10px]">
+                      <span className="text-zinc-400">{item.category === 'Ammunition' && lang === 'ru' ? 'Боеприпасы' : item.category}</span>
+                      <span className="font-mono font-bold text-emerald-400">{gearPrice(item, lang)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isGearItemGrenade(item) && (
+                      <button
+                        onClick={() => handleEquipGearGrenade(item)}
+                        className="px-2 py-1 rounded bg-cyan-950 text-cyan-300 text-[11px] font-semibold hover:bg-cyan-900 border border-cyan-800 transition active:scale-95 touch-manipulation"
+                        title={lang === 'ru' ? 'Снарядить 1 шт. как оружие' : 'Equip 1 as weapon'}
+                      >
+                        {lang === 'ru' ? 'Снарядить' : 'Equip'}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDeleteItem(item.id)}
+                      className="text-zinc-500 hover:text-red-400 p-1.5 rounded transition"
+                      title={lang === 'ru' ? 'Удалить предмет' : 'Delete item'}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Wear selector if cyberware device */}
+                {gearCyberwareDevice(item) && (
+                  <div className="text-[11px] text-cyan-300 bg-cyan-950/30 border border-cyan-900/60 rounded p-1.5">
+                    <span className="font-semibold block mb-0.5">{lang === 'ru' ? 'Ношение (надеть/снять):' : 'Wear (equip/remove):'}</span>
+                    <select
+                      aria-label={`${lang === 'ru' ? 'Ношение' : 'Wear'}: ${item.name}`}
+                      value={item.wornOn ?? ''}
+                      onChange={event => onUpdateCharacter(wearCyberwareGear(character, item.id, event.target.value as GearItem['wornOn'] || undefined))}
+                      className="w-full p-1 bg-zinc-950 border border-cyan-800 rounded text-xs text-zinc-200"
+                    >
+                      <option value="">{lang === 'ru' ? 'В рюкзаке' : 'Stored'}</option>
+                      {gearCyberwareDevice(item)!.sites.map(site => (
+                        <option key={site} value={site}>
+                          {lang === 'ru' ? ({eyes:'На глазах', ears:'На ушах', 'left-arm':'Левая рука', 'right-arm':'Правая рука'}[site]) : site}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Bottom row: Quantity stepper & Notes */}
+                <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-900 text-xs">
+                  <div className="inline-flex items-center gap-1.5 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
+                    <span className="text-[10px] text-zinc-400 uppercase font-semibold mr-0.5">{t.quantity}:</span>
+                    <button
+                      onClick={() => handleAdjustQuantity(item.id, -1)}
+                      className="w-6 h-6 flex items-center justify-center text-zinc-300 hover:text-white font-bold text-sm bg-zinc-800 rounded active:scale-95 touch-manipulation"
+                    >
+                      -
+                    </button>
+                    <span className="font-bold text-white min-w-[18px] text-center font-mono">
+                      {item.quantity}
+                      {isPackAmmo(item) && <span className="ml-0.5 text-[10px] text-zinc-400">{lang === 'ru' ? 'уп.' : 'pk'}</span>}
+                    </span>
+                    <button
+                      onClick={() => handleAdjustQuantity(item.id, 1)}
+                      className="w-6 h-6 flex items-center justify-center text-zinc-300 hover:text-white font-bold text-sm bg-zinc-800 rounded active:scale-95 touch-manipulation"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  {item.notes && (
+                    <div className="min-w-0 flex-1 text-right">
+                      {item.notes.length > 40 ? (
+                        <details className="text-[11px] text-zinc-400 inline-block text-left">
+                          <summary className="cursor-pointer truncate max-w-[150px]">{item.notes.slice(0, 30)}…</summary>
+                          <p className="whitespace-pre-line mt-1 p-1.5 bg-zinc-900 rounded border border-zinc-800 text-[11px] text-zinc-300">{item.notes}</p>
+                        </details>
+                      ) : (
+                        <span className="text-[11px] text-zinc-400 truncate block max-w-[150px]">{item.notes}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

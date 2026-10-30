@@ -239,7 +239,13 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   const t = translations[lang];
   const [selectedCategory, setSelectedCategory] = useState<'all' | SkillCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [trainedOnly, setTrainedOnly] = useState(false);
   const [showAddCustom, setShowAddCustom] = useState(false);
+
+  // Count skills with training (rank > 0 or active role bonus)
+  const trainedSkillsCount = character.skills.filter(
+    (s) => s.level > 0 || getRoleSkillBonus(character, s.id).bonus > 0
+  ).length;
 
   // New custom skill inputs
   const [customNameRu, setCustomNameRu] = useState('');
@@ -378,10 +384,18 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
       return a.nameRu.localeCompare(b.nameRu);
     });
 
-    const visibleSkills = sortedSkills.filter(matchesSearch);
+    const visibleSkills = sortedSkills.filter((s) => {
+      if (!matchesSearch(s)) return false;
+      if (trainedOnly) {
+        const hasLevel = s.level > 0;
+        const hasBonus = getRoleSkillBonus(character, s.id).bonus > 0;
+        if (!hasLevel && !hasBonus) return false;
+      }
+      return true;
+    });
 
-    // If searching and this category has no matches, omit it
-    if (searchQuery.trim() && visibleSkills.length === 0) {
+    // If searching or trained-only filter is active and this category has no matches, omit it
+    if ((searchQuery.trim() || trainedOnly) && visibleSkills.length === 0) {
       return null;
     }
 
@@ -405,9 +419,9 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
 
           {/* Table Column Labels */}
           <div className="flex items-center text-[11px] font-mono font-bold text-zinc-400 shrink-0 select-none">
-            <span className="w-16 sm:w-20 text-center tracking-wide">{t.skillColLevel || 'УР'}</span>
-            <span className="w-9 sm:w-10 text-center tracking-wide">{t.skillColStat || 'ХАР'}</span>
-            <span className="w-11 sm:w-12 text-center text-red-400 tracking-wide">{t.skillColBase || 'ОСН'}</span>
+            <span className="w-16 md:w-20 text-center tracking-wide">{t.skillColLevel || 'УР'}</span>
+            <span className="w-9 md:w-10 text-center tracking-wide">{t.skillColStat || 'ХАР'}</span>
+            <span className="w-12 md:w-12 text-center text-red-400 tracking-wide">{t.skillColBase || 'ОСН'}</span>
           </div>
         </div>
 
@@ -435,10 +449,14 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               return (
                 <div
                   key={skill.id}
-                  className="flex items-center justify-between px-2.5 sm:px-3 py-1.5 hover:bg-zinc-800/40 transition group"
+                  className="flex items-center justify-between px-2 sm:px-3 py-1 sm:py-1.5 hover:bg-zinc-800/40 transition group"
                 >
-                  {/* Left: Skill icon + Skill title + stat badge + dual term */}
-                  <div className="min-w-0 flex-1 pr-2 flex items-center gap-2">
+                  {/* Left: Skill icon + Skill title + stat badge + dual term. Tap anywhere on title to roll */}
+                  <div
+                    onClick={() => onRollSkill(skill, effectiveBase)}
+                    className="min-w-0 flex-1 pr-2 flex items-center gap-2 cursor-pointer select-none active:opacity-75"
+                    title={`${lang === 'ru' ? 'Бросить' : 'Roll'} ${lang === 'ru' ? nameRu : nameEn}: 1d10 + ${effectiveBase}`}
+                  >
                     <div className="w-5 h-5 rounded flex items-center justify-center bg-zinc-950/70 border border-zinc-800/80 group-hover:border-red-900/60 group-hover:bg-red-950/20 shrink-0 transition">
                       <SkillIcon size={12} className="text-red-400/80 group-hover:text-red-300 shrink-0 transition" />
                     </div>
@@ -474,7 +492,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
 
                         {skill.isCustom && (
                           <button
-                            onClick={() => handleDeleteCustomSkill(skill.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteCustomSkill(skill.id);
+                            }}
                             className="text-zinc-600 hover:text-red-400 p-0.5 transition"
                             title={lang === 'ru' ? 'Удалить навык' : 'Delete skill'}
                           >
@@ -507,7 +528,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                       <button
                         onClick={() => handleLevelChange(skill.id, -1)}
                         disabled={skill.level <= 0}
-                        className="w-5 h-6 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 hover:bg-zinc-800 rounded text-xs font-bold transition active:scale-95 touch-manipulation"
+                        className="w-6 h-7 sm:w-5 sm:h-6 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 hover:bg-zinc-800 rounded text-sm sm:text-xs font-bold transition active:scale-95 touch-manipulation"
                       >
                         -
                       </button>
@@ -519,14 +540,14 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                       <button
                         onClick={() => handleLevelChange(skill.id, 1)}
                         disabled={skill.level >= 10}
-                        className="w-5 h-6 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 hover:bg-zinc-800 rounded text-xs font-bold transition active:scale-95 touch-manipulation"
+                        className="w-6 h-7 sm:w-5 sm:h-6 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 hover:bg-zinc-800 rounded text-sm sm:text-xs font-bold transition active:scale-95 touch-manipulation"
                       >
                         +
                       </button>
                     </div>
 
                     {/* Stat (ХАР) */}
-                    <div className="w-9 sm:w-10 text-center font-mono font-bold text-xs select-none">
+                    <div className="w-9 md:w-10 text-center font-mono font-bold text-xs select-none">
                       {effectiveStat !== statVal ? (
                         <span className="text-amber-400 cursor-help" title={lang === 'ru' ? `Исходная: ${statVal}; текущая: ${effectiveStat} (с учётом модификаторов, Humanity и брони)` : `Original: ${statVal}; current: ${effectiveStat} (modifiers, Humanity and armor included)`}>
                           {effectiveStat}
@@ -539,17 +560,17 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                     </div>
 
                     {/* Roll Base (ОСН) */}
-                    <div className="w-11 sm:w-12 flex items-center justify-center">
+                    <div className="w-12 md:w-12 flex items-center justify-center">
                       <button
                         onClick={() => onRollSkill(skill, effectiveBase)}
                         title={`${lang === 'ru' ? 'Бросить' : 'Roll'} ${lang === 'ru' ? nameRu : nameEn}: 1d10 + ${effectiveBase} (${lang === 'ru' ? STAT_DISPLAY_RU[skill.stat] : skill.stat} ${effectiveStat} + ${lang === 'ru' ? 'Ур' : 'Lvl'} ${skill.level}${roleBonusInfo.bonus > 0 ? ` + ${lang === 'ru' ? roleBonusInfo.badgeRu : roleBonusInfo.badgeEn}` : ''}${woundPenalty !== 0 ? ` ${woundPenalty}` : ''})`}
-                        className={`w-full py-1 min-h-[26px] flex items-center justify-center gap-0.5 rounded font-mono font-bold text-xs border transition active:scale-95 select-none ${
+                        className={`w-full py-1.5 md:py-1 min-h-[30px] md:min-h-[26px] flex items-center justify-center gap-0.5 rounded font-mono font-bold text-xs border transition active:scale-95 touch-manipulation select-none ${
                           effectiveBase >= 14
                             ? 'bg-red-950/70 hover:bg-red-600 hover:text-white border-red-700 text-red-200 shadow-xs'
                             : 'bg-zinc-950 hover:bg-red-900/60 hover:text-white border-zinc-800 hover:border-red-700 text-zinc-200'
                         }`}
                       >
-                        <Dices size={11} className="text-red-400 shrink-0 hidden sm:inline" />
+                        <Dices size={11} className="text-red-400 shrink-0 hidden md:inline" />
                         <span>{effectiveBase}</span>
                       </button>
                     </div>
@@ -617,7 +638,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               className="px-2.5 py-1.5 bg-zinc-800 hover:bg-cyan-950 border border-zinc-700 hover:border-cyan-700 text-zinc-200 hover:text-cyan-300 rounded text-xs font-semibold flex items-center gap-1.5 transition whitespace-nowrap shadow-xs"
             >
               <Wand2 size={13} className="text-cyan-400" />
-              <span className="hidden sm:inline">
+              <span className="hidden md:inline">
                 {lang === 'ru' ? `Пакет ${roleName(character.role,lang)}` : `${character.role} Pkg`}
               </span>
             </button>
@@ -635,7 +656,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               }`}
             >
               <Plus size={14} />
-              <span className="hidden sm:inline">{lang === 'ru' ? 'Свой' : 'Custom'}</span>
+              <span className="hidden md:inline">{lang === 'ru' ? 'Свой' : 'Custom'}</span>
             </button>
           </div>
         </div>
@@ -656,6 +677,21 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
           >
             <BookOpen size={12} className="shrink-0" />
             <span>{t.allCategories}</span>
+          </button>
+          <button
+            onClick={() => {
+              sfx.playClick();
+              setTrainedOnly(!trainedOnly);
+            }}
+            className={`px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 transition text-[11px] font-semibold min-h-[30px] flex items-center justify-center gap-1.5 touch-manipulation ${
+              trainedOnly
+                ? 'bg-amber-500 text-black font-extrabold shadow-sm ring-1 ring-amber-300'
+                : 'bg-zinc-800 hover:bg-zinc-700 text-amber-300 border border-amber-900/40'
+            }`}
+            title={lang === 'ru' ? 'Показать только изученные навыки (> 0 или с бонусом роли)' : 'Show only trained skills (> 0 or with role bonus)'}
+          >
+            <Sparkles size={12} className={trainedOnly ? 'text-black shrink-0' : 'text-amber-400 shrink-0'} />
+            <span>{lang === 'ru' ? `Изученные (${trainedSkillsCount})` : `Trained (${trainedSkillsCount})`}</span>
           </button>
           {CATEGORY_MAP.map((cat) => {
             const CatIcon = CATEGORY_ICON_MAP[cat.key];

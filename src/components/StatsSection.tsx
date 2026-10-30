@@ -258,7 +258,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
         {lang === 'ru' ? 'Автоматически учитывать эффекты поддержанных имплантов (отключите, если уже внесли бонусы вручную)' : 'Apply supported cyberware effects (disable if bonuses were already entered manually)'}
       </label>
       {/* Vital Stats Cards: HP, Humanity, Luck, Death Save */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 responsive-cols-4 gap-2 sm:gap-3">
         {/* HP CARD */}
         <div
           className={`bg-zinc-900 border rounded-lg p-3 sm:p-3.5 relative overflow-hidden transition-all ${
@@ -607,8 +607,79 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
         </div>
       </div>
 
-      {/* 10 Core Stats Grid */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4">
+      {/* 10 Core Stats Grid - Collapsible on Mobile (< md), Fully open on Tablet & Desktop (>= md) */}
+      <details className="mobile-only md:hidden bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 group">
+        <summary className="flex items-center justify-between cursor-pointer font-orbitron font-bold text-xs uppercase text-red-500 select-none">
+          <div className="flex items-center gap-1.5">
+            <Flame size={14} className="text-red-500" />
+            <span>{t.statsTitle} (10 ХАР)</span>
+            {armorPenalty < 0 && (
+              <span className="text-[10px] text-amber-400 font-mono font-semibold">({armorPenalty})</span>
+            )}
+          </div>
+          <span className="text-[10px] text-zinc-400 font-mono">▸</span>
+        </summary>
+        <div className="grid grid-cols-2 gap-2 pt-2.5">
+          {STAT_ORDER.map((statKey) => {
+            const rawVal = character.stats[statKey];
+            const isPenalized = (statKey === 'REF' || statKey === 'DEX' || statKey === 'MOVE') && armorPenalty < 0;
+            const effectiveVal = effectiveStat(character, statKey);
+
+            return (
+              <div
+                key={statKey}
+                className="bg-zinc-950 border border-zinc-800 rounded p-2 text-center flex flex-col justify-between"
+              >
+                <div>
+                  <div className="font-orbitron font-extrabold text-xs text-red-500 tracking-wider">
+                    {statKey}
+                  </div>
+                  <div className="text-[9px] text-zinc-400 truncate" title={t[statKey]}>
+                    {t[statKey]}
+                  </div>
+                </div>
+
+                <div className="my-1.5">
+                  <span className={`font-orbitron font-black text-xl ${isPenalized ? 'text-amber-400' : 'text-white'}`}>
+                    {effectiveVal}
+                  </span>
+                  {isPenalized && (
+                    <div className="text-[9px] text-amber-500 font-mono font-bold">
+                      ({rawVal}{armorPenalty})
+                    </div>
+                  )}
+                </div>
+
+                {/* +/- Controls & Roll button */}
+                <div className="flex items-center justify-center gap-1 pt-1 border-t border-zinc-900">
+                  <button
+                    onClick={() => handleStatChange(statKey, -1)}
+                    className="w-7 h-7 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded text-sm font-bold transition flex items-center justify-center touch-manipulation active:scale-95"
+                  >
+                    -
+                  </button>
+                  <button
+                    onClick={() => onRollStat(statKey, effectiveVal)}
+                    title={lang === 'ru' ? `Бросок ${statKey} (1d10 + ${effectiveVal})` : `Roll ${statKey} (1d10 + ${effectiveVal})`}
+                    className="flex-1 py-1 min-h-[28px] bg-zinc-900 hover:bg-red-950 text-zinc-300 hover:text-red-400 rounded text-[11px] font-bold font-mono transition flex items-center justify-center touch-manipulation active:scale-95"
+                  >
+                    1d10
+                  </button>
+                  <button
+                    onClick={() => handleStatChange(statKey, 1)}
+                    className="w-7 h-7 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded text-sm font-bold transition flex items-center justify-center touch-manipulation active:scale-95"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </details>
+
+      {/* Desktop view (>= md) */}
+      <div className="desktop-only hidden md:block bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4">
         <div className="flex items-center justify-between mb-3 border-b border-zinc-800 pb-2">
           <h2 className="font-orbitron font-bold text-sm text-red-500 uppercase tracking-wider flex items-center gap-2">
             <Flame size={16} />

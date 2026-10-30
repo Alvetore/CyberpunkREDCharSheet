@@ -14,7 +14,8 @@ import {
   FileText,
   Layers,
   LayoutGrid,
-  ChevronRight
+  ChevronRight,
+  Menu
 } from 'lucide-react';
 
 export type NavigationTab = 
@@ -258,8 +259,154 @@ export const SectionNav: React.FC<SectionNavProps> = ({
 
   const currentCategoryDef = categories.find((c) => c.id === activeCategory) || categories[0];
 
+  // Mobile extra tabs state
+  const [showMobileMore, setShowMobileMore] = useState(false);
+
+  // In-game 4 core tabs for 1-tap mobile access:
+  // 1. Навыки (skills)
+  // 2. Снаряжение (gear)
+  // 3. Импланты (cyberware)
+  // 4. Бой (main)
+  const coreMobileTabs: { id: NavigationTab; labelRu: string; labelEn: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+    { id: 'skills', labelRu: 'Навыки', labelEn: 'Skills', icon: BookOpen },
+    { id: 'gear', labelRu: 'Снаряж.', labelEn: 'Gear', icon: Package },
+    { id: 'cyberware', labelRu: 'Импланты', labelEn: 'Cyberware', icon: ShieldAlert },
+    { id: 'main', labelRu: 'Бой', labelEn: 'Combat', icon: Crosshair },
+  ];
+
+  // Secondary tabs for mobile "Ещё ▾" menu
+  const secondaryMobileTabs: { id: NavigationTab; labelRu: string; labelEn: string; icon: React.ComponentType<{ size?: number; className?: string }>; badge?: { text?: string; isAlert?: boolean } }[] = [
+    {
+      id: 'injuries',
+      labelRu: 'Травмы и Броня',
+      labelEn: 'Injuries & Armor',
+      icon: HeartCrack,
+      badge: character.criticalInjuries?.some(i => i.isActive) ? { text: '!', isAlert: true } : undefined
+    },
+    {
+      id: 'netrunner',
+      labelRu: 'Нетраннинг',
+      labelEn: 'Netrunning',
+      icon: Cpu,
+    },
+    {
+      id: 'vehicles',
+      labelRu: 'Гараж и Транспорт',
+      labelEn: 'Garage & Vehicles',
+      icon: Car,
+      badge: character.vehicles && character.vehicles.length > 0 ? { text: String(character.vehicles.length) } : undefined
+    },
+    {
+      id: 'lifepath',
+      labelRu: 'Жизненный путь',
+      labelEn: 'Lifepath',
+      icon: Compass,
+    },
+    {
+      id: 'notes',
+      labelRu: 'Заметки',
+      labelEn: 'Notes',
+      icon: FileText,
+      badge: character.notes ? { text: '•' } : undefined
+    },
+  ];
+
+  const isSecondaryActive = secondaryMobileTabs.some(t => t.id === activeTab);
+  const activeSecondaryTab = secondaryMobileTabs.find(t => t.id === activeTab);
+  const hasCriticalInjuryAlert = character.criticalInjuries?.some(i => i.isActive);
+
   return (
     <nav className="bg-zinc-950 border border-zinc-800 rounded-xl p-2 sm:p-2.5 shadow-xl space-y-2 no-print">
+      {/* MOBILE 1-TAP IN-GAME BAR (< md:) */}
+      <div className="mobile-only md:hidden space-y-2">
+        <div className="grid grid-cols-5 gap-1">
+          {coreMobileTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setShowMobileMore(false);
+                  handleSelectTab(tab.id);
+                }}
+                className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg border text-[11px] font-orbitron font-bold transition active:scale-95 touch-manipulation min-h-[48px] ${
+                  isActive
+                    ? 'bg-red-600 text-white border-red-500 shadow-md shadow-red-950/60'
+                    : 'bg-zinc-900/90 text-zinc-300 border-zinc-800 hover:bg-zinc-800'
+                }`}
+              >
+                <Icon size={16} className={isActive ? 'text-white' : 'text-zinc-400'} />
+                <span className="truncate leading-none mt-1 text-[10px]">
+                  {lang === 'ru' ? tab.labelRu : tab.labelEn}
+                </span>
+              </button>
+            );
+          })}
+
+          {/* 5th Tab: "Ещё" / More or current active secondary tab */}
+          <button
+            onClick={() => {
+              sfx.playClick();
+              setShowMobileMore(!showMobileMore);
+            }}
+            className={`relative flex flex-col items-center justify-center py-2 px-1 rounded-lg border text-[11px] font-orbitron font-bold transition active:scale-95 touch-manipulation min-h-[48px] ${
+              isSecondaryActive || showMobileMore
+                ? 'bg-amber-500 text-black border-amber-400 shadow-md shadow-amber-950/40'
+                : 'bg-zinc-900/90 text-zinc-300 border-zinc-800 hover:bg-zinc-800'
+            }`}
+          >
+            {hasCriticalInjuryAlert && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[9px] font-bold flex items-center justify-center animate-pulse border border-zinc-950">
+                !
+              </span>
+            )}
+            <Menu size={16} className={isSecondaryActive || showMobileMore ? 'text-black' : 'text-zinc-400'} />
+            <span className="truncate leading-none mt-1 text-[10px]">
+              {isSecondaryActive
+                ? (lang === 'ru' ? activeSecondaryTab?.labelRu.split(' ')[0] : activeSecondaryTab?.labelEn.split(' ')[0])
+                : (lang === 'ru' ? 'Ещё ▾' : 'More ▾')}
+            </span>
+          </button>
+        </div>
+
+        {/* Expandable secondary tabs drawer */}
+        {showMobileMore && (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2 grid grid-cols-2 gap-1.5 animate-in fade-in duration-150">
+            {secondaryMobileTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setShowMobileMore(false);
+                    handleSelectTab(tab.id);
+                  }}
+                  className={`flex items-center gap-2 px-2.5 py-2 rounded-md border text-xs font-orbitron font-bold transition active:scale-95 touch-manipulation min-h-[38px] truncate ${
+                    isActive
+                      ? 'bg-amber-500 text-black border-amber-400'
+                      : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white'
+                  }`}
+                >
+                  <Icon size={14} className="shrink-0" />
+                  <span className="truncate text-[11px]">
+                    {lang === 'ru' ? tab.labelRu : tab.labelEn}
+                  </span>
+                  {tab.badge && (
+                    <span className={`ml-auto text-[10px] px-1 rounded-full shrink-0 ${tab.badge.isAlert ? 'bg-red-600 text-white font-bold animate-pulse' : 'bg-zinc-800 text-amber-300'}`}>
+                      {tab.badge.text}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* DESKTOP & TABLET NAVIGATION (>= md:) */}
+      <div className="desktop-only hidden md:block space-y-2">
       {/* Top Header: Mode Toggle & Current Location Breadcrumb */}
       <div className="flex items-center justify-between gap-2 px-1 text-xs">
         <div className="flex items-center gap-1.5 text-zinc-400 font-mono text-[11px] truncate">
@@ -523,6 +670,7 @@ export const SectionNav: React.FC<SectionNavProps> = ({
           })}
         </div>
       )}
+      </div>
     </nav>
   );
 };
