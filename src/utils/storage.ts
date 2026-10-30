@@ -60,6 +60,25 @@ export function saveStoredTheme(theme: AppTheme): void {
   }
 }
 
+export type UILayoutMode = 'auto' | 'mobile' | 'desktop';
+const LAYOUT_MODE_KEY = 'cpr_layout_mode_v1';
+
+export function getStoredLayoutMode(): UILayoutMode {
+  try {
+    const saved = localStorage.getItem(LAYOUT_MODE_KEY);
+    if (saved === 'auto' || saved === 'mobile' || saved === 'desktop') return saved;
+  } catch {}
+  return 'auto';
+}
+
+export function saveStoredLayoutMode(mode: UILayoutMode): void {
+  try {
+    localStorage.setItem(LAYOUT_MODE_KEY, mode);
+  } catch (err) {
+    console.error('Failed to save layout mode to localStorage', err);
+  }
+}
+
 export function loadStoredCharacters(): Character[] {
   try {
     const raw = localStorage.getItem(CHARACTERS_STORAGE_KEY);

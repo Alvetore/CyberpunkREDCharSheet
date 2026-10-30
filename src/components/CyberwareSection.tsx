@@ -204,8 +204,8 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
         </div>
       </div>
 
-      {/* Installation Slots - Collapsible on mobile, fully visible on desktop */}
-      <details className="sm:hidden bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 space-y-2 group">
+      {/* Installation Slots - Collapsible on mobile (< md), fully visible on tablet & desktop (>= md) */}
+      <details className="mobile-only md:hidden bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 space-y-2 group">
         <summary className="flex items-center justify-between cursor-pointer font-bold text-cyan-300 text-xs select-none">
           <div className="flex items-center gap-1.5">
             <Layers size={14} className="text-cyan-400" />
@@ -233,7 +233,7 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
         )}
       </details>
 
-      <section className="hidden sm:block bg-zinc-900 border border-zinc-800 rounded p-3 space-y-2">
+      <section className="desktop-only hidden md:block bg-zinc-900 border border-zinc-800 rounded p-3 space-y-2">
         <h3 className="text-cyan-300 font-bold text-sm">{lang === 'ru' ? 'Слоты установки' : 'Installation slots'}</h3>
         <p className="text-xs text-zinc-400">{lang === 'ru' ? 'Покупка и установка разделены. Выберите конкретное основание для каждой опции. Снятые импланты не дают эффектов и не занимают слоты.' : 'Purchase and installation are separate. Assign each option to a specific host. Uninstalled inventory provides no effects and occupies no slots.'}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">{hosts.map(host => <div key={host.id} className={`bg-zinc-950 rounded p-2 ${host.used > host.capacity ? 'text-red-300' : 'text-zinc-300'}`}><span>{host.name}</span><strong className="block text-cyan-300">{host.capacity === 0 ? (lang === 'ru' ? 'Особое крепление — см. описание' : 'Special mount — see description') : `${host.used} / ${host.capacity}`}</strong></div>)}</div>
@@ -280,12 +280,12 @@ export const CyberwareSection: React.FC<CyberwareSectionProps> = ({
               </div>
 
               {/* Desktop description */}
-              <div className="hidden sm:block text-xs text-zinc-300 mt-2 leading-relaxed">
+              <div className="desktop-only hidden md:block text-xs text-zinc-300 mt-2 leading-relaxed">
                 {item.description}
               </div>
 
               {/* Mobile description: compact preview with tap-to-expand */}
-              <div className="sm:hidden mt-1 text-xs text-zinc-300">
+              <div className="mobile-only md:hidden mt-1 text-xs text-zinc-300">
                 {item.description.length > 70 ? (
                   <details className="text-[11px] text-zinc-400">
                     <summary className="cursor-pointer text-zinc-300 line-clamp-2">

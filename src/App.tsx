@@ -11,6 +11,9 @@ import {
   getStoredSoundEnabled,
   saveStoredSoundEnabled,
   AppTheme,
+  getStoredLayoutMode,
+  saveStoredLayoutMode,
+  UILayoutMode,
   exportSingleCharacter,
   exportAllCharacters,
   parseImportedJson,
@@ -70,6 +73,28 @@ export const App: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => getStoredSoundEnabled());
   const [dualTerms, setDualTerms] = useState<boolean>(true);
   const [theme, setTheme] = useState<AppTheme>(() => getStoredTheme());
+  const [layoutMode, setLayoutMode] = useState<UILayoutMode>(() => getStoredLayoutMode());
+
+  // Apply layout mode to document element
+  useEffect(() => {
+    saveStoredLayoutMode(layoutMode);
+    const root = document.documentElement;
+    root.classList.remove('layout-mobile', 'layout-desktop');
+    if (layoutMode === 'mobile') {
+      root.classList.add('layout-mobile');
+    } else if (layoutMode === 'desktop') {
+      root.classList.add('layout-desktop');
+    }
+  }, [layoutMode]);
+
+  const handleToggleLayoutMode = () => {
+    sfx.playClick();
+    setLayoutMode((prev) => {
+      if (prev === 'auto') return 'mobile';
+      if (prev === 'mobile') return 'desktop';
+      return 'auto';
+    });
+  };
 
   // Apply theme to document element
   useEffect(() => {
@@ -418,6 +443,8 @@ export const App: React.FC = () => {
         onToggleSound={() => setSoundEnabled(!soundEnabled)}
         dualTerms={dualTerms}
         onToggleDualTerms={() => setDualTerms(!dualTerms)}
+        layoutMode={layoutMode}
+        onToggleLayoutMode={handleToggleLayoutMode}
       />
 
       {/* Main Container */}

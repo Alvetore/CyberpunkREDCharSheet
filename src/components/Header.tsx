@@ -22,8 +22,12 @@ import {
   Menu,
   X,
   BookA,
-  Users
+  Users,
+  Smartphone,
+  Monitor,
+  TabletSmartphone
 } from 'lucide-react';
+import { UILayoutMode } from '../utils/storage';
 
 interface HeaderProps {
   characters: Character[];
@@ -46,6 +50,8 @@ interface HeaderProps {
   onToggleSound: () => void;
   dualTerms: boolean;
   onToggleDualTerms: () => void;
+  layoutMode?: UILayoutMode;
+  onToggleLayoutMode?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -68,7 +74,9 @@ export const Header: React.FC<HeaderProps> = ({
   soundEnabled,
   onToggleSound,
   dualTerms,
-  onToggleDualTerms
+  onToggleDualTerms,
+  layoutMode = 'auto',
+  onToggleLayoutMode
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mobileFileInputRef = useRef<HTMLInputElement>(null);
@@ -211,6 +219,45 @@ export const Header: React.FC<HeaderProps> = ({
               <Languages size={14} />
               <span>{lang.toUpperCase()}</span>
             </button>
+
+            {/* Layout Mode Toggle (Auto / Mobile / Desktop) */}
+            {onToggleLayoutMode && (
+              <button
+                onClick={() => {
+                  sfx.playClick();
+                  onToggleLayoutMode();
+                }}
+                title={
+                  layoutMode === 'mobile'
+                    ? (lang === 'ru' ? 'Режим: Мобильный (компактный). Нажмите для переключения' : 'Mode: Mobile (compact). Click to toggle')
+                    : layoutMode === 'desktop'
+                    ? (lang === 'ru' ? 'Режим: ПК / Планшет (полный). Нажмите для переключения' : 'Mode: Desktop & Tablet (full). Click to toggle')
+                    : (lang === 'ru' ? 'Режим: Авто (по экрану). Нажмите для переключения' : 'Mode: Auto (by screen size). Click to toggle')
+                }
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 border rounded transition min-h-[36px] text-xs font-semibold ${
+                  layoutMode === 'mobile'
+                    ? 'bg-red-950/70 text-red-300 border-red-700'
+                    : layoutMode === 'desktop'
+                    ? 'bg-cyan-950/70 text-cyan-300 border-cyan-700'
+                    : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:text-white'
+                }`}
+              >
+                {layoutMode === 'mobile' ? (
+                  <Smartphone size={14} className="text-red-400" />
+                ) : layoutMode === 'desktop' ? (
+                  <Monitor size={14} className="text-cyan-400" />
+                ) : (
+                  <TabletSmartphone size={14} className="text-amber-400" />
+                )}
+                <span className="font-orbitron text-[11px] uppercase">
+                  {layoutMode === 'mobile'
+                    ? (lang === 'ru' ? 'Моб' : 'Mob')
+                    : layoutMode === 'desktop'
+                    ? (lang === 'ru' ? 'ПК' : 'PC')
+                    : (lang === 'ru' ? 'Авто' : 'Auto')}
+                </span>
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu Hamburger Toggle (Visible on screens < lg) */}
@@ -458,6 +505,39 @@ export const Header: React.FC<HeaderProps> = ({
                 <Languages size={15} className="text-cyan-400" />
                 <span>{lang === 'ru' ? 'Язык: RU' : 'Lang: EN'}</span>
               </button>
+
+              {/* Layout Mode Toggle */}
+              {onToggleLayoutMode && (
+                <button
+                  onClick={() => {
+                    sfx.playClick();
+                    onToggleLayoutMode();
+                  }}
+                  className={`flex items-center justify-center gap-2 p-2 border rounded text-xs font-semibold min-h-[40px] transition col-span-2 sm:col-span-1 ${
+                    layoutMode === 'mobile'
+                      ? 'bg-red-950/60 border-red-800 text-red-300'
+                      : layoutMode === 'desktop'
+                      ? 'bg-cyan-950/60 border-cyan-800 text-cyan-300'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-800'
+                  }`}
+                  title={lang === 'ru' ? 'Переключить режим отображения (Авто / Телефон / ПК)' : 'Toggle layout mode (Auto / Mobile / Desktop)'}
+                >
+                  {layoutMode === 'mobile' ? (
+                    <Smartphone size={15} className="text-red-400" />
+                  ) : layoutMode === 'desktop' ? (
+                    <Monitor size={15} className="text-cyan-400" />
+                  ) : (
+                    <TabletSmartphone size={15} className="text-amber-400" />
+                  )}
+                  <span>
+                    {layoutMode === 'mobile'
+                      ? (lang === 'ru' ? 'Вид: Телефон' : 'View: Mobile')
+                      : layoutMode === 'desktop'
+                      ? (lang === 'ru' ? 'Вид: ПК/Планшет' : 'View: Desktop')
+                      : (lang === 'ru' ? 'Вид: Авто' : 'View: Auto')}
+                  </span>
+                </button>
+              )}
             </div>
           </div>
 

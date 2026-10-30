@@ -77,6 +77,39 @@ button, input, select, textarea, [role="button"] {
   touch-action: manipulation;
 }
 
+/* Layout mode overrides:
+   - Auto mode (default): Breakpoint md (768px). Mobile UI on phones (<768px), full desktop/tablet UI on screens >= 768px.
+   - Forced mobile (html.layout-mobile): Always displays mobile elements and hides desktop elements on any screen width.
+   - Forced desktop (html.layout-desktop): Always displays desktop elements and hides mobile elements on any screen width.
+*/
+html.layout-mobile .mobile-only,
+html.layout-mobile details.mobile-only {
+  display: block !important;
+}
+html.layout-mobile .mobile-only-grid {
+  display: grid !important;
+}
+html.layout-mobile .desktop-only,
+html.layout-mobile section.desktop-only {
+  display: none !important;
+}
+html.layout-mobile .responsive-cols-4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+html.layout-desktop .mobile-only,
+html.layout-desktop details.mobile-only,
+html.layout-desktop .mobile-only-grid {
+  display: none !important;
+}
+html.layout-desktop .desktop-only,
+html.layout-desktop section.desktop-only {
+  display: block !important;
+}
+html.layout-desktop .responsive-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
 /* Light Theme - Arasaka Corporate Clean */
 html.light {
   color-scheme: light;

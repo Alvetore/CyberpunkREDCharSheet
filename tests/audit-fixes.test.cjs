@@ -14,6 +14,7 @@ const { TherapyModal } = load('src/components/TherapyModal.tsx');
 const { WeaponsSection } = load('src/components/WeaponsSection.tsx');
 const { VehiclesSection } = load('src/components/VehiclesSection.tsx');
 const { SkillsSection } = load('src/components/SkillsSection.tsx');
+const { Header } = load('src/components/Header.tsx');
 
 let memory;
 beforeEach(() => {
@@ -535,4 +536,48 @@ test('mobile usability: StatsSection collapsible 10 stats and 2x2 vitals grid', 
   assert.ok(details.length > 0);
   const summary = nodes(rendered, n => n.type === 'summary' && label(n).includes('10 ХАР'));
   assert.ok(summary.length > 0);
+});
+
+test('mobile usability: layout mode storage and manual toggle button', () => {
+  // Test storage
+  assert.equal(storage.getStoredLayoutMode(), 'auto');
+  storage.saveStoredLayoutMode('mobile');
+  assert.equal(storage.getStoredLayoutMode(), 'mobile');
+  storage.saveStoredLayoutMode('desktop');
+  assert.equal(storage.getStoredLayoutMode(), 'desktop');
+  storage.saveStoredLayoutMode('invalid');
+  assert.equal(storage.getStoredLayoutMode(), 'auto');
+
+  // Test Header toggle button
+  let toggled = false;
+  const c = createEmptyCharacter('LayoutTester');
+  const view = mount(Header, {
+    characters: [c],
+    activeChar: c,
+    onSelectCharacter() {},
+    onNewCharacter() {},
+    onDuplicateCharacter() {},
+    onDeleteCharacter() {},
+    onExportCharacter() {},
+    onExportAll() {},
+    onImportCharacter() {},
+    onOpenDiceRoller() {},
+    onOpenWizard() {},
+    onOpenShop() {},
+    theme: 'dark',
+    onToggleTheme() {},
+    lang: 'ru',
+    onToggleLang() {},
+    soundEnabled: true,
+    onToggleSound() {},
+    dualTerms: true,
+    onToggleDualTerms() {},
+    layoutMode: 'auto',
+    onToggleLayoutMode() { toggled = true; }
+  });
+
+  const btn = button(view.render(), 'Авто');
+  assert.ok(btn);
+  btn.props.onClick();
+  assert.equal(toggled, true);
 });

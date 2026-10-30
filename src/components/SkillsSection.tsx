@@ -419,9 +419,9 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
 
           {/* Table Column Labels */}
           <div className="flex items-center text-[11px] font-mono font-bold text-zinc-400 shrink-0 select-none">
-            <span className="w-16 sm:w-20 text-center tracking-wide">{t.skillColLevel || 'УР'}</span>
-            <span className="w-9 sm:w-10 text-center tracking-wide">{t.skillColStat || 'ХАР'}</span>
-            <span className="w-12 sm:w-12 text-center text-red-400 tracking-wide">{t.skillColBase || 'ОСН'}</span>
+            <span className="w-16 md:w-20 text-center tracking-wide">{t.skillColLevel || 'УР'}</span>
+            <span className="w-9 md:w-10 text-center tracking-wide">{t.skillColStat || 'ХАР'}</span>
+            <span className="w-12 md:w-12 text-center text-red-400 tracking-wide">{t.skillColBase || 'ОСН'}</span>
           </div>
         </div>
 
@@ -547,7 +547,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                     </div>
 
                     {/* Stat (ХАР) */}
-                    <div className="w-9 sm:w-10 text-center font-mono font-bold text-xs select-none">
+                    <div className="w-9 md:w-10 text-center font-mono font-bold text-xs select-none">
                       {effectiveStat !== statVal ? (
                         <span className="text-amber-400 cursor-help" title={lang === 'ru' ? `Исходная: ${statVal}; текущая: ${effectiveStat} (с учётом модификаторов, Humanity и брони)` : `Original: ${statVal}; current: ${effectiveStat} (modifiers, Humanity and armor included)`}>
                           {effectiveStat}
@@ -560,17 +560,17 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                     </div>
 
                     {/* Roll Base (ОСН) */}
-                    <div className="w-12 sm:w-12 flex items-center justify-center">
+                    <div className="w-12 md:w-12 flex items-center justify-center">
                       <button
                         onClick={() => onRollSkill(skill, effectiveBase)}
                         title={`${lang === 'ru' ? 'Бросить' : 'Roll'} ${lang === 'ru' ? nameRu : nameEn}: 1d10 + ${effectiveBase} (${lang === 'ru' ? STAT_DISPLAY_RU[skill.stat] : skill.stat} ${effectiveStat} + ${lang === 'ru' ? 'Ур' : 'Lvl'} ${skill.level}${roleBonusInfo.bonus > 0 ? ` + ${lang === 'ru' ? roleBonusInfo.badgeRu : roleBonusInfo.badgeEn}` : ''}${woundPenalty !== 0 ? ` ${woundPenalty}` : ''})`}
-                        className={`w-full py-1.5 sm:py-1 min-h-[30px] sm:min-h-[26px] flex items-center justify-center gap-0.5 rounded font-mono font-bold text-xs border transition active:scale-95 touch-manipulation select-none ${
+                        className={`w-full py-1.5 md:py-1 min-h-[30px] md:min-h-[26px] flex items-center justify-center gap-0.5 rounded font-mono font-bold text-xs border transition active:scale-95 touch-manipulation select-none ${
                           effectiveBase >= 14
                             ? 'bg-red-950/70 hover:bg-red-600 hover:text-white border-red-700 text-red-200 shadow-xs'
                             : 'bg-zinc-950 hover:bg-red-900/60 hover:text-white border-zinc-800 hover:border-red-700 text-zinc-200'
                         }`}
                       >
-                        <Dices size={11} className="text-red-400 shrink-0 hidden sm:inline" />
+                        <Dices size={11} className="text-red-400 shrink-0 hidden md:inline" />
                         <span>{effectiveBase}</span>
                       </button>
                     </div>
@@ -638,7 +638,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               className="px-2.5 py-1.5 bg-zinc-800 hover:bg-cyan-950 border border-zinc-700 hover:border-cyan-700 text-zinc-200 hover:text-cyan-300 rounded text-xs font-semibold flex items-center gap-1.5 transition whitespace-nowrap shadow-xs"
             >
               <Wand2 size={13} className="text-cyan-400" />
-              <span className="hidden sm:inline">
+              <span className="hidden md:inline">
                 {lang === 'ru' ? `Пакет ${roleName(character.role,lang)}` : `${character.role} Pkg`}
               </span>
             </button>
@@ -656,7 +656,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               }`}
             >
               <Plus size={14} />
-              <span className="hidden sm:inline">{lang === 'ru' ? 'Свой' : 'Custom'}</span>
+              <span className="hidden md:inline">{lang === 'ru' ? 'Свой' : 'Custom'}</span>
             </button>
           </div>
         </div>

@@ -258,7 +258,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
         {lang === 'ru' ? 'Автоматически учитывать эффекты поддержанных имплантов (отключите, если уже внесли бонусы вручную)' : 'Apply supported cyberware effects (disable if bonuses were already entered manually)'}
       </label>
       {/* Vital Stats Cards: HP, Humanity, Luck, Death Save */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 responsive-cols-4 gap-2 sm:gap-3">
         {/* HP CARD */}
         <div
           className={`bg-zinc-900 border rounded-lg p-3 sm:p-3.5 relative overflow-hidden transition-all ${
@@ -607,8 +607,8 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
         </div>
       </div>
 
-      {/* 10 Core Stats Grid - Collapsible on Mobile (< sm), Fully open on Desktop (>= sm) */}
-      <details className="sm:hidden bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 group">
+      {/* 10 Core Stats Grid - Collapsible on Mobile (< md), Fully open on Tablet & Desktop (>= md) */}
+      <details className="mobile-only md:hidden bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 group">
         <summary className="flex items-center justify-between cursor-pointer font-orbitron font-bold text-xs uppercase text-red-500 select-none">
           <div className="flex items-center gap-1.5">
             <Flame size={14} className="text-red-500" />
@@ -678,8 +678,8 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
         </div>
       </details>
 
-      {/* Desktop view (>= sm) */}
-      <div className="hidden sm:block bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4">
+      {/* Desktop view (>= md) */}
+      <div className="desktop-only hidden md:block bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4">
         <div className="flex items-center justify-between mb-3 border-b border-zinc-800 pb-2">
           <h2 className="font-orbitron font-bold text-sm text-red-500 uppercase tracking-wider flex items-center gap-2">
             <Flame size={16} />

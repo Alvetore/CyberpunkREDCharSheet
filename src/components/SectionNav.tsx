@@ -317,8 +317,8 @@ export const SectionNav: React.FC<SectionNavProps> = ({
 
   return (
     <nav className="bg-zinc-950 border border-zinc-800 rounded-xl p-2 sm:p-2.5 shadow-xl space-y-2 no-print">
-      {/* MOBILE 1-TAP IN-GAME BAR (< sm:) */}
-      <div className="sm:hidden space-y-2">
+      {/* MOBILE 1-TAP IN-GAME BAR (< md:) */}
+      <div className="mobile-only md:hidden space-y-2">
         <div className="grid grid-cols-5 gap-1">
           {coreMobileTabs.map((tab) => {
             const Icon = tab.icon;
@@ -405,8 +405,8 @@ export const SectionNav: React.FC<SectionNavProps> = ({
         )}
       </div>
 
-      {/* DESKTOP & TABLET NAVIGATION (>= sm:) */}
-      <div className="hidden sm:block space-y-2">
+      {/* DESKTOP & TABLET NAVIGATION (>= md:) */}
+      <div className="desktop-only hidden md:block space-y-2">
       {/* Top Header: Mode Toggle & Current Location Breadcrumb */}
       <div className="flex items-center justify-between gap-2 px-1 text-xs">
         <div className="flex items-center gap-1.5 text-zinc-400 font-mono text-[11px] truncate">

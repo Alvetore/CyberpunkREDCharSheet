@@ -177,7 +177,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
   return (
     <div className="space-y-4">
       {/* Economy & Lifestyle Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 responsive-cols-4 gap-2 sm:gap-3">
         {/* Cash */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 sm:p-3">
           <div className="flex items-center gap-1.5 font-orbitron font-bold text-xs uppercase text-emerald-400 mb-1">
@@ -294,8 +294,8 @@ export const GearSection: React.FC<GearSectionProps> = ({
           </div>
         </div>
 
-        {/* Desktop Table View (>= sm) */}
-        <div className="hidden sm:block overflow-x-auto touch-pan-x -mx-2 px-2 sm:mx-0 sm:px-0">
+        {/* Desktop Table View (>= md) */}
+        <div className="desktop-only hidden md:block overflow-x-auto touch-pan-x -mx-2 px-2 sm:mx-0 sm:px-0">
           <table className="w-full text-xs text-left border-collapse min-w-[550px]">
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-400 font-semibold uppercase text-[10px]">
@@ -367,8 +367,8 @@ export const GearSection: React.FC<GearSectionProps> = ({
           </table>
         </div>
 
-        {/* Mobile Cards View (< sm) */}
-        <div className="sm:hidden space-y-2">
+        {/* Mobile Cards View (< md) */}
+        <div className="mobile-only md:hidden space-y-2">
           {character.gear.length === 0 ? (
             <div className="p-4 text-center text-xs text-zinc-500 italic bg-zinc-950/60 rounded border border-zinc-800/60">
               {lang === 'ru' ? 'Рюкзак пуст. Нажмите «+ Снаряжение»' : 'Backpack is empty. Tap "+ Add Gear"'}
