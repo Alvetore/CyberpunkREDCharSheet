@@ -16,10 +16,7 @@ import {
   UILayoutMode,
   exportSingleCharacter,
   exportAllCharacters,
-  parseImportedJson,
-  hasStorageRecovery,
-  exportStorageRecovery,
-  restorePreviousCharacters
+  parseImportedJson
 } from './utils/storage';
 import { createEmptyCharacter } from './data/initialData';
 import { executeCyberpunkCheck, executeDamageRoll, executeDeathSave } from './utils/dice';
@@ -449,35 +446,18 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-2.5 sm:p-4 md:p-5 space-y-4 pb-24 sm:pb-8 min-w-0">
-        {(saveFailed || hasStorageRecovery()) && (
-          <div role="alert" className="p-3 border border-amber-500 text-amber-300 rounded text-sm flex items-center justify-between flex-wrap gap-2">
+        {saveFailed && (
+          <div role="alert" className="p-3 border border-red-500 bg-red-950/40 text-red-300 rounded text-sm flex items-center justify-between flex-wrap gap-2">
             <div>
-              {saveFailed
-                ? (lang === 'ru' ? 'Не удалось сохранить лист. Экспортируйте данные перед закрытием страницы.' : 'Saving failed. Export your data before closing this page.')
-                : (lang === 'ru' ? 'Резервная копия сохранена отдельно для восстановления.' : 'A backup copy has been preserved for recovery.')}
+              {lang === 'ru' ? 'Не удалось сохранить лист в браузере. Экспортируйте данные перед закрытием страницы.' : 'Saving failed. Export your data before closing this page.'}
             </div>
-            <div className="flex items-center gap-3">
-              <button type="button" className="underline hover:text-amber-200" onClick={exportStorageRecovery}>
-                {lang === 'ru' ? 'Выгрузить резервную копию' : 'Download recovery copy'}
-              </button>
-              {restorePreviousCharacters() && (
-                <button
-                  type="button"
-                  className="underline hover:text-amber-200 font-semibold"
-                  onClick={() => {
-                    const restored = restorePreviousCharacters();
-                    if (restored && restored.length > 0) {
-                      if (window.confirm(lang === 'ru' ? 'Восстановить предыдущую коллекцию персонажей?' : 'Restore previous character collection?')) {
-                        setCharacters(restored);
-                        setActiveId(restored[0]?.id || '');
-                      }
-                    }
-                  }}
-                >
-                  {lang === 'ru' ? 'Восстановить прошлую коллекцию' : 'Restore previous collection'}
-                </button>
-              )}
-            </div>
+            <button
+              type="button"
+              className="underline hover:text-red-200 font-semibold"
+              onClick={() => exportAllCharacters(characters)}
+            >
+              {lang === 'ru' ? 'Экспортировать всех' : 'Export all'}
+            </button>
           </div>
         )}
         {/* Core Stats always visible on top */}
