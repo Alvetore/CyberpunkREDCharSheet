@@ -453,7 +453,15 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 >
                   {/* Left: Skill icon + Skill title + stat badge + dual term. Tap anywhere on title to roll */}
                   <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onRollSkill(skill, effectiveBase)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onRollSkill(skill, effectiveBase);
+                      }
+                    }}
                     className="min-w-0 flex-1 pr-2 flex items-center gap-2 cursor-pointer select-none active:opacity-75"
                     title={`${lang === 'ru' ? 'Бросить' : 'Roll'} ${lang === 'ru' ? nameRu : nameEn}: 1d10 + ${effectiveBase}`}
                   >

@@ -119,7 +119,7 @@ test('manual weapon modal remains open for the next weapon and generates indepen
   assert.ok(exactButton(view.render(), 'Close'));
 });
 
-test('vehicle upgrade selector keeps its target and receipt while installing two different upgrades', () => {
+test('vehicle upgrade selector charges the book price and keeps its target and receipt', () => {
   const c = fresh(), vehicle = vehicleFromCatalog(DATAPOOL_ALL_VEHICLES.find(item => item.id === 'veh-ground-1'), 'en');
   vehicle.id = 'batch-vehicle'; vehicle.upgrades = ['Existing custom work']; vehicle.sdpCurrent = 9; c.vehicles = [vehicle];
   let updated;
@@ -127,12 +127,53 @@ test('vehicle upgrade selector keeps its target and receipt while installing two
   button(view.render(), 'Install Upgrade').props.onClick();
   const dialog = () => nodes(view.render(), node => node.props.role === 'dialog' && node.props['aria-label'] === 'Vehicle upgrades')[0];
   const one = DATAPOOL_VEHICLE_UPGRADES[0], two = DATAPOOL_VEHICLE_UPGRADES.find(item => item.nameEn !== one.nameEn);
-  assert.ok(two); selectOffering(dialog(), one.id); exactButton(dialog(), 'Install').props.onClick(); view.props.character = updated;
-  assert.ok(dialog()); assert.equal(nodes(dialog(), node => node.type === 'select')[0].props.value, one.id); receipt(dialog(), 1);
+  assert.ok(two);
+  selectOffering(dialog(), one.id); exactButton(dialog(), 'Install').props.onClick(); view.props.character = updated;
+  assert.ok(dialog()); receipt(dialog(), 1);
+  assert.equal(updated.cashEb, c.cashEb - one.costEb);
+  assert.equal(nodes(dialog(), node => node.type === 'select')[0].props.value, two.id);
   selectOffering(dialog(), two.id); exactButton(dialog(), 'Install').props.onClick(); view.props.character = updated;
-  assert.deepEqual(updated.vehicles[0].upgrades, ['Existing custom work', one.nameEn, two.nameEn]); assert.equal(updated.vehicles[0].sdpCurrent, 9);
-  assert.equal(updated.cashEb, c.cashEb); assert.ok(dialog()); assert.equal(nodes(dialog(), node => node.type === 'select')[0].props.value, two.id);
+  assert.deepEqual(updated.vehicles[0].upgrades, ['Existing custom work', one.nameEn, two.nameEn]);
+  assert.equal(updated.vehicles[0].sdpCurrent, 9);
+  assert.equal(updated.cashEb, c.cashEb - one.costEb - two.costEb);
+  assert.ok(dialog());
   assert.ok(receipt(dialog(), 2).includes(two.nameEn));
+});
+
+test('vehicle upgrades enforce category, prerequisite, rank and repeat rules', () => {
+  const c = fresh();
+  const bike = vehicleFromCatalog(DATAPOOL_ALL_VEHICLES.find(item => item.id === 'veh-ground-1'), 'en');
+  bike.id = 'bike'; c.vehicles = [bike];
+  const heavy = DATAPOOL_VEHICLE_UPGRADES.find(item => item.id === 'upg-reinforced-chassis');
+  const mount = DATAPOOL_VEHICLE_UPGRADES.find(item => item.id === 'upg-heavy-mount');
+  const living = DATAPOOL_VEHICLE_UPGRADES.find(item => item.id === 'upg-living-quarters');
+  assert.ok(heavy && mount && living);
+
+  const vehicles = load('src/utils/vehicles.ts');
+  assert.equal(vehicles.vehicleUpgradeCompatibility(heavy, bike), 'category');
+  assert.equal(vehicles.vehicleUpgradeCompatibility(living, bike), 'category');
+
+  const car = { ...bike, id: 'car', name: 'Компактный Автомобиль', model: 'Compact Car', bodyType: 'Компакт.Авто' };
+  assert.equal(vehicles.vehicleUpgradeCompatibility(heavy, car), 'ok');
+  assert.equal(vehicles.vehicleUpgradeCompatibility(mount, car), 'prerequisite');
+  assert.equal(vehicles.installVehicleUpgrade(c, 'car', living, true, 'en').error, 'vehicle');
+  c.vehicles = [car];
+  assert.equal(vehicles.installVehicleUpgrade(c, 'car', living, true, 'en').error, 'prerequisite');
+  const withHeavy = vehicles.installVehicleUpgrade(c, 'car', heavy, true, 'en');
+  assert.ok(withHeavy.character);
+  assert.equal(withHeavy.character.cashEb, c.cashEb - heavy.costEb);
+  assert.ok(vehicles.installVehicleUpgrade(withHeavy.character, 'car', heavy, true, 'en').error === 'duplicate');
+
+  const nomad = { ...c, role: 'Nomad', roleRank: 1 };
+  assert.equal(vehicles.installVehicleUpgrade(nomad, 'car', mount, true, 'en').error, 'rank');
+  const rankedNomad = {
+    ...nomad,
+    roleRank: 5,
+    vehicles: [{ ...car, upgrades: ['Тяжёлое шасси (Heavy Chassis)'] }]
+  };
+  const mounted = vehicles.installVehicleUpgrade(rankedNomad, 'car', mount, true, 'en');
+  assert.ok(mounted.character);
+  assert.equal(mounted.character.cashEb, rankedNomad.cashEb - mount.costEb);
 });
 
 test('global armor purchase stores the old ablated suit and all its metadata in spare armor', () => {

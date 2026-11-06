@@ -15,7 +15,7 @@ import { sfx } from '../utils/audio';
 import { effectiveStat, martialArtsLevel, selectedWeaponProfile, skillBase, soloPrecisionBonus, updateWeaponAmmo, weaponPenetration } from '../utils/rules';
 import { cyberwareDefinition, functionalCyberware } from '../utils/cyberware';
 import { useCatalogNotice } from './CatalogNotice';
-import { setWeaponEquipped, isGrenadeWeapon, isSameGrenadeType } from '../utils/backpack';
+import { setWeaponEquipped, isGrenadeWeapon, isSameGrenadeType, mergeGrenadeStack } from '../utils/backpack';
 import { 
   Crosshair, 
   Plus, 
@@ -166,16 +166,21 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
     };
 
     const isGrenade = isGrenadeWeapon(weapon);
+    // One manually added grenade is one item, regardless of the firearm form's
+    // default magazine value. Additional quantities are purchased explicitly.
+    if (isGrenade) {
+      weapon.magCapacity = 1;
+      weapon.currentAmmo = 1;
+      weapon.ammoType = 'Grenade';
+      weapon.consumable = true;
+    }
     const existing = isGrenade && character.weapons.find(
       w => w.isEquipped !== false && !w.sourceCyberwareId && isSameGrenadeType(w, weapon)
     );
     if (existing) {
-      const addedAmmo = weapon.currentAmmo || weapon.magCapacity || 1;
-      const newAmmo = existing.currentAmmo + addedAmmo;
-      const newCap = existing.currentAmmo === 0 ? addedAmmo : Math.max(existing.magCapacity + addedAmmo, newAmmo);
       onUpdateCharacter({
         ...character,
-        weapons: character.weapons.map(w => w.id === existing.id ? { ...w, currentAmmo: newAmmo, magCapacity: newCap } : w)
+        weapons: character.weapons.map(w => w.id === existing.id ? { ...w, ...mergeGrenadeStack(existing, 1, 1) } : w)
       });
       catalog.added(weapon.name);
       return;
@@ -235,7 +240,9 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   };
 
   const handleRollThrow = () => {
-    onRollCustomDamage?.(lang === 'ru' ? `Бросок: Урон рукопашной (${unarmedDamage}) напрямую по HP, цель сбита с ног` : `Throw: Brawling damage (${unarmedDamage}) directly to HP, target Prone`, unarmedDamage);
+    // Core p.177-179: a thrown grappled target takes damage equal to the
+    // attacker's BODY directly to HP, ignoring armor and SP ablation.
+    onRollCustomDamage?.(lang === 'ru' ? `Бросок: BODY (${body}) напрямую по HP, цель сбита с ног` : `Throw: BODY (${body}) directly to HP, target Prone`, String(body));
     setIsGrapplingTarget(false);
   };
 
@@ -690,8 +697,8 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   </div>
                   <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
                     {lang === 'ru'
-                      ? `Швыряет захваченную цель на землю: цель сбита с ног (Prone) и получает полный урон ${unarmedDamage}. Захват прекращается.`
-                      : `Throws grappled target to ground: target falls Prone and takes full ${unarmedDamage} damage. Ends grapple.`}
+                      ? `Швыряет захваченную цель на землю: цель сбита с ног (Prone) и получает ${body} урона (BODY) напрямую по HP. Захват прекращается.`
+                      : `Throws grappled target to ground: target falls Prone and takes ${body} BODY damage directly to HP. Ends grapple.`}
                   </p>
                 </div>
 

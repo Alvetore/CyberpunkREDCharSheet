@@ -82,18 +82,36 @@ test('audit: legacy cyberware with isInstalled true without slot is recognized a
   assert.deepEqual(installResult.character.cyberware[0].installedIn, ['body:neural']);
 });
 
-test('audit: storage recovery and previous character collection restoration', () => {
+test('audit: storage recovery is reserved for damaged saves while ordinary previous backups restore', () => {
   const initial = [createEmptyCharacter('Char1'), createEmptyCharacter('Char2')];
   storage.saveCharactersToStorage(initial);
 
   const next = [createEmptyCharacter('Char3')];
   storage.saveCharactersToStorage(next);
 
-  assert.equal(storage.hasStorageRecovery(), true);
+  // A normal previous save is not a damaged-save recovery: no warning banner.
+  assert.equal(storage.hasStorageRecovery(), false);
   const previous = storage.restorePreviousCharacters();
   assert.ok(previous);
   assert.equal(previous.length, 2);
   assert.equal(previous[0].name, 'Char1');
+
+  // A structurally damaged original is preserved separately and is announced.
+  global.localStorage.setItem('cpr_characters_v1', '{"broken":true}');
+  const loaded = storage.loadStoredCharacters();
+  assert.ok(loaded.length > 0);
+  assert.equal(storage.hasStorageRecovery(), true);
+
+  // The next save moves the damaged original into the dedicated recovery key
+  // without destroying the older valid previous collection.
+  storage.saveCharactersToStorage([createEmptyCharacter('Char4')]);
+  assert.equal(global.localStorage.getItem('cpr_characters_recovery_v1'), '{"broken":true}');
+  const recovery = storage.restorePreviousCharacters();
+  assert.ok(recovery);
+  assert.equal(recovery[0].name, 'Char1');
+
+  storage.clearStorageRecovery();
+  assert.equal(storage.hasStorageRecovery(), false);
 });
 
 test('audit: DataPoolShopModal syncs activeTab with initialCategory', () => {
@@ -211,13 +229,59 @@ test('audit: therapy rejects treatment when cash is insufficient for fee', () =>
     onUpdateCharacter(next) { updated = next; }
   });
 
+  // Core p.229: a successful Medtech check is required before payment is taken.
+  const checkInput = nodes(view.render(), n => n.type === 'input' && n.props['aria-label'] === 'Medtech check result')[0];
+  assert.ok(checkInput);
+  checkInput.props.onChange({ target: { value: '15' } });
+
   // Standard therapy costs 500 eb, character has 100 eb
   const therapyBtn = nodes(view.render(), n => n.type === 'button' && n.props.onClick?.toString().includes('executeTherapy'))[0];
   assert.ok(therapyBtn);
+  assert.equal(therapyBtn.props.disabled, false);
   therapyBtn.props.onClick();
 
   assert.equal(updated, null);
   assert.ok(alertMessage && alertMessage.includes('Insufficient funds'));
+});
+
+test('audit: therapy applies only after a passing Medtech check at the matching DV', () => {
+  const c = createEmptyCharacter('TherapyCheck');
+  c.cashEb = 5000;
+  c.humanityCurrent = 40;
+
+  let updated = null;
+  let alertMessage = null;
+  global.alert = msg => { alertMessage = msg; };
+
+  const view = mount(TherapyModal, {
+    isOpen: true,
+    character: c,
+    lang: 'en',
+    onClose() {},
+    onUpdateCharacter(next) { updated = next; }
+  });
+
+  const checkInput = () => nodes(view.render(), n => n.type === 'input' && n.props['aria-label'] === 'Medtech check result')[0];
+  const standardButton = () => nodes(view.render(), n => n.type === 'button' && n.props.onClick?.toString().includes('executeTherapy'))[0];
+  const extremeButton = () => nodes(view.render(), n => n.type === 'button' && n.props.onClick?.toString().includes('executeTherapy'))[1];
+
+  assert.equal(standardButton().props.disabled, true, 'No check yet');
+  checkInput().props.onChange({ target: { value: '14' } });
+  assert.equal(standardButton().props.disabled, true, 'DV15 not met');
+  standardButton().props.onClick();
+  assert.equal(updated, null);
+  assert.match(alertMessage, /Medtech check failed: DV15/);
+
+  checkInput().props.onChange({ target: { value: '15' } });
+  assert.equal(standardButton().props.disabled, false);
+  assert.equal(extremeButton().props.disabled, true, 'DV17 not met');
+  standardButton().props.onClick();
+  assert.ok(updated);
+  assert.ok(updated.humanityCurrent >= 42);
+  assert.equal(updated.cashEb, 4500);
+
+  // The successful check is consumed; another course needs a fresh check.
+  assert.equal(standardButton().props.disabled, true);
 });
 
 test('audit: Death Save displays effective BODY and reset button clears penalty; reducing BODY clamps HP', () => {
@@ -273,12 +337,13 @@ test('audit: WeaponsSection throw and wrestling choke deal direct damage through
   // Switch to Brawling subtab
   button(view.render(), 'Brawling').props.onClick();
 
-  // Throw button deals unarmed damage (3d6 for BODY 8) directly to HP
+  // Core pp.177-179: Throw deals BODY damage (8 for BODY 8) directly to HP.
   const throwBtn = button(view.render(), 'Throw to Ground');
   assert.ok(throwBtn);
   throwBtn.props.onClick();
   assert.ok(customDamage);
-  assert.equal(customDamage.formula, '3d6');
+  assert.equal(customDamage.formula, '8');
+  assert.match(customDamage.title, /BODY \(8\)/);
 });
 
 const backpack = load('src/utils/backpack.ts');
@@ -430,6 +495,111 @@ test('audit: consolidateGrenadeWeapons merges duplicate equipped and unequipped 
   assert.equal(unequippedFrags.length, 1);
   assert.equal(unequippedFrags[0].currentAmmo, 3);
   assert.equal(unequippedFrags[0].magCapacity, 3);
+});
+
+test('audit: a fully spent grenade stack never adds phantom capacity', () => {
+  const frag = GRENADE_CATALOG.find(g => g.name === 'Бронебойная граната');
+  assert.deepEqual(backpack.mergeGrenadeStack({ currentAmmo: 4, magCapacity: 4 }, 0, 5), { currentAmmo: 4, magCapacity: 4 });
+
+  const spent = { ...frag, id: 'spent', isEquipped: false, currentAmmo: 0, magCapacity: 5 };
+  const active = { ...frag, id: 'active', isEquipped: false, currentAmmo: 2, magCapacity: 2 };
+  const consolidated = backpack.consolidateGrenadeWeapons([spent, active]);
+  assert.equal(consolidated.length, 1);
+  assert.equal(consolidated[0].currentAmmo, 2);
+  assert.equal(consolidated[0].magCapacity, 2);
+
+  const reverse = backpack.consolidateGrenadeWeapons([active, spent]);
+  assert.equal(reverse.length, 1);
+  assert.equal(reverse[0].currentAmmo, 2);
+  assert.equal(reverse[0].magCapacity, 2);
+});
+
+test('audit: manually adding a Thrown Grenade creates one grenade, not the firearm magazine', () => {
+  const c = createEmptyCharacter('GrenadeManual');
+  c.weapons = [];
+  let updated = null;
+  const view = mount(WeaponsSection, {
+    character: c,
+    lang: 'en',
+    onUpdateCharacter(next) { updated = next; },
+    onRollWeaponAttack() {},
+    onRollWeaponDamage() {},
+    onRollCustomCheck() {},
+    onRollCustomDamage() {}
+  });
+
+  button(view.render(), 'Add Weapon').props.onClick();
+  const textInputs = nodes(view.render(), n => n.type === 'input' && n.props.type === 'text');
+  // Name and category both start as "Heavy Pistol"; category is the second field.
+  textInputs[1].props.onChange({ target: { value: 'Thrown Grenade' } });
+  nodes(view.render(), n => n.type === 'button' && label(n).trim() === 'Add')[0].props.onClick();
+
+  assert.ok(updated);
+  assert.equal(updated.weapons.length, 1);
+  assert.equal(updated.weapons[0].category, 'Thrown Grenade');
+  assert.equal(updated.weapons[0].currentAmmo, 1);
+  assert.equal(updated.weapons[0].magCapacity, 1);
+
+  view.props.character = updated;
+  nodes(view.render(), n => n.type === 'button' && label(n).trim() === 'Add')[0].props.onClick();
+  assert.equal(updated.weapons.length, 1);
+  assert.equal(updated.weapons[0].currentAmmo, 2);
+  assert.equal(updated.weapons[0].magCapacity, 2);
+});
+
+test('audit: legacy stored numbers are clamped and duplicate ids repaired before validation', () => {
+  const c = createEmptyCharacter('LegacyNumbers');
+  c.roleRank = 0;
+  c.cashEb = -50;
+  c.bankEb = -10;
+  c.hpCurrent = 999;
+  c.armor.head = { ...c.armor.head, spMax: -5, spCurrent: 99 };
+  c.weapons = [
+    { ...c.weapons[0], id: 'dup', magCapacity: 5, currentAmmo: -2 },
+    { ...c.weapons[0], id: 'dup', magCapacity: 5, currentAmmo: 99 }
+  ];
+  c.gear = [
+    { id: 'gear-dup', name: 'Rope', category: 'Gear', quantity: -3, costEb: 10, notes: '' },
+    { id: 'gear-dup', name: 'Medkit', category: 'Medical', quantity: 1.9, costEb: 10, notes: '' }
+  ];
+  c.vehicles = [{
+    id: 'v1', name: 'Car', model: 'Car', category: 'Ground', sdpMax: 20, sdpCurrent: -5,
+    seats: 2, speedCombat: '20', speedNarrative: '100', costEb: -100, notes: ''
+  }];
+
+  const fixed = storage.normalizeStoredCharacter(c);
+  assert.equal(fixed.roleRank, 1);
+  assert.equal(fixed.cashEb, 0);
+  assert.equal(fixed.bankEb, 0);
+  assert.equal(fixed.hpCurrent, rules.maxHP(c));
+  assert.equal(fixed.armor.head.spMax, 0);
+  assert.equal(fixed.armor.head.spCurrent, 0);
+  assert.equal(fixed.weapons[0].currentAmmo, 0);
+  assert.equal(fixed.weapons[1].currentAmmo, 5);
+  assert.notEqual(fixed.weapons[0].id, fixed.weapons[1].id);
+  assert.equal(fixed.gear[0].quantity, 0);
+  assert.equal(fixed.gear[1].quantity, 1);
+  assert.notEqual(fixed.gear[0].id, fixed.gear[1].id);
+  assert.equal(fixed.vehicles[0].sdpCurrent, 0);
+  assert.equal(fixed.vehicles[0].costEb, 0);
+  assert.ok(isCharacter(fixed));
+});
+
+test('audit: damaged storage shows recovery and previous-collection actions in the sheet', () => {
+  const { App } = load('src/App.tsx');
+  global.window = { confirm: () => true };
+  global.localStorage.setItem('cpr_characters_v1', '{"broken":true}');
+  global.localStorage.setItem('cpr_characters_previous_v1', JSON.stringify([createEmptyCharacter('Previous Hero')]));
+
+  const view = mount(App, {});
+  const tree = view.render();
+  assert.match(label(tree), /Повреждённое сохранение|damaged save/i);
+  assert.ok(nodes(tree, n => n.type === 'button' && /Выгрузить резервную копию|Download recovery copy/.test(label(n))).length);
+  const restore = nodes(tree, n => n.type === 'button' && /Восстановить предыдущую коллекцию|Restore previous collection/.test(label(n)))[0];
+  assert.ok(restore);
+  restore.props.onClick();
+  assert.doesNotMatch(label(view.render()), /Повреждённое сохранение|damaged save/i);
+  assert.equal(storage.hasStorageRecovery(), false);
 });
 
 test('mobile usability: SkillsSection trained-only filter and 1-tap skill rolling', () => {

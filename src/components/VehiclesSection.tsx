@@ -5,8 +5,9 @@ import { sfx } from '../utils/audio';
 import { VehicleCatalogModal } from './VehicleCatalogModal';
 import { useCatalogNotice } from './CatalogNotice';
 import { functionalCyberware } from '../utils/cyberware';
-import { maxHP, skillBase, woundPenalty } from '../utils/rules';
-import { DATAPOOL_VEHICLE_UPGRADES, CatalogVehicleUpgrade } from '../data/datapoolVehicles';
+import { skillBase } from '../utils/rules';
+import { DATAPOOL_VEHICLE_UPGRADES } from '../data/datapoolVehicles';
+import { availableVehicleUpgrades, installVehicleUpgrade, vehicleUpgradeErrorMessage } from '../utils/vehicles';
 import { 
   Car, 
   Wrench, 
@@ -52,6 +53,10 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
   const [selectedUpgradeId, setSelectedUpgradeId] = useState<string>('');
   const [customUpgradeText, setCustomUpgradeText] = useState<string>('');
   const catalog = useCatalogNotice(lang);
+  const upgradeTargetVehicle = upgradeTargetVehId ? vehicles.find(vehicle => vehicle.id === upgradeTargetVehId) : undefined;
+  const upgradeChoices = upgradeTargetVehicle ? availableVehicleUpgrades(character, upgradeTargetVehicle) : [];
+  const selectedCatalogUpgrade = upgradeChoices.find(upgrade => upgrade.id === selectedUpgradeId);
+  const upgradeAffordable = !selectedCatalogUpgrade || character.cashEb >= selectedCatalogUpgrade.costEb;
 
   // Calculate fleet stats
   const totalFleetCost = useMemo(() => {
@@ -71,10 +76,6 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
     if (categoryFilter === 'all') return vehicles;
     return vehicles.filter((v) => v.category === categoryFilter);
   }, [vehicles, categoryFilter]);
-
-  // General wound penalty of character
-  const characterMaxHp = maxHP(character);
-  const characterWoundPenalty = woundPenalty(character);
 
   // Handlers for Vehicle Management
   const handleDeleteVehicle = (vehId: string) => {
@@ -122,28 +123,31 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
     if (!targetVehicle) return;
     sfx.playClick();
 
-    let upgradeNameToAdd = '';
     if (selectedUpgradeId === 'custom') {
-      upgradeNameToAdd = customUpgradeText.trim();
-    } else if (selectedUpgradeId) {
-      const match = DATAPOOL_VEHICLE_UPGRADES.find((u) => u.id === selectedUpgradeId);
-      if (match) {
-        upgradeNameToAdd = lang === 'ru' ? match.nameRu : match.nameEn;
-      }
+      const upgradeNameToAdd = customUpgradeText.trim();
+      if (!upgradeNameToAdd) return;
+      const updated = vehicles.map((v) => v.id === upgradeTargetVehId
+        ? { ...v, upgrades: [...(v.upgrades || []), upgradeNameToAdd] }
+        : v);
+      onUpdateCharacter({ ...character, vehicles: updated });
+      catalog.added(`${upgradeNameToAdd} → ${targetVehicle.name}`);
+      return;
     }
 
-    if (!upgradeNameToAdd) return;
-
-    const updated = vehicles.map((v) => {
-      if (v.id === upgradeTargetVehId) {
-        const currentUpg = v.upgrades || [];
-        return { ...v, upgrades: [...currentUpg, upgradeNameToAdd] };
-      }
-      return v;
-    });
-
-    onUpdateCharacter({ ...character, vehicles: updated });
-    catalog.added(`${upgradeNameToAdd} → ${targetVehicle.name}`);
+    const match = DATAPOOL_VEHICLE_UPGRADES.find((u) => u.id === selectedUpgradeId);
+    if (!match) return;
+    const result = installVehicleUpgrade(character, upgradeTargetVehId, match, true, lang);
+    if (!result.character) {
+      alert(vehicleUpgradeErrorMessage(result.error!, lang));
+      return;
+    }
+    onUpdateCharacter(result.character);
+    catalog.added(`${lang === 'ru' ? match.nameRu : match.nameEn} → ${targetVehicle.name}`);
+    // A non-repeatable upgrade disappears from the list; move to the next legal choice.
+    const updatedTarget = result.character.vehicles?.find(vehicle => vehicle.id === upgradeTargetVehId);
+    setSelectedUpgradeId(updatedTarget
+      ? availableVehicleUpgrades(result.character, updatedTarget)[0]?.id || 'custom'
+      : 'custom');
   };
 
   const handleRemoveUpgrade = (vehId: string, upgIdx: number) => {
@@ -367,7 +371,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filteredVehicles.map((vehicle) => {
-            const isCriticalDamage = vehicle.sdpCurrent <= Math.floor(vehicle.sdpMax / 2) && vehicle.sdpCurrent > 0;
+            const isCriticalDamage = vehicle.sdpCurrent < Math.ceil(vehicle.sdpMax / 2) && vehicle.sdpCurrent > 0;
             const isDestroyed = vehicle.sdpCurrent === 0;
             const sdpPercent = Math.round((vehicle.sdpCurrent / vehicle.sdpMax) * 100);
 
@@ -586,7 +590,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
                           sfx.playClick();
                           catalog.reset();
                           setUpgradeTargetVehId(vehicle.id);
-                          setSelectedUpgradeId(DATAPOOL_VEHICLE_UPGRADES[0]?.id || '');
+                          setSelectedUpgradeId(availableVehicleUpgrades(character, vehicle)[0]?.id || 'custom');
                         }}
                         className="text-[11px] text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 transition"
                       >
@@ -696,13 +700,25 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
                   onChange={(e) => setSelectedUpgradeId(e.target.value)}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 focus:outline-none focus:border-amber-500 min-h-[38px]"
                 >
-                  {DATAPOOL_VEHICLE_UPGRADES.map((u) => (
+                  {upgradeChoices.map((u) => (
                     <option key={u.id} value={u.id}>
                       {lang === 'ru' ? u.nameRu : u.nameEn} ({u.costEb} eb, {lang === 'ru' ? `Ранг ${u.nomadRank}` : `Rank ${u.nomadRank}`})
                     </option>
                   ))}
                   <option value="custom">{lang === 'ru' ? '— Ввести своё название вручную —' : '— Enter custom name —'}</option>
                 </select>
+                {upgradeTargetVehicle && upgradeChoices.length === 0 && (
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    {lang === 'ru'
+                      ? 'Для этого транспорта больше нет доступных официальных улучшений.'
+                      : 'No further official upgrades are available for this vehicle.'}
+                  </p>
+                )}
+                {upgradeTargetVehicle && (
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    {lang === 'ru' ? `Цель установки: ${upgradeTargetVehicle.name}` : `Target vehicle: ${upgradeTargetVehicle.name}`}
+                  </p>
+                )}
               </div>
 
               {selectedUpgradeId === 'custom' ? (
@@ -720,7 +736,7 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
                 </div>
               ) : (
                 (() => {
-                  const currentUpg = DATAPOOL_VEHICLE_UPGRADES.find((u) => u.id === selectedUpgradeId);
+                  const currentUpg = selectedCatalogUpgrade;
                   if (!currentUpg) return null;
                   return (
                     <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-800 space-y-1.5 text-zinc-300">
@@ -733,7 +749,13 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
                       <div className="flex items-center gap-2 pt-1 font-mono text-[10px] text-zinc-400">
                         <span>{lang === 'ru' ? `Подходит для: ${currentUpg.applicableCategory}` : `Applies to: ${currentUpg.applicableCategory}`}</span>
                         <span>•</span>
-                        <span>{lang === 'ru' ? `Мин. ранг Кочевника: ${currentUpg.nomadRank}` : `Nomad: ${currentUpg.nomadRank}`}</span>
+                        <span>{lang === 'ru' ? `Мин. ранг Мото: ${currentUpg.nomadRank}` : `Nomad: ${currentUpg.nomadRank}`}</span>
+                      </div>
+                      <div className="flex items-center gap-2 pt-1 font-mono text-[10px]">
+                        <span className="text-amber-400">{lang === 'ru' ? `Цена: ${currentUpg.costEb} eb` : `Price: ${currentUpg.costEb} eb`}</span>
+                        {currentUpg.requiresUpgradeId && (
+                          <span className="text-zinc-500">{lang === 'ru' ? '• требуется Тяжёлое шасси' : '• requires Heavy Chassis'}</span>
+                        )}
                       </div>
                     </div>
                   );
@@ -751,7 +773,8 @@ export const VehiclesSection: React.FC<VehiclesSectionProps> = ({
               </button>
               <button
                 onClick={handleAddUpgradeToVehicle}
-                className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded font-orbitron font-bold text-xs uppercase tracking-wider min-h-[36px]"
+                disabled={!upgradeAffordable || (selectedUpgradeId === 'custom' && !customUpgradeText.trim())}
+                className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:hover:bg-amber-600 text-white rounded font-orbitron font-bold text-xs uppercase tracking-wider min-h-[36px]"
               >
                 {lang === 'ru' ? 'Установить' : 'Install'}
               </button>

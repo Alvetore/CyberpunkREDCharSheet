@@ -33,7 +33,7 @@ export const RoleActions:React.FC<Props> = ({character:c,lang,onUpdateCharacter,
     {button(ru?'Вызвать подкрепление':'Call Backup',()=>emit(rollLawmanBackup(c,lang)))}
   </section>;
   if(c.role==='Fixer') return <section className={panel}><h3 className="text-cyan-300 font-bold">{ru?'Деловая хватка':'Operator'} · {rank}</h3>
-    <p>{ru?`Охват: товары до ${fixerReach(rank)}. Торг: КРУТ + Торговля + ранг; ранг уже включён в навык. Одна сделка на транзакцию, проверка против Торговли второй стороны.`:`Reach: items up to ${fixerReach(rank)}. Haggle: COOL + Trading + rank; rank already included in Trading. One deal per transaction; oppose the other party's Trading.`}</p>
+    <p>{ru?`Охват: товары до ${fixerReach(rank)}. Торг: КРУТ + Торговля + ранг; ранг добавляется только к проверке торга. Одна сделка на транзакцию, проверка против Торговли второй стороны.`:`Reach: items up to ${fixerReach(rank)}. Haggle: COOL + Trading + rank; rank is added only to the haggle check. One deal per transaction; oppose the other party's Trading.`}</p>
     <ul className="list-disc pl-4"><li>{ru?`Покупка/продажа: ±${rank>=9?20:10}% при успешном торге.`:`Buy/sell: ±${rank>=9?20:10}% after successful haggling.`}</li>
       {rank>=3&&<li>{ru?'При покупке 5 одинаковых предметов — шестой бесплатно; дополнительная культура и язык 4.':'Buy 5 identical items, get one free; additional culture and language at 4.'}</li>}
       {rank>=5&&<li>{ru?'Ночной рынок раз в месяц с другими фиксерами; оплата работы до ±20%. Всего 3 дополнительные культуры/языка 4.':'Monthly Night Market with other Fixers; job pay up to ±20%. Three additional cultures/languages at 4.'}</li>}

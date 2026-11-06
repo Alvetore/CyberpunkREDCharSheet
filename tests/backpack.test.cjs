@@ -130,9 +130,12 @@ test('all armor records require complete shapes and unique nonempty IDs across r
   for (const patch of [{ sourceUrl: false }, { catalogId: [] }, { costEb: -1 }, { id: '' }]) {
     assert.equal(isCharacter({ ...c, armor: { ...c.armor, body: { ...c.armor.body, ...patch } } }), false);
   }
-  // Finite manually edited SP/penalty values were accepted before backpack support.
-  assert.ok(isCharacter({ ...c, spareArmor: [{ ...spare, spMax: -1.5, spCurrent: 99.25, penalty: 2.5, costEb: 0 }] }));
-  assert.ok(isCharacter({ ...c, armor: { ...c.armor, head: { ...c.armor.head, spCurrent: -2.5 } } }));
+  // Finite non-negative manually edited SP/penalty values remain accepted, but
+  // negative SP is not a legal armor value and must be rejected on import.
+  assert.ok(isCharacter({ ...c, spareArmor: [{ ...spare, spCurrent: 99.25, penalty: 2.5, costEb: 0 }] }));
+  assert.equal(isCharacter({ ...c, spareArmor: [{ ...spare, spMax: -1.5 }] }), false);
+  assert.equal(isCharacter({ ...c, spareArmor: [{ ...spare, spCurrent: -1 }] }), false);
+  assert.equal(isCharacter({ ...c, armor: { ...c.armor, head: { ...c.armor.head, spCurrent: -2.5 } } }), false);
 });
 
 test('optional owned cyberware prices validate without changing legacy price-free records', () => {

@@ -49,9 +49,37 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
   const [copied, setCopied] = useState(false);
   const [isRawSourceMode, setIsRawSourceMode] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingNotesRef = useRef<string | null>(null);
-  const characterRef = useRef(character);
-  characterRef.current = character;
+  const pendingNotesRef = useRef<{ characterId: string; notes: string; snapshot: Character } | null>(null);
+  const latestCharacterRef = useRef(character);
+  const updateCharacterRef = useRef(onUpdateCharacter);
+  latestCharacterRef.current = character;
+  updateCharacterRef.current = onUpdateCharacter;
+
+  const clearDebounce = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+  };
+
+  /**
+   * Save pending notes to the character they belong to. The snapshot is used
+   * when the active character has already changed, so notes for A can never
+   * be written into B during a switch.
+   */
+  const flushPendingNotes = (target?: Character) => {
+    const pending = pendingNotesRef.current;
+    if (!pending) return;
+    const destination = target && target.id === pending.characterId
+      ? target
+      : latestCharacterRef.current.id === pending.characterId
+      ? latestCharacterRef.current
+      : pending.snapshot;
+    pendingNotesRef.current = null;
+    clearDebounce();
+    if (destination.id !== pending.characterId) return;
+    updateCharacterRef.current({ ...destination, notes: pending.notes });
+  };
 
   // Initialize TipTap with Markdown and TaskList extensions
   const editor = useEditor({
@@ -82,26 +110,44 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
     onUpdate: ({ editor: ed }) => {
       const storage = ed.storage as unknown as { markdown?: { getMarkdown: () => string } };
       const md = storage.markdown ? storage.markdown.getMarkdown() : ed.getHTML();
-      pendingNotesRef.current = md;
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      const current = latestCharacterRef.current;
+      pendingNotesRef.current = { characterId: current.id, notes: md, snapshot: current };
+      clearDebounce();
       debounceTimerRef.current = setTimeout(() => {
-        onUpdateCharacter({ ...characterRef.current, notes: md });
+        const pending = pendingNotesRef.current;
+        if (!pending) return;
+        // A character switch flushes through the id-scoped effect below.
+        if (latestCharacterRef.current.id !== pending.characterId) return;
         pendingNotesRef.current = null;
+        updateCharacterRef.current({ ...latestCharacterRef.current, notes: pending.notes });
       }, 400);
     },
   });
 
-  // Flush pending notes on unmount
+  // Flush notes for the character that was active when they were edited.
+  // The cleanup only runs when the character id changes or on unmount.
   useEffect(() => {
+    const id = character.id;
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      if (pendingNotesRef.current !== null) {
-        onUpdateCharacter({ ...characterRef.current, notes: pendingNotesRef.current });
+      const pending = pendingNotesRef.current;
+      if (pending?.characterId === id) {
+        pendingNotesRef.current = null;
+        clearDebounce();
+        updateCharacterRef.current({ ...pending.snapshot, notes: pending.notes });
       }
     };
-  }, [onUpdateCharacter]);
+  }, [character.id]);
+
+  // Best-effort save when the page/tab is being closed or hidden.
+  useEffect(() => {
+    const flush = () => flushPendingNotes();
+    window.addEventListener('pagehide', flush);
+    window.addEventListener('beforeunload', flush);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      window.removeEventListener('beforeunload', flush);
+    };
+  }, []);
 
   // Sync content when switching characters from the header dropdown
   useEffect(() => {

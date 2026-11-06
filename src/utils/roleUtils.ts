@@ -35,13 +35,9 @@ export function getRoleSkillBonus(character: Character, skillId: string): RoleSk
   const descriptionsRu: string[] = [];
   const descriptionsEn: string[] = [];
 
-  if (character.role === 'Fixer' && skillId === 'trading') {
-    totalBonus += character.roleRank;
-    badgesRu.push(`Деловая хватка +${character.roleRank}`);
-    badgesEn.push(`Operator +${character.roleRank}`);
-    descriptionsRu.push('Деловая хватка: ранг добавляется к Торговле при торге.');
-    descriptionsEn.push('Operator rank applies to Trading when haggling.');
-  }
+  // Fixer's Operator rank is added only to Trading checks made to haggle
+  // (Core p.160), not to every Trading check. That context-specific bonus is
+  // applied by fixerTradingBase in roleAbilities.ts.
 
   // 1. NOMAD: Moto (Мото)
   // CPR Core Rulebook p.161: Nomad adds Moto rank to Drive Land, Pilot Air, Pilot Sea, Land Tech, Air Tech, Sea Tech

@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Character, Weapon, ArmorItem, CyberwareItem, GearItem } from '../types/character';
+import { Character, Weapon, ArmorItem, CyberwareItem } from '../types/character';
 import { Language } from '../locales/i18n';
 import { sfx } from '../utils/audio';
 import { initializeCyberware } from '../utils/rules';
 import { addGearToInventory, gearErrorMessage, gearPrice } from '../utils/gear';
-import { addVehicleToGarage, vehicleErrorMessage, vehicleFromCatalog } from '../utils/vehicles';
-import { stowArmor, isGrenadeWeapon, isSameGrenadeType } from '../utils/backpack';
+import { addVehicleToGarage, vehicleErrorMessage, vehicleFromCatalog, availableVehicleUpgrades, installVehicleUpgrade, vehicleUpgradeErrorMessage } from '../utils/vehicles';
+import { stowArmor, isGrenadeWeapon, isSameGrenadeType, mergeGrenadeStack } from '../utils/backpack';
 import { 
   DATAPOOL_WEAPONS, 
   DATAPOOL_ARMORS, 
@@ -86,6 +86,7 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
   const [isFreeMode, setIsFreeMode] = useState(false);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [purchaseSuccessMessage, setPurchaseSuccessMessage] = useState<string | null>(null);
+  const [vehicleUpgradeTargets, setVehicleUpgradeTargets] = useState<Record<string, string>>({});
 
   const [prevCat, setPrevCat] = useState(initialCategory);
   if (initialCategory !== prevCat) {
@@ -259,13 +260,8 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
         );
         if (existingGrenade) {
           const addedAmmo = item.weaponData.magCapacity || item.weaponData.currentAmmo || 1;
-          const newAmmo = existingGrenade.currentAmmo + addedAmmo;
-          const newCap = existingGrenade.currentAmmo === 0
-            ? addedAmmo
-            : Math.max(existingGrenade.magCapacity + addedAmmo, newAmmo);
-
           updatedChar.weapons = updatedChar.weapons.map(w =>
-            w.id === existingGrenade.id ? { ...w, currentAmmo: newAmmo, magCapacity: newCap } : w
+            w.id === existingGrenade.id ? { ...w, ...mergeGrenadeStack(existingGrenade, addedAmmo, addedAmmo) } : w
           );
         } else {
           const newWeap: Weapon = {
@@ -353,28 +349,21 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
       updatedChar.vehicles = result.character.vehicles;
       updatedChar.cashEb = result.character.cashEb;
     } else if (item.type === 'vehicle_upgrade' && item.vehicleUpgradeData) {
-      const upgTitle = lang === 'ru' ? item.vehicleUpgradeData.nameRu : item.vehicleUpgradeData.nameEn;
-      if (updatedChar.vehicles && updatedChar.vehicles.length > 0) {
-        // Install on first vehicle
-        const updatedVehicles = [...updatedChar.vehicles];
-        const existingUpg = updatedVehicles[0].upgrades || [];
-        updatedVehicles[0] = {
-          ...updatedVehicles[0],
-          upgrades: [...existingUpg, upgTitle]
-        };
-        updatedChar.vehicles = updatedVehicles;
-      } else {
-        // Add to gear
-        const newGear: GearItem = {
-          id: 'gear-vehupg-' + Date.now(),
-          name: upgTitle,
-          category: lang === 'ru' ? 'Модернизация ТС' : 'Vehicle Upgrade',
-          quantity: 1,
-          costEb: item.vehicleUpgradeData.costEb,
-          notes: lang === 'ru' ? item.vehicleUpgradeData.descriptionRu : item.vehicleUpgradeData.descriptionEn
-        };
-        updatedChar.gear = [...updatedChar.gear, newGear];
+      const upgrade = item.vehicleUpgradeData;
+      const compatible = (updatedChar.vehicles ?? []).filter(vehicle =>
+        availableVehicleUpgrades(updatedChar, vehicle).some(candidate => candidate.id === upgrade.id));
+      const requested = vehicleUpgradeTargets[item.id];
+      const targetId = compatible.some(vehicle => vehicle.id === requested) ? requested : compatible[0]?.id;
+      if (!targetId) {
+        alert(lang === 'ru' ? 'Сначала купите или добавьте совместимый транспорт.' : 'Buy or add a compatible vehicle first.');
+        return;
       }
+      const result = installVehicleUpgrade(updatedChar, targetId, upgrade, false, lang);
+      if (!result.character) {
+        alert(vehicleUpgradeErrorMessage(result.error!, lang));
+        return;
+      }
+      updatedChar = result.character;
     }
 
     onUpdateCharacter(updatedChar);
@@ -671,6 +660,16 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
               {filteredItems.map((item) => {
                 const canAfford = isFreeMode || character.cashEb >= item.costEb;
                 const isExpanded = expandedItemId === item.id;
+                const compatibleVehicles = item.type === 'vehicle_upgrade' && item.vehicleUpgradeData
+                  ? (character.vehicles ?? []).filter(vehicle =>
+                      availableVehicleUpgrades(character, vehicle).some(upgrade => upgrade.id === item.vehicleUpgradeData!.id))
+                  : [];
+                const selectedVehicleId = item.type === 'vehicle_upgrade'
+                  ? (compatibleVehicles.some(vehicle => vehicle.id === vehicleUpgradeTargets[item.id])
+                      ? vehicleUpgradeTargets[item.id]
+                      : compatibleVehicles[0]?.id || '')
+                  : '';
+                const canBuy = canAfford && (item.type !== 'vehicle_upgrade' || !!selectedVehicleId);
 
                 return (
                   <div
@@ -825,6 +824,32 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
                       )}
                     </div>
 
+                    {/* Vehicle upgrade target */}
+                    {item.type === 'vehicle_upgrade' && (
+                      <div className="mt-2 pt-2 border-t border-zinc-900">
+                        <label className="block text-[10px] text-zinc-400 font-semibold mb-1">
+                          {lang === 'ru' ? 'Установить на транспорт:' : 'Install on vehicle:'}
+                        </label>
+                        {compatibleVehicles.length > 0 ? (
+                          <select
+                            value={selectedVehicleId}
+                            onChange={(e) => setVehicleUpgradeTargets(previous => ({ ...previous, [item.id]: e.target.value }))}
+                            className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-[11px] text-zinc-100 min-h-[32px]"
+                          >
+                            {compatibleVehicles.map(vehicle => (
+                              <option key={vehicle.id} value={vehicle.id}>{vehicle.name}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <p className="text-[10px] text-amber-400">
+                            {character.vehicles?.length
+                              ? (lang === 'ru' ? 'Нет совместимого транспорта или улучшение уже установлено.' : 'No compatible vehicle, or the upgrade is already installed.')
+                              : (lang === 'ru' ? 'Сначала купите или добавьте транспорт.' : 'Buy or add a vehicle first.')}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {/* Buy Action Button */}
                     <div className="pt-2 border-t border-zinc-900 flex items-center justify-between gap-2 mt-2">
                       <span className="text-[10px] text-zinc-500 font-mono">
@@ -833,9 +858,9 @@ export const DataPoolShopModal: React.FC<DataPoolShopModalProps> = ({
 
                       <button
                         onClick={() => handleBuyItem(item)}
-                        disabled={!canAfford}
+                        disabled={!canBuy}
                         className={`flex items-center gap-1.5 px-3.5 py-1.5 min-h-[36px] rounded text-xs font-bold font-orbitron uppercase tracking-wider transition ${
-                          canAfford
+                          canBuy
                             ? 'bg-red-600 hover:bg-red-500 text-white shadow'
                             : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                         }`}

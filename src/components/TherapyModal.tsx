@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Character } from '../types/character';
 import { Language, translations } from '../locales/i18n';
 import { sfx } from '../utils/audio';
+import { executeCyberpunkCheck } from '../utils/dice';
 import { calculateHumanityStats } from '../utils/roleUtils';
 import { RollResult } from '../types/character';
 import { 
@@ -47,11 +48,37 @@ export const TherapyModal: React.FC<TherapyModalProps> = ({
   } | null>(null);
 
   const [manualInput, setManualInput] = useState(stats.currentHumanity.toString());
+  const [medtechBase, setMedtechBase] = useState('');
+  const [medtechCheck, setMedtechCheck] = useState('');
   useEffect(() => {
-    if (isOpen) { setManualInput(String(character.humanityCurrent)); setLastTherapyResult(null); }
+    if (isOpen) {
+      setManualInput(String(character.humanityCurrent));
+      setLastTherapyResult(null);
+      setMedtechBase('');
+      setMedtechCheck('');
+    }
   }, [isOpen, character.id]);
 
   if (!isOpen) return null;
+
+  const checkTotal = Number.parseInt(medtechCheck, 10);
+  const hasCheck = Number.isFinite(checkTotal);
+  const standardReady = hasCheck && checkTotal >= 15;
+  const extremeReady = hasCheck && checkTotal >= 17;
+
+  const rollMedtechCheck = () => {
+    const base = Number.parseInt(medtechBase, 10);
+    if (!Number.isFinite(base)) return;
+    sfx.playDiceRoll();
+    const result = executeCyberpunkCheck({
+      title: lang === 'ru' ? 'Проверка Медтеха для терапии' : 'Medtech check for therapy',
+      baseVal: base,
+      type: 'custom',
+      lang
+    });
+    setMedtechCheck(String(result.total));
+    onAddRollResult?.(result);
+  };
 
   const rollDice = (count: number): number[] => {
     const rolls: number[] = [];
@@ -61,7 +88,16 @@ export const TherapyModal: React.FC<TherapyModalProps> = ({
     return rolls;
   };
 
-  const executeTherapy = (diceCount: number, costEb: number, therapyNameRu: string, therapyNameEn: string) => {
+  const executeTherapy = (diceCount: number, costEb: number, therapyNameRu: string, therapyNameEn: string, checkDv: number) => {
+    const check = Number.parseInt(medtechCheck, 10);
+    if (!Number.isFinite(check) || check < checkDv) {
+      alert(
+        lang === 'ru'
+          ? `Провал проверки Медтеха: требуется СЛ${checkDv}. Неделя и материалы потеряны, человечность не восстановлена.`
+          : `Medtech check failed: DV${checkDv} required. The week and materials are lost, and Humanity is not restored.`
+      );
+      return;
+    }
     sfx.playDiceRoll();
     const rolls = rollDice(diceCount);
     const sum = rolls.reduce((a, b) => a + b, 0);
@@ -109,6 +145,8 @@ export const TherapyModal: React.FC<TherapyModalProps> = ({
       newHumanity: targetHumanity,
       cost: costPaid
     });
+    // One check covers one week-long course; another course needs a new check.
+    setMedtechCheck('');
 
     if (onAddRollResult) {
       onAddRollResult({
@@ -245,6 +283,69 @@ export const TherapyModal: React.FC<TherapyModalProps> = ({
             </label>
           </div>
 
+          {/* Medtech check (Core p.229) */}
+          <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 space-y-2">
+            <div className="font-orbitron font-bold text-cyan-300 flex items-center gap-1.5">
+              <HeartHandshake size={14} />
+              {lang === 'ru' ? 'Проверка Медтеха (Core p.229)' : 'Medtech Check (Core p.229)'}
+            </div>
+            <p className="text-[11px] text-zinc-400 leading-relaxed">
+              {lang === 'ru'
+                ? 'Каждый курс длится неделю; в конце недели Медтех проходит проверку Медицинских технологий: 1d10 + ТЕХ + навык. Стандартная терапия — СЛ15, экстремальная — СЛ17. При провале неделя и материалы потеряны, человечность не восстанавливается. Медтех не может лечить самого себя.'
+                : 'Each course lasts one week; at the end, a Medtech makes a Medical Tech check: 1d10 + TECH + skill. Standard therapy is DV15, extreme is DV17. On a failure the week and materials are lost and Humanity is not restored. A Medtech cannot treat themselves.'}
+            </p>
+            {character.role === 'Medtech' && (
+              <p className="text-[11px] text-amber-400">
+                {lang === 'ru'
+                  ? 'Этот персонаж — Медтех. Проверку должен выполнить другой Медтех.'
+                  : 'This character is a Medtech. Another Medtech must make the check.'}
+              </p>
+            )}
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="text-[10px] text-zinc-400">
+                <span className="block mb-0.5">{lang === 'ru' ? 'База Медтеха (ТЕХ + навык)' : 'Medtech base (TECH + skill)'}</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={medtechBase}
+                  onChange={(e) => setMedtechBase(e.target.value)}
+                  aria-label={lang === 'ru' ? 'База проверки Медтеха' : 'Medtech check base'}
+                  className="w-32 bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-center font-mono text-xs text-cyan-300"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={rollMedtechCheck}
+                disabled={!Number.isFinite(Number.parseInt(medtechBase, 10))}
+                className="px-3 py-1.5 bg-cyan-950 border border-cyan-700 text-cyan-200 rounded text-[11px] font-bold disabled:opacity-40"
+              >
+                {lang === 'ru' ? 'Бросить 1d10' : 'Roll 1d10'}
+              </button>
+              <label className="text-[10px] text-zinc-400">
+                <span className="block mb-0.5">{lang === 'ru' ? 'Итог проверки' : 'Check total'}</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={medtechCheck}
+                  onChange={(e) => setMedtechCheck(e.target.value)}
+                  aria-label={lang === 'ru' ? 'Итог проверки Медтеха' : 'Medtech check result'}
+                  className="w-28 bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-center font-orbitron font-bold text-xs text-cyan-300"
+                />
+              </label>
+              <span className={`text-[11px] font-semibold ${standardReady ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                {standardReady
+                  ? (lang === 'ru' ? 'СЛ15 пройдена' : 'DV15 passed')
+                  : (lang === 'ru' ? 'СЛ15 не пройдена' : 'DV15 not passed')}
+                {' · '}
+                <span className={extremeReady ? 'text-emerald-400' : 'text-zinc-500'}>
+                  {extremeReady
+                    ? (lang === 'ru' ? 'СЛ17 пройдена' : 'DV17 passed')
+                    : (lang === 'ru' ? 'СЛ17 не пройдена' : 'DV17 not passed')}
+                </span>
+              </span>
+            </div>
+          </div>
+
           {/* Latest Result Banner */}
           {lastTherapyResult && (
             <div className="bg-emerald-950/40 border border-emerald-700/80 rounded-lg p-3 text-emerald-200 animate-in fade-in">
@@ -295,8 +396,8 @@ export const TherapyModal: React.FC<TherapyModalProps> = ({
                 </div>
               </div>
               <button
-                onClick={() => executeTherapy(2, 500, 'Стандартная (2d6)', 'Standard (2d6)')}
-                disabled={!stats.canRestore}
+                onClick={() => executeTherapy(2, 500, 'Стандартная (2d6)', 'Standard (2d6)', 15)}
+                disabled={!stats.canRestore || !standardReady}
                 className="w-full py-2 bg-cyan-950/80 hover:bg-cyan-800 disabled:opacity-30 disabled:hover:bg-cyan-950/80 border border-cyan-700/80 text-cyan-200 hover:text-white rounded font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition active:scale-95 shadow-xs"
               >
                 <Dices size={14} className="text-cyan-400" />
@@ -323,8 +424,8 @@ export const TherapyModal: React.FC<TherapyModalProps> = ({
                 </div>
               </div>
               <button
-                onClick={() => executeTherapy(4, 1000, 'Экстремальная (4d6)', 'Extreme (4d6)')}
-                disabled={!stats.canRestore}
+                onClick={() => executeTherapy(4, 1000, 'Экстремальная (4d6)', 'Extreme (4d6)', 17)}
+                disabled={!stats.canRestore || !extremeReady}
                 className="w-full py-2 bg-emerald-950/80 hover:bg-emerald-800 disabled:opacity-30 disabled:hover:bg-emerald-950/80 border border-emerald-700/80 text-emerald-200 hover:text-white rounded font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition active:scale-95 shadow-xs"
               >
                 <Dices size={14} className="text-emerald-400" />

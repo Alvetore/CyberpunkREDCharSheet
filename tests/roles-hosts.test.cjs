@@ -61,7 +61,10 @@ test('all ten role identifiers have book translations and selectors retain stabl
 });
 
 test('Fixer Trading bonus and role checks use correct dice and rank, not generic STAT additions',()=>{
-  const c={...fresh(),role:'Fixer',roleRank:4};assert.equal(rules.skillBase(c,'trading'),rules.effectiveStat(c,'COOL')+4+c.skills.find(s=>s.id==='trading').level);
+  const c={...fresh(),role:'Fixer',roleRank:4};
+  // Operator rank applies only to the haggle check, not every Trading check.
+  assert.equal(rules.skillBase(c,'trading'),rules.effectiveStat(c,'COOL')+c.skills.find(s=>s.id==='trading').level);
+  assert.equal(roles.fixerTradingBase(c),rules.effectiveStat(c,'COOL')+4+c.skills.find(s=>s.id==='trading').level);
   c.role='Lawman';let result=withRandom([0.3,0.999],()=>roles.rollLawmanBackup(c,'en'));assert.equal(result.total,4);assert.equal(result.isSuccess,true);assert.match(result.summary,/6 rounds.*next higher/);
   result=withRandom([0.4],()=>roles.rollLawmanBackup(c,'en'));assert.equal(result.isSuccess,false);
   c.role='Media';assert.equal(roles.mediaBelievability(4),3);assert.equal(roles.charismaticImpactBase({...c,hpCurrent:0}),0);result=withRandom([0.5],()=>roles.rollMediaStory(c,true,4,'en'));assert.equal(result.total,6);assert.equal(result.isSuccess,true);
@@ -178,7 +181,10 @@ test('rank editing and role switching synchronize legacy aliases without losing 
     const character=setRoleRank({...fresh(),role},9);assert.equal(character.roleRank,9);assert.equal(character.roleAbilities.generic.rank,9);assert.ok(isCharacter(character));
     if(role==='Netrunner') assert.equal(character.roleAbilities.netrunner.interfaceRank,9);
     if(role==='Medtech') assert.equal(character.roleAbilities.medtech.medicineRank,9);
-    if(role==='Fixer') assert.equal(rules.skillBase(character,'trading'),character.stats.COOL+character.skills.find(s=>s.id==='trading').level+9);
+    if(role==='Fixer') {
+      assert.equal(rules.skillBase(character,'trading'),character.stats.COOL+character.skills.find(s=>s.id==='trading').level);
+      assert.equal(roles.fixerTradingBase(character),character.stats.COOL+character.skills.find(s=>s.id==='trading').level+9);
+    }
   }
   assert.equal(setRoleRank(c,99).roleRank,10);assert.equal(setRoleRank(c,-1).roleRank,1);
 });

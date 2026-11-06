@@ -21,6 +21,28 @@ export function isSameGrenadeType(
   return w1.name.trim().toLowerCase() === w2.name.trim().toLowerCase();
 }
 
+/**
+ * Merge an incoming grenade stack into an existing one. Capacity represents
+ * the number of purchased grenades in the stack, while currentAmmo represents
+ * the remaining grenades. A fully spent incoming stack contributes no
+ * capacity; otherwise a spent existing stack starts a fresh capacity.
+ */
+export function mergeGrenadeStack(
+  existing: Pick<Weapon, 'currentAmmo' | 'magCapacity'>,
+  addedAmmo: number,
+  addedCapacity: number
+): Pick<Weapon, 'currentAmmo' | 'magCapacity'> {
+  const ammoToAdd = Math.max(0, Math.floor(addedAmmo) || 0);
+  const capacityToAdd = Math.max(0, Math.floor(addedCapacity) || 0);
+  const currentAmmo = Math.max(0, existing.currentAmmo + ammoToAdd);
+  const magCapacity = ammoToAdd === 0
+    ? existing.magCapacity
+    : existing.currentAmmo === 0
+    ? Math.max(ammoToAdd, capacityToAdd)
+    : Math.max(existing.magCapacity + capacityToAdd, currentAmmo);
+  return { currentAmmo, magCapacity };
+}
+
 export function consolidateGrenadeWeapons(weapons: Weapon[]): Weapon[] {
   const result: Weapon[] = [];
   for (const weapon of weapons) {
@@ -36,15 +58,9 @@ export function consolidateGrenadeWeapons(weapons: Weapon[]): Weapon[] {
       const existing = result[existingIndex];
       const addedAmmo = weapon.currentAmmo ?? weapon.magCapacity ?? 1;
       const addedCap = weapon.magCapacity || addedAmmo || 1;
-      const newAmmo = existing.currentAmmo + addedAmmo;
-      const newCap = existing.currentAmmo === 0
-        ? addedCap
-        : Math.max(existing.magCapacity + addedCap, newAmmo);
-
       result[existingIndex] = {
         ...existing,
-        currentAmmo: newAmmo,
-        magCapacity: newCap
+        ...mergeGrenadeStack(existing, addedAmmo, addedCap)
       };
     } else {
       result.push(weapon);
@@ -77,13 +93,8 @@ export function addEquipmentToBackpack(character: Character, equipment: Backpack
       if (existingInBackpack) {
         const addedAmmo = quantity * (equipment.item.currentAmmo || 1);
         const addedCapacity = quantity * (equipment.item.magCapacity || 1);
-        const newAmmo = existingInBackpack.currentAmmo + addedAmmo;
-        const newCap = existingInBackpack.currentAmmo === 0
-          ? addedCapacity
-          : Math.max(existingInBackpack.magCapacity + addedCapacity, newAmmo);
-
         updated.weapons = character.weapons.map(w =>
-          w.id === existingInBackpack.id ? { ...w, currentAmmo: newAmmo, magCapacity: newCap } : w
+          w.id === existingInBackpack.id ? { ...w, ...mergeGrenadeStack(existingInBackpack, addedAmmo, addedCapacity) } : w
         );
       } else {
         const singleRecord: Weapon = {
@@ -121,16 +132,12 @@ export function setWeaponEquipped(character: Character, id: string, equipped: bo
       if (existingEquipped) {
         const addedAmmo = target.currentAmmo ?? target.magCapacity ?? 1;
         const addedCapacity = target.magCapacity || addedAmmo || 1;
-        const newAmmo = existingEquipped.currentAmmo + addedAmmo;
-        const newCap = existingEquipped.currentAmmo === 0
-          ? addedCapacity
-          : Math.max(existingEquipped.magCapacity + addedCapacity, newAmmo);
 
         return {
           ...character,
           weapons: character.weapons
             .filter(w => w.id !== id)
-            .map(w => w.id === existingEquipped.id ? { ...w, currentAmmo: newAmmo, magCapacity: newCap } : w)
+            .map(w => w.id === existingEquipped.id ? { ...w, ...mergeGrenadeStack(existingEquipped, addedAmmo, addedCapacity) } : w)
         };
       }
     } else {
@@ -140,16 +147,12 @@ export function setWeaponEquipped(character: Character, id: string, equipped: bo
       if (existingInBackpack) {
         const addedAmmo = target.currentAmmo ?? target.magCapacity ?? 1;
         const addedCapacity = target.magCapacity || addedAmmo || 1;
-        const newAmmo = existingInBackpack.currentAmmo + addedAmmo;
-        const newCap = existingInBackpack.currentAmmo === 0
-          ? addedCapacity
-          : Math.max(existingInBackpack.magCapacity + addedCapacity, newAmmo);
 
         return {
           ...character,
           weapons: character.weapons
             .filter(w => w.id !== id)
-            .map(w => w.id === existingInBackpack.id ? { ...w, currentAmmo: newAmmo, magCapacity: newCap } : w)
+            .map(w => w.id === existingInBackpack.id ? { ...w, ...mergeGrenadeStack(existingInBackpack, addedAmmo, addedCapacity) } : w)
         };
       }
     }

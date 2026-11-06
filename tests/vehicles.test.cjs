@@ -2,7 +2,7 @@ const { test, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { load, mount, nodes, button, label } = require('./helpers.cjs');
 const { createEmptyCharacter } = load('src/data/initialData.ts');
-const { DATAPOOL_ALL_VEHICLES } = load('src/data/datapoolVehicles.ts');
+const { DATAPOOL_ALL_VEHICLES, DATAPOOL_VEHICLE_UPGRADES } = load('src/data/datapoolVehicles.ts');
 const { CatalogBrowser } = load('src/components/CatalogBrowser.tsx');
 const { VehicleCatalogBrowser } = load('src/components/VehicleCatalogBrowser.tsx');
 const { VehicleCatalogModal } = load('src/components/VehicleCatalogModal.tsx');
@@ -86,4 +86,51 @@ test('vehicle modal keeps insufficient-funds errors open and garage entry opens 
 test('global vehicle shop uses the same validated catalog purchase path',()=>{
   let updated;const view=mount(DataPoolShopModal,{isOpen:true,initialCategory:'vehicles',character:fresh(),lang:'en',onClose(){},onUpdateCharacter:c=>updated=c});
   nodes(view.render(),n=>n.type==='input'&&n.props.placeholder==='Search items...')[0].props.onChange({target:{value:'Bicycle'}});button(view.render(),'Buy').props.onClick();assert.equal(updated.cashEb,99900);assert.equal(updated.vehicles[0].catalogId,'veh-bike-1');assert.equal(updated.vehicles[0].sdpMax,15);
+});
+
+test('vehicle upgrade catalog keeps the corebook ranks and Interface prices',()=>{
+  assert.equal(DATAPOOL_VEHICLE_UPGRADES.length,19);
+  const expected={
+    'upg-armored-chassis':[5,5000],'upg-bulletproof-glass':[1,1000],'upg-comms-center':[1,1000],
+    'upg-nos':[1,1000],'upg-mounted-flamethrower':[1,1000],'upg-mounted-smg':[1,1000],
+    'upg-seat-module':[1,1000],'upg-security-system':[5,5000],'upg-smuggle-compartment':[1,1000],
+    'upg-reinforced-chassis':[1,1000],'upg-rocket-pod':[5,5000],'upg-heavy-mount':[5,5000],
+    'upg-mounted-melee':[1,1000],'upg-air-cushion':[5,5000],'upg-av4-engine':[7,5000],
+    'upg-combat-ram':[1,1000],'upg-interface-control':[5,5000],'upg-spike-strip':[1,1000],
+    'upg-living-quarters':[1,1000]
+  };
+  for(const [id,[rank,cost]] of Object.entries(expected)){
+    const upgrade=DATAPOOL_VEHICLE_UPGRADES.find(item=>item.id===id);
+    assert.ok(upgrade,id);assert.equal(upgrade.nomadRank,rank,id);assert.equal(upgrade.costEb,cost,id);
+    assert.ok(upgrade.categoryRule,id);
+    if(upgrade.requiresUpgradeId) assert.ok(DATAPOOL_VEHICLE_UPGRADES.some(item=>item.id===upgrade.requiresUpgradeId),id);
+  }
+  assert.equal(DATAPOOL_VEHICLE_UPGRADES.find(item=>item.id==='upg-heavy-mount').requiresUpgradeId,'upg-reinforced-chassis');
+  assert.equal(DATAPOOL_VEHICLE_UPGRADES.find(item=>item.id==='upg-rocket-pod').requiresUpgradeId,'upg-reinforced-chassis');
+  assert.equal(DATAPOOL_VEHICLE_UPGRADES.find(item=>item.id==='upg-interface-control').categoryRule,'motorcycles');
+});
+
+test('global vehicle shop installs an upgrade on the selected compatible vehicle and charges its price',()=>{
+  const c=fresh(),model=DATAPOOL_ALL_VEHICLES.find(v=>v.id==='veh-ground-3');
+  const first=vehicleFromCatalog(model,'en'),second={...vehicleFromCatalog(model,'en'),id:'car-2',name:'Second Car'};
+  first.id='car-1';c.vehicles=[first,second];
+  let updated;const view=mount(DataPoolShopModal,{isOpen:true,initialCategory:'vehicles',character:c,lang:'en',onClose(){},onUpdateCharacter:next=>updated=next});
+  button(view.render(),'Upgrades').props.onClick();
+  nodes(view.render(),n=>n.type==='input'&&n.props.placeholder==='Search items...')[0].props.onChange({target:{value:'Heavy Chassis'}});
+  const target=nodes(view.render(),n=>n.type==='select'&&nodes(n,o=>o.type==='option'&&o.props.value==='car-2').length===1)[0];
+  assert.ok(target,'target vehicle selector');target.props.onChange({target:{value:'car-2'}});
+  const buy=nodes(view.render(),n=>n.type==='button'&&label(n).trim()==='Buy')[0];assert.ok(buy);buy.props.onClick();
+  assert.ok(updated);assert.deepEqual(updated.vehicles[0].upgrades,[]);
+  assert.deepEqual(updated.vehicles[1].upgrades,['Heavy Chassis']);
+  assert.equal(updated.cashEb,c.cashEb-1000);
+});
+
+test('global vehicle shop refuses an upgrade when no compatible vehicle exists',()=>{
+  const c=fresh();let updated;
+  const view=mount(DataPoolShopModal,{isOpen:true,initialCategory:'vehicles',character:c,lang:'en',onClose(){},onUpdateCharacter:next=>updated=next});
+  button(view.render(),'Upgrades').props.onClick();
+  nodes(view.render(),n=>n.type==='input'&&n.props.placeholder==='Search items...')[0].props.onChange({target:{value:'Heavy Chassis'}});
+  const buy=nodes(view.render(),n=>n.type==='button'&&label(n).trim()==='Buy')[0];
+  assert.ok(buy);assert.equal(buy.props.disabled,true);buy.props.onClick();
+  assert.equal(updated,undefined);assert.deepEqual(c.gear,createEmptyCharacter('Garage').gear);
 });

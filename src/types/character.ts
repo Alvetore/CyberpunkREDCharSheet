@@ -292,6 +292,8 @@ export interface Vehicle {
   name: string;
   model: string;
   category: VehicleCategory;
+  /** Catalog body type (motorcycle, van, AV-4, yacht, ...) used for upgrade compatibility. */
+  bodyType?: string;
   sdpMax: number; // Structural Damage Points (ПСП)
   sdpCurrent: number;
   armorSp?: number; // Armor SP

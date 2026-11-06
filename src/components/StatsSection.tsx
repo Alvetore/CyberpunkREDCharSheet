@@ -128,9 +128,13 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
   const handleHpChange = (delta: number) => {
     sfx.playClick();
     const newHp = Math.max(0, Math.min(hpMax, character.hpCurrent + delta));
+    // Core p.188: a character stabilized and returned to at least 1 HP resets
+    // the accumulated Death Save penalty; injury-derived penalties remain.
+    const stabilized = character.hpCurrent <= 0 && newHp > 0;
     onUpdateCharacter({
       ...character,
-      hpCurrent: newHp
+      hpCurrent: newHp,
+      ...(stabilized ? { deathSavePenalties: 0 } : {})
     });
   };
 
@@ -612,7 +616,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
         <summary className="flex items-center justify-between cursor-pointer font-orbitron font-bold text-xs uppercase text-red-500 select-none">
           <div className="flex items-center gap-1.5">
             <Flame size={14} className="text-red-500" />
-            <span>{t.statsTitle} (10 ХАР)</span>
+            <span>{`${t.statsTitle} (10 ${lang === 'ru' ? 'ХАР' : 'STAT'})`}</span>
             {armorPenalty < 0 && (
               <span className="text-[10px] text-amber-400 font-mono font-semibold">({armorPenalty})</span>
             )}

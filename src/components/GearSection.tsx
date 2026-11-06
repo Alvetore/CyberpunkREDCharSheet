@@ -7,7 +7,7 @@ import { AMMUNITION_CATALOG } from '../data/ammunitionCatalog';
 import { GRENADE_CATALOG } from '../data/grenadeCatalog';
 import { gearCyberwareDevice, wearCyberwareGear } from '../utils/gearCyberware';
 import { useCatalogNotice } from './CatalogNotice';
-import { addEquipmentToBackpack, BackpackEquipment, backpackCyberware, isSameGrenadeType } from '../utils/backpack';
+import { addEquipmentToBackpack, BackpackEquipment, backpackCyberware, isSameGrenadeType, mergeGrenadeStack } from '../utils/backpack';
 import { BackpackEquipmentSection } from './BackpackEquipmentSection';
 import { addGearToInventory, gearErrorMessage, gearPrice } from '../utils/gear';
 import { 
@@ -124,7 +124,9 @@ export const GearSection: React.FC<GearSectionProps> = ({
       id: 'weap-gear-' + crypto.randomUUID(),
       name: item.name,
       category: 'Thrown Grenade',
-      damage: '6d6',
+      // Unknown/utility grenades are resolved manually. Do not invent a
+      // generic 6d6 explosion for smoke, flashbang, tear gas, etc.
+      damage: '',
       standardRof: 1,
       magCapacity: 1,
       currentAmmo: 1,
@@ -132,6 +134,8 @@ export const GearSection: React.FC<GearSectionProps> = ({
       skillId: 'athletics',
       concealable: true,
       consumable: true,
+      canCrit: false,
+      attackRequiresRoll: true,
       notes: item.notes,
       isEquipped: true
     };
@@ -141,12 +145,10 @@ export const GearSection: React.FC<GearSectionProps> = ({
       w => w.isEquipped !== false && !w.sourceCyberwareId && isSameGrenadeType(w, baseWeapon)
     );
     if (existing) {
-      const newAmmo = existing.currentAmmo + 1;
-      const newCap = existing.currentAmmo === 0 ? 1 : Math.max(existing.magCapacity + 1, newAmmo);
       onUpdateCharacter({
         ...charWithUpdatedGear,
         weapons: charWithUpdatedGear.weapons.map(w =>
-          w.id === existing.id ? { ...w, currentAmmo: newAmmo, magCapacity: newCap } : w
+          w.id === existing.id ? { ...w, ...mergeGrenadeStack(existing, 1, 1) } : w
         )
       });
     } else {
@@ -188,7 +190,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
             type="number"
             value={character.cashEb}
             onChange={(e) =>
-              onUpdateCharacter({ ...character, cashEb: parseInt(e.target.value, 10) || 0 })
+              onUpdateCharacter({ ...character, cashEb: Math.max(0, parseInt(e.target.value, 10) || 0) })
             }
             className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-emerald-300 font-orbitron font-black text-lg sm:text-xl focus:border-emerald-500 focus:outline-none"
           />
@@ -204,7 +206,7 @@ export const GearSection: React.FC<GearSectionProps> = ({
             type="number"
             value={character.bankEb}
             onChange={(e) =>
-              onUpdateCharacter({ ...character, bankEb: parseInt(e.target.value, 10) || 0 })
+              onUpdateCharacter({ ...character, bankEb: Math.max(0, parseInt(e.target.value, 10) || 0) })
             }
             className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-cyan-300 font-orbitron font-black text-lg sm:text-xl focus:border-cyan-500 focus:outline-none"
           />

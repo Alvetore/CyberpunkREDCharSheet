@@ -16,7 +16,11 @@ import {
   UILayoutMode,
   exportSingleCharacter,
   exportAllCharacters,
-  parseImportedJson
+  parseImportedJson,
+  hasStorageRecovery,
+  exportStorageRecovery,
+  restorePreviousCharacters,
+  clearStorageRecovery
 } from './utils/storage';
 import { createEmptyCharacter } from './data/initialData';
 import { executeCyberpunkCheck, executeDamageRoll, executeDeathSave } from './utils/dice';
@@ -207,6 +211,20 @@ export const App: React.FC = () => {
 
   const handleExportAll = () => {
     exportAllCharacters(characters);
+  };
+
+  const handleRestorePrevious = () => {
+    const restored = restorePreviousCharacters();
+    if (!restored?.length) return;
+    const confirmed = window.confirm(
+      lang === 'ru'
+        ? 'Восстановить предыдущую коллекцию персонажей? Текущая коллекция будет заменена.'
+        : 'Restore the previous character collection? The current collection will be replaced.'
+    );
+    if (!confirmed) return;
+    setCharacters(restored);
+    setActiveId(restored[0]?.id || '');
+    clearStorageRecovery();
   };
 
   const handleImportCharacter = (jsonText: string) => {
@@ -446,18 +464,34 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-2.5 sm:p-4 md:p-5 space-y-4 pb-24 sm:pb-8 min-w-0">
-        {saveFailed && (
+        {(saveFailed || hasStorageRecovery()) && (
           <div role="alert" className="p-3 border border-red-500 bg-red-950/40 text-red-300 rounded text-sm flex items-center justify-between flex-wrap gap-2">
             <div>
-              {lang === 'ru' ? 'Не удалось сохранить лист в браузере. Экспортируйте данные перед закрытием страницы.' : 'Saving failed. Export your data before closing this page.'}
+              {saveFailed
+                ? (lang === 'ru' ? 'Не удалось сохранить лист в браузере. Экспортируйте данные перед закрытием страницы.' : 'Saving failed. Export your data before closing this page.')
+                : (lang === 'ru' ? 'Повреждённое сохранение сохранено отдельно для восстановления.' : 'The damaged save was preserved separately for recovery.')}
             </div>
-            <button
-              type="button"
-              className="underline hover:text-red-200 font-semibold"
-              onClick={() => exportAllCharacters(characters)}
-            >
-              {lang === 'ru' ? 'Экспортировать всех' : 'Export all'}
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                className="underline hover:text-red-200 font-semibold"
+                onClick={() => exportAllCharacters(characters)}
+              >
+                {lang === 'ru' ? 'Экспортировать всех' : 'Export all'}
+              </button>
+              {hasStorageRecovery() && (
+                <>
+                  <button type="button" className="underline hover:text-red-200" onClick={exportStorageRecovery}>
+                    {lang === 'ru' ? 'Выгрузить резервную копию' : 'Download recovery copy'}
+                  </button>
+                  {restorePreviousCharacters() && (
+                    <button type="button" className="underline hover:text-red-200 font-semibold" onClick={handleRestorePrevious}>
+                      {lang === 'ru' ? 'Восстановить предыдущую коллекцию' : 'Restore previous collection'}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         )}
         {/* Core Stats always visible on top */}

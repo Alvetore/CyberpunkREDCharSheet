@@ -40,4 +40,7 @@ export function roleTechnicalBase(character:Character, specialty:number):number 
 export function charismaticImpactBase(character:Character):number {
   return character.roleRank+woundPenalty(character)+injuryActionPenalty(character);
 }
-export function fixerTradingBase(character:Character):number { return skillBase(character,'trading'); }
+export function fixerTradingBase(character:Character):number {
+  // Core p.160: Operator adds its rank to Trading only when the Fixer haggles.
+  return skillBase(character,'trading') + (character.role === 'Fixer' ? character.roleRank : 0);
+}

@@ -1,6 +1,7 @@
 import { Character, CYBERWARE_SLOT_TYPES } from '../types/character';
 import { createEmptyCharacter } from '../data/initialData';
 import { gearCyberwareDevice } from './gearCyberware';
+import { maxHP } from './rules';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
 const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
@@ -49,11 +50,12 @@ function matches(value: unknown, template: unknown): boolean {
 }
 
 function validArmor(value: unknown): boolean {
-  // Keep the existing finite-number contract for SP/penalty, including legacy
-  // manually edited values. Backpack metadata must not reinterpret old armor.
+  // SP cannot be negative; negative legacy values are repaired by the storage
+  // migration rather than silently weakening the validation boundary.
   return isRecord(value) && matches(value, {id:'',name:'',location:'',spMax:0,spCurrent:0,penalty:0})
     && typeof value.id === 'string' && value.id.trim().length > 0
     && ['head','body','shield'].includes(value.location as string)
+    && nonnegative(value.spMax) && nonnegative(value.spCurrent)
     && optionalFields(value, {catalogId:text,sourceUrl:text,costEb:nonnegative,notes:text});
 }
 
@@ -95,6 +97,7 @@ export function isCharacter(value: unknown): value is Character {
   if (new Set(wornDevices.map(item=>item.wornOn)).size!==wornDevices.length || wornDevices.some(item=>item.quantity!==1||!(gearCyberwareDevice(item)!.sites as readonly string[]).includes(item.wornOn!))) return false;
   if (character.cyberware.some(item => !item.id) || character.weapons.some(item => !item.id) || new Set(character.cyberware.map(item => item.id)).size !== character.cyberware.length || new Set(character.weapons.map(item => item.id)).size !== character.weapons.length) return false;
   if (character.gear.some(item => !item.id) || new Set(character.gear.map(item => item.id)).size !== character.gear.length) return false;
+  if (!character.gear.every(item => Number.isInteger(item.quantity) && item.quantity >= 0)) return false;
   if (character.programs.some(item => !item.id) || new Set(character.programs.map(item => item.id)).size !== character.programs.length) return false;
   if (character.criticalInjuries.some(item => !item.id) || new Set(character.criticalInjuries.map(item => item.id)).size !== character.criticalInjuries.length) return false;
   if (character.skills.some(item => !item.id) || new Set(character.skills.map(item => item.id)).size !== character.skills.length) return false;
@@ -103,7 +106,7 @@ export function isCharacter(value: unknown): value is Character {
   if (character.roleRank !== undefined && (!Number.isInteger(character.roleRank) || character.roleRank < 1 || character.roleRank > 10)) return false;
   if (typeof character.cashEb === 'number' && character.cashEb < 0) return false;
   if (typeof character.bankEb === 'number' && character.bankEb < 0) return false;
-  if (typeof character.hpCurrent === 'number' && character.hpCurrent < 0) return false;
+  if (typeof character.hpCurrent === 'number' && (character.hpCurrent < 0 || character.hpCurrent > maxHP(character))) return false;
   if (!Object.values(character.stats).every(n => Number.isInteger(n) && n >= 0 && n <= 30)) return false;
   if (!character.skills.every(skill => Object.hasOwn(template.stats, skill.stat) && Number.isInteger(skill.level) && skill.level >= 0 && skill.level <= 10 && [1,2].includes(skill.multiplier))) return false;
   for (const weapon of character.weapons) {
